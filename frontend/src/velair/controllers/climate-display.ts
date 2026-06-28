@@ -1,6 +1,11 @@
 import {
   climateCapabilities,
+  climateFanModeOptions,
+  climateHumidityLimits,
+  climatePresetModeOptions,
   climateSupportedModes,
+  climateSwingHorizontalModeOptions,
+  climateSwingModeOptions,
   entityTemperatureLimits,
   entityTemperatureStep,
   uniqueKnownHvacModes,
@@ -12,6 +17,7 @@ import {
   formatEventAction,
   formatEventMode,
   formatRemaining,
+  formatScheduleTime,
   formatTemperature,
   temperatureUnit,
 } from "../domain/formatters";
@@ -21,7 +27,7 @@ import {
   lowestTemperatureStep,
 } from "../domain/settings";
 import type { SupportedLanguage } from "../translations";
-import type { BlockDraftSource, EntityDiagnostic, HomeAssistant, ScheduleEvent, ScheduleResponse } from "../types";
+import type { BlockDraftSource, EntityDiagnostic, HassState, HomeAssistant, ScheduleEvent, ScheduleResponse } from "../types";
 
 type ClimateDisplayHost = {
   readonly hass?: HomeAssistant;
@@ -105,8 +111,67 @@ export function hvacModeOptions(host: ClimateDisplayHost, source: BlockDraftSour
   return host._uniqueModes(host._selectedEntity ? host._climateSupportedModes(host._selectedEntity) : []);
 }
 
+export function fanModeOptions(host: ClimateDisplayHost, source: BlockDraftSource = "schedule"): string[] {
+  return climateOptionValues(host, source, climateFanModeOptions);
+}
+
+export function entityFanModeOptionsForHost(host: ClimateDisplayHost, entityId: string): string[] {
+  return uniqueOptionValues(climateFanModeOptions(host.hass?.states?.[entityId]));
+}
+
+export function presetModeOptions(host: ClimateDisplayHost, source: BlockDraftSource = "schedule"): string[] {
+  return climateOptionValues(host, source, climatePresetModeOptions);
+}
+
+export function entityPresetModeOptionsForHost(host: ClimateDisplayHost, entityId: string): string[] {
+  return uniqueOptionValues(climatePresetModeOptions(host.hass?.states?.[entityId]));
+}
+
+export function swingModeOptions(host: ClimateDisplayHost, source: BlockDraftSource = "schedule"): string[] {
+  return climateOptionValues(host, source, climateSwingModeOptions);
+}
+
+export function entitySwingModeOptionsForHost(host: ClimateDisplayHost, entityId: string): string[] {
+  return uniqueOptionValues(climateSwingModeOptions(host.hass?.states?.[entityId]));
+}
+
+export function swingHorizontalModeOptions(host: ClimateDisplayHost, source: BlockDraftSource = "schedule"): string[] {
+  return climateOptionValues(host, source, climateSwingHorizontalModeOptions);
+}
+
+export function entitySwingHorizontalModeOptionsForHost(host: ClimateDisplayHost, entityId: string): string[] {
+  return uniqueOptionValues(climateSwingHorizontalModeOptions(host.hass?.states?.[entityId]));
+}
+
+export function humidityLimits(
+  host: ClimateDisplayHost,
+  source: BlockDraftSource = "schedule",
+): [number, number] | undefined {
+  if (source === "template") {
+    const limits = (host._data?.configured_entities ?? [])
+      .map((entityId: string) => climateHumidityLimits(host.hass?.states?.[entityId]))
+      .filter((item): item is [number, number] => Boolean(item));
+    if (!limits.length) {
+      return undefined;
+    }
+    return [
+      Math.min(...limits.map((item) => item[0])),
+      Math.max(...limits.map((item) => item[1])),
+    ];
+  }
+  return host._selectedEntity ? climateHumidityLimits(host.hass?.states?.[host._selectedEntity]) : undefined;
+}
+
+export function entityHumidityLimitsForHost(host: ClimateDisplayHost, entityId: string): [number, number] | undefined {
+  return climateHumidityLimits(host.hass?.states?.[entityId]);
+}
+
 export function uniqueModes(modes: string[]): string[] {
   return uniqueKnownHvacModes(modes);
+}
+
+export function uniqueOptionValues(values: string[]): string[] {
+  return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
 export function entityDiagnostic(host: ClimateDisplayHost, entityId: string): EntityDiagnostic {
@@ -132,7 +197,11 @@ export function climateProvidedData(host: ClimateDisplayHost, entityId: string):
 }
 
 export function formatDateTimeForHost(host: ClimateDisplayHost, value: string): string {
-  return formatDateTime(value, host._dateLocale());
+  return formatDateTime(value, host._dateLocale(), host.hass?.locale?.time_format);
+}
+
+export function formatScheduleTimeForHost(host: ClimateDisplayHost, value: string): string {
+  return formatScheduleTime(value, host._dateLocale(), host.hass?.locale?.time_format);
 }
 
 export function dateLocaleForHost(host: ClimateDisplayHost): string {
@@ -174,3 +243,16 @@ export function temperatureUnitForHost(host: ClimateDisplayHost, entityId?: stri
 }
 
 export { formatRemaining, formatTemperatureLimit };
+
+function climateOptionValues(
+  host: ClimateDisplayHost,
+  source: BlockDraftSource,
+  optionReader: (state: HassState | undefined) => string[],
+): string[] {
+  if (source === "template") {
+    return uniqueOptionValues((host._data?.configured_entities ?? [])
+      .flatMap((entityId: string) => optionReader(host.hass?.states?.[entityId])));
+  }
+
+  return uniqueOptionValues(host._selectedEntity ? optionReader(host.hass?.states?.[host._selectedEntity]) : []);
+}

@@ -5,6 +5,7 @@ import {
   addDraftBlock,
   clampBlocksToTemperatureLimits,
   draftBlockTemperatureError,
+  filterBlocksForClimateOptions,
   firstUnsupportedModeBlock,
   normalizeDraftBlocks,
   updateDraftBlock,
@@ -75,6 +76,46 @@ describe("draft block domain", () => {
     ])).toEqual({ ok: false, error: "invalid-temperature:08:00:step" });
   });
 
+  it("normalizes optional climate settings for temperature blocks only", () => {
+    expect(normalize([
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "low",
+        humidity: "45",
+        hvac_mode: "cool",
+        preset_mode: "eco",
+        start: "22:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 24,
+      },
+      {
+        action: ACTION_TURN_OFF,
+        fan_mode: "high",
+        humidity: "55",
+        preset_mode: "boost",
+        start: "23:00",
+        temperature: "",
+      },
+    ])).toEqual({
+      ok: true,
+      blocks: [
+        {
+          action: ACTION_SET_TEMPERATURE,
+          fan_mode: "low",
+          humidity: 45,
+          hvac_mode: "cool",
+          preset_mode: "eco",
+          start: "22:00",
+          swing_horizontal_mode: "left",
+          swing_mode: "vertical",
+          temperature: 24,
+        },
+        { action: ACTION_TURN_OFF, start: "23:00" },
+      ],
+    });
+  });
+
   it("clamps template blocks to entity limits and detects unsupported modes", () => {
     expect(clampBlocksToTemperatureLimits([
       { action: ACTION_SET_TEMPERATURE, hvac_mode: "heat", start: "08:00", temperature: 5 },
@@ -90,5 +131,63 @@ describe("draft block domain", () => {
       { action: ACTION_SET_TEMPERATURE, hvac_mode: "heat", start: "08:00" },
       { action: ACTION_SET_TEMPERATURE, hvac_mode: "cool", start: "12:00" },
     ], ["heat"])).toMatchObject({ hvac_mode: "cool", start: "12:00" });
+  });
+
+  it("filters optional climate settings using the target climate capabilities", () => {
+    expect(filterBlocksForClimateOptions([
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        humidity: 45,
+        hvac_mode: "cool",
+        preset_mode: "eco",
+        start: "08:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 24,
+      },
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "turbo",
+        humidity: 90,
+        hvac_mode: "cool",
+        preset_mode: "boost",
+        start: "12:00",
+        swing_horizontal_mode: "right",
+        swing_mode: "horizontal",
+        temperature: 23,
+      },
+      {
+        action: ACTION_TURN_OFF,
+        fan_mode: "quiet",
+        humidity: 45,
+        start: "23:00",
+      },
+    ], {
+      fanModes: ["quiet"],
+      humidityLimits: [30, 60],
+      presetModes: ["eco"],
+      swingHorizontalModes: ["left"],
+      swingModes: ["vertical"],
+    })).toEqual([
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        humidity: 45,
+        hvac_mode: "cool",
+        preset_mode: "eco",
+        start: "08:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 24,
+      },
+      {
+        action: ACTION_SET_TEMPERATURE,
+        hvac_mode: "cool",
+        start: "12:00",
+        temperature: 23,
+      },
+      { action: ACTION_TURN_OFF, start: "23:00" },
+    ]);
   });
 });

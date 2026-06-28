@@ -6,17 +6,54 @@ export function dateLocale(language: SupportedLanguage): string {
   return language === "es" ? "es-ES" : "en";
 }
 
-export function formatDateTime(value: string, locale: string): string {
+function timeOptions(timeFormat?: string): Intl.DateTimeFormatOptions {
+  const normalizedTimeFormat = String(timeFormat ?? "").toLowerCase();
+  const hour12 = normalizedTimeFormat === "12"
+    ? true
+    : normalizedTimeFormat === "24"
+      ? false
+      : undefined;
+  return {
+    hour: "numeric",
+    minute: "2-digit",
+    ...(hour12 === undefined ? {} : { hour12 }),
+  };
+}
+
+export function formatDateTime(
+  value: string,
+  locale: string,
+  timeFormat?: string,
+): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
   return date.toLocaleString(locale, {
+    ...timeOptions(timeFormat),
     weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
   });
+}
+
+export function formatScheduleTime(
+  value: string,
+  locale: string,
+  timeFormat?: string,
+): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) {
+    return value;
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return value;
+  }
+
+  const date = new Date(2000, 0, 1, hour, minute);
+  return date.toLocaleTimeString(locale, timeOptions(timeFormat));
 }
 
 export function formatRemaining(valueMs: number): string {

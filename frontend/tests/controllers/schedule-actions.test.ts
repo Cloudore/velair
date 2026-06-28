@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ACTION_SET_TEMPERATURE } from "../../src/velair/constants";
-import { applySelectedDayToZones, saveSelectedDay } from "../../src/velair/controllers/schedule-actions";
+import { applySelectedDayToZones, clampBlocksForEntity, saveSelectedDay } from "../../src/velair/controllers/schedule-actions";
 import type { ScheduleBlock, ScheduleResponse } from "../../src/velair/types";
 
 const response = { configured_entities: [], zones: {}, settings: { first_weekday: "monday", zone_order: [] } } as unknown as ScheduleResponse;
@@ -28,15 +28,17 @@ function host(normalizedBlocks: ScheduleBlock[] = [{ action: ACTION_SET_TEMPERAT
     _applyScheduleData: vi.fn(),
     _blocksForSource: () => [],
     _clampBlocksForEntity(blocks: ScheduleBlock[], entityId: string) {
-      if (entityId === "climate.bedroom") {
-        return blocks.map((block) => ({ ...block, temperature: Math.min(19, Number(block.temperature)) }));
-      }
-      return blocks;
+      return clampBlocksForEntity(this, blocks, entityId);
     },
     _climateSupportedModes(entityId: string) {
       return entityId === "climate.cool_only" ? ["cool", "off"] : ["heat", "off"];
     },
-    _entityTemperatureLimits: () => [10, 30] as [number, number],
+    _entityFanModeOptions: (entityId: string) => entityId === "climate.bedroom" ? ["quiet"] : ["quiet", "turbo"],
+    _entityHumidityLimits: (entityId: string) => entityId === "climate.bedroom" ? undefined : [30, 70] as [number, number],
+    _entityPresetModeOptions: (entityId: string) => entityId === "climate.bedroom" ? [] : ["eco"],
+    _entitySwingHorizontalModeOptions: (entityId: string) => entityId === "climate.bedroom" ? [] : ["left"],
+    _entitySwingModeOptions: (entityId: string) => entityId === "climate.bedroom" ? [] : ["vertical"],
+    _entityTemperatureLimits: (entityId?: string) => entityId === "climate.bedroom" ? [10, 19] as [number, number] : [10, 30] as [number, number],
     _friendlyEntityName: (entityId: string) => entityId,
     _modeLabel: (mode: string) => mode,
     _normalizeDraftBlocks: () => ({ ok: true as const, blocks: normalizedBlocks }),
@@ -89,5 +91,47 @@ describe("schedule actions controller", () => {
       { action: ACTION_SET_TEMPERATURE, start: "08:00", temperature: 19, hvac_mode: "heat" },
     ]);
     expect(state._zoneTargets.size).toBe(0);
+  });
+
+  it("drops unsupported optional climate settings when applying to another zone", async () => {
+    const { api, state } = host([
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        humidity: 45,
+        hvac_mode: "heat",
+        preset_mode: "eco",
+        start: "08:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 21,
+      },
+    ]);
+    state._zoneTargets = new Set(["climate.bedroom"]);
+
+    await applySelectedDayToZones(state);
+
+    expect(api.setDailySchedule).toHaveBeenNthCalledWith(1, "climate.office", "monday", [
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        humidity: 45,
+        hvac_mode: "heat",
+        preset_mode: "eco",
+        start: "08:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 21,
+      },
+    ]);
+    expect(api.setDailySchedule).toHaveBeenNthCalledWith(2, "climate.bedroom", "monday", [
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        hvac_mode: "heat",
+        start: "08:00",
+        temperature: 19,
+      },
+    ]);
   });
 });

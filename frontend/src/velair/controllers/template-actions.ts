@@ -80,7 +80,10 @@ export function selectScheduleTemplate(host: TemplateActionsHost, key: string): 
 
   if (!host._applySelectedTemplate()) {
     host._selectedTemplateKey = previousKey;
+    return;
   }
+
+  host._selectedTemplateKey = "";
 }
 
 export function resetTemplateDraft(host: TemplateActionsHost, template?: ScheduleTemplate): void {
@@ -321,12 +324,30 @@ export function applySelectedTemplate(host: TemplateActionsHost): boolean {
 }
 
 function normalizeTemplateDraftBlocks(blocks: DraftScheduleBlock[]): DraftScheduleBlock[] {
-  return blocks.map((block) => ({
-    action: block.action,
-    hvac_mode: block.hvac_mode ?? "",
-    start: block.start,
-    temperature: block.temperature,
-  }));
+  return blocks.map((block) => {
+    const draft: DraftScheduleBlock = {
+      action: block.action,
+      hvac_mode: block.hvac_mode ?? "",
+      start: block.start,
+      temperature: block.temperature,
+    };
+    if (block.fan_mode) {
+      draft.fan_mode = block.fan_mode;
+    }
+    if (block.preset_mode) {
+      draft.preset_mode = block.preset_mode;
+    }
+    if (block.swing_mode) {
+      draft.swing_mode = block.swing_mode;
+    }
+    if (block.swing_horizontal_mode) {
+      draft.swing_horizontal_mode = block.swing_horizontal_mode;
+    }
+    if (String(block.humidity ?? "").trim()) {
+      draft.humidity = block.humidity;
+    }
+    return draft;
+  });
 }
 
 export async function saveTemplate(host: TemplateActionsHost, saveAsNew: boolean): Promise<void> {

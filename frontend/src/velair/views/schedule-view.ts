@@ -235,7 +235,15 @@ export function renderTimelineBlock(
     : Number.isFinite(temperature)
       ? host._formatTemperature(temperature, entityId)
       : host._t("invalidTemperatureRange");
+  const displayStart = host._formatScheduleTime(block.draft.start);
   const mode = isTurnOff ? "" : block.draft.hvac_mode || host._t("keep");
+  const optionItems = climateOptionSummaryItems(host, block.draft);
+  const optionSummary = optionItems.map((item) => item.short).join(" • ");
+  const title = [
+    `${displayStart} - ${label}`,
+    mode ? `${host._t("mode")}: ${mode}` : "",
+    ...optionItems.map((item) => `${item.label}: ${item.value}`),
+  ].filter(Boolean).join("\n");
   const blockClass = [
     "timeline-block",
     isTurnOff ? "off" : "",
@@ -253,7 +261,7 @@ export function renderTimelineBlock(
       role="button"
       style=${`left: ${block.left}%; width: ${block.width}%;`}
       tabindex="0"
-      title=${`${block.draft.start} - ${label}`}
+      title=${title}
       @dragstart=${(event: DragEvent) => host._handleTimelineDragStart(block.index, source, event)}
       @dragend=${host._handleTimelineDragEnd}
     >
@@ -264,9 +272,11 @@ export function renderTimelineBlock(
         @pointerdown=${(event: PointerEvent) => host._handleTimelineResizeStart(block.index, "start", source, event)}
         @dragstart=${(event: DragEvent) => event.preventDefault()}
       ></div>
-      <strong>${block.draft.start}</strong>
+      <strong>${displayStart}</strong>
       <span>${label}</span>
-      ${mode ? html`<small>${mode}</small>` : nothing}
+      ${mode || optionSummary
+        ? html`<small>${[mode, optionSummary].filter(Boolean).join(" • ")}</small>`
+        : nothing}
       ${block.nextIndex !== undefined
         ? html`
             <div
@@ -295,7 +305,9 @@ export function renderTemplatePanel(host: ScheduleViewHost) {
             .value=${host._selectedTemplateKey}
             ?disabled=${!templates.length}
             @change=${(event: Event) => {
+              const select = event.currentTarget as HTMLSelectElement;
               host._selectScheduleTemplate(host._inputValue(event));
+              select.value = host._selectedTemplateKey;
             }}
           >
             ${templates.length
@@ -317,6 +329,7 @@ export function renderDraftListHeader(host: ScheduleViewHost) {
       <span>${host._t("time")}</span>
       <span>${host._t("mode")}</span>
       <span>${host._t("temp")}</span>
+      <span></span>
       <span></span>
     </div>
   `;
@@ -354,6 +367,24 @@ export function renderEditableBlock(
   const displayedModeOptions = selectedMode && !modeOptions.includes(selectedMode)
     ? [...modeOptions, selectedMode]
     : modeOptions;
+  const fanModeOptions = host._fanModeOptions(source);
+  const presetModeOptions = host._presetModeOptions(source);
+  const swingModeOptions = host._swingModeOptions(source);
+  const swingHorizontalModeOptions = host._swingHorizontalModeOptions(source);
+  const humidityLimits = host._humidityLimits(source);
+  const hasSupportedClimateOptions = !isTurnOff && (
+    fanModeOptions.length > 0 ||
+    presetModeOptions.length > 0 ||
+    swingModeOptions.length > 0 ||
+    swingHorizontalModeOptions.length > 0 ||
+    Boolean(humidityLimits)
+  );
+  const optionItems = climateOptionSummaryItems(host, block);
+  const hasSelectedClimateOptions = optionItems.length > 0;
+  const hasClimateOptions = hasSupportedClimateOptions || hasSelectedClimateOptions;
+  const optionSummary = hasSelectedClimateOptions
+    ? optionItems.map((item) => item.short).join(" • ")
+    : host._t("climateOptionsAdd");
 
   return html`
     <div class=${temperatureError ? "editable-block invalid" : "editable-block"}>
@@ -402,6 +433,87 @@ export function renderEditableBlock(
         />
         ${temperatureError ? html`<small class="field-error">${temperatureError}</small>` : nothing}
       </label>
+      ${hasClimateOptions
+        ? html`
+            <details class="advanced-climate-options" @toggle=${handleClimateOptionsToggle}>
+              <summary
+                class="icon-button climate-options-toggle"
+                title=${optionItems.map((item) => `${item.label}: ${item.value}`).join("\n") || host._t("climateOptions")}
+                aria-label=${host._t("climateOptions")}
+                @click=${handleClimateOptionsSummaryClick}
+              >
+                <ha-icon icon="mdi:tune-variant"></ha-icon>
+                ${hasSelectedClimateOptions
+                  ? html`<span class="climate-options-badge">${optionItems.length}</span>`
+                  : nothing}
+              </summary>
+              <button
+                class="climate-options-scrim"
+                type="button"
+                aria-label=${host._t("dismiss")}
+                @click=${closeClimateOptionsDialog}
+              ></button>
+              <fieldset class="advanced-climate-options-fields">
+                <legend>${host._t("climateOptions")}</legend>
+                ${renderAdvancedOptionSelect(
+                  host,
+                  block,
+                  index,
+                  source,
+                  "fan_mode",
+                  "fanMode",
+                  fanModeOptions,
+                )}
+                ${renderAdvancedOptionSelect(
+                  host,
+                  block,
+                  index,
+                  source,
+                  "preset_mode",
+                  "presetMode",
+                  presetModeOptions,
+                )}
+                ${renderAdvancedOptionSelect(
+                  host,
+                  block,
+                  index,
+                  source,
+                  "swing_mode",
+                  "swingMode",
+                  swingModeOptions,
+                )}
+                ${renderAdvancedOptionSelect(
+                  host,
+                  block,
+                  index,
+                  source,
+                  "swing_horizontal_mode",
+                  "horizontalSwingMode",
+                  swingHorizontalModeOptions,
+                )}
+                ${humidityLimits || String(block.humidity ?? "").trim()
+                  ? html`
+                      <label>
+                        <span class="label">${host._t("targetHumidity")}</span>
+                        <input
+                          type="number"
+                          min=${String(humidityLimits?.[0] ?? 0)}
+                          max=${String(humidityLimits?.[1] ?? 100)}
+                          step="1"
+                          placeholder=${host._t("notSet")}
+                          .value=${String(block.humidity ?? "")}
+                          @input=${(event: Event) =>
+                            host._updateDraftBlock(index, "humidity", host._inputValue(event), source)}
+                          @change=${(event: Event) =>
+                            host._updateDraftBlock(index, "humidity", host._inputValue(event), source)}
+                        />
+                      </label>
+                    `
+                  : nothing}
+              </fieldset>
+            </details>
+          `
+        : html`<span class="advanced-climate-options-placeholder" aria-hidden="true"></span>`}
       <button
         class="icon-button danger"
         type="button"
@@ -410,8 +522,146 @@ export function renderEditableBlock(
       >
         <ha-icon icon="mdi:trash-can"></ha-icon>
       </button>
+      ${hasSelectedClimateOptions
+        ? html`
+            <small
+              class="climate-options-inline-summary"
+              title=${optionItems.map((item) => `${item.label}: ${item.value}`).join("\n")}
+            >
+              ${optionSummary}
+            </small>
+          `
+        : nothing}
     </div>
   `;
+}
+
+function handleClimateOptionsSummaryClick(event: Event): void {
+  const summary = event.currentTarget;
+  if (!(summary instanceof HTMLElement)) {
+    return;
+  }
+  const currentDetails = summary.closest("details");
+  const root = summary.getRootNode();
+  if (!(root instanceof Document || root instanceof ShadowRoot)) {
+    return;
+  }
+  root.querySelectorAll<HTMLDetailsElement>(".advanced-climate-options[open]").forEach((details) => {
+    if (details !== currentDetails) {
+      details.open = false;
+    }
+  });
+}
+
+function closeClimateOptionsDialog(event: Event): void {
+  event.preventDefault();
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  const details = target.closest("details");
+  if (details instanceof HTMLDetailsElement) {
+    details.open = false;
+  }
+}
+
+function handleClimateOptionsToggle(event: Event): void {
+  const details = event.currentTarget;
+  if (!(details instanceof HTMLDetailsElement) || !details.open) {
+    return;
+  }
+  const summary = details.querySelector("summary");
+  if (summary instanceof HTMLElement) {
+    positionClimateOptionsDialog(summary, details);
+  }
+}
+
+function positionClimateOptionsDialog(summary: HTMLElement, details: HTMLElement): void {
+  const rect = summary.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const margin = 16;
+  const gap = 8;
+  const width = Math.max(280, Math.min(420, viewportWidth - margin * 2));
+  const preferredLeft = rect.left + rect.width / 2 - width / 2;
+  const left = Math.max(margin, Math.min(preferredLeft, viewportWidth - width - margin));
+  const availableBelow = Math.max(0, viewportHeight - rect.bottom - gap - margin);
+  const availableAbove = Math.max(0, rect.top - gap - margin);
+  const shouldOpenAbove = availableAbove > availableBelow && availableBelow < 260;
+  const maxHeight = Math.max(180, shouldOpenAbove ? availableAbove : availableBelow);
+  const top = shouldOpenAbove ? rect.top - gap : rect.bottom + gap;
+
+  details.style.setProperty("--climate-options-left", `${Math.round(left)}px`);
+  details.style.setProperty("--climate-options-top", `${Math.round(top)}px`);
+  details.style.setProperty("--climate-options-width", `${Math.round(width)}px`);
+  details.style.setProperty("--climate-options-max-height", `${Math.round(maxHeight)}px`);
+  details.style.setProperty("--climate-options-translate-y", shouldOpenAbove ? "-100%" : "0");
+}
+
+function renderAdvancedOptionSelect(
+  host: ScheduleViewHost,
+  block: DraftScheduleBlock,
+  index: number,
+  source: BlockDraftSource,
+  field: keyof DraftScheduleBlock,
+  labelKey: Parameters<ScheduleViewHost["_t"]>[0],
+  options: string[],
+) {
+  const selectedValue = String(block[field] ?? "");
+  const displayedOptions = selectedValue && !options.includes(selectedValue)
+    ? [...options, selectedValue]
+    : options;
+  if (!displayedOptions.length && !selectedValue) {
+    return nothing;
+  }
+
+  return html`
+    <label>
+      <span class="label">${host._t(labelKey)}</span>
+      <span class="select-wrap">
+        <select
+          .value=${selectedValue}
+          @change=${(event: Event) => host._updateDraftBlock(index, field, host._inputValue(event), source)}
+          @input=${(event: Event) => host._updateDraftBlock(index, field, host._inputValue(event), source)}
+        >
+          <option value="" .selected=${selectedValue === ""}>${host._t("notSet")}</option>
+          ${displayedOptions.map((option: string) => html`
+            <option value=${option} .selected=${option === selectedValue}>${option}</option>
+          `)}
+        </select>
+      </span>
+    </label>
+  `;
+}
+
+function climateOptionSummaryItems(host: ScheduleViewHost, block: DraftScheduleBlock) {
+  const items: Array<{ label: string; short: string; value: string }> = [];
+  const add = (labelKey: Parameters<ScheduleViewHost["_t"]>[0], value: unknown) => {
+    if (typeof value !== "string" || !value.trim()) {
+      return;
+    }
+    const label = host._t(labelKey);
+    items.push({
+      label,
+      short: `${label}: ${value}`,
+      value,
+    });
+  };
+
+  add("fanMode", block.fan_mode);
+  add("presetMode", block.preset_mode);
+  add("swingMode", block.swing_mode);
+  add("horizontalSwingMode", block.swing_horizontal_mode);
+  if (String(block.humidity ?? "").trim()) {
+    const label = host._t("targetHumidity");
+    const value = `${block.humidity}%`;
+    items.push({
+      label,
+      short: `${label}: ${value}`,
+      value,
+    });
+  }
+  return items;
 }
 
 export function editableBlockRowKey(
@@ -483,7 +733,7 @@ export function renderCopyDayTarget(host: ScheduleViewHost, weekday: string) {
 }
 
 export function renderZoneTargets(host: ScheduleViewHost) {
-  const targets = host._orderedZoneIds(host._data?.configured_entities ?? []).filter(
+  const targets = host._visibleZoneIds(host._data?.configured_entities ?? []).filter(
     (entityId: string) => entityId !== host._selectedEntity,
   );
 

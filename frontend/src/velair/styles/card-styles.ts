@@ -3,12 +3,14 @@ import { baseStyles } from "./base-styles";
 import { noticeStyles } from "./notice-styles";
 import { overviewStyles } from "./overview-styles";
 import { portabilityStyles } from "./portability-styles";
+import { preconditioningStyles } from "./preconditioning-styles";
+import { sensorsStyles } from "./sensors-styles";
 import { settingsStyles } from "./settings-styles";
 import { templateStyles } from "./template-styles";
 import { timelineStyles } from "./timeline-styles";
 import { responsiveStyles } from "./responsive-styles";
 
-export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portabilityStyles, settingsStyles, templateStyles, timelineStyles, css`
+export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`
     .summary {
       display: grid;
       gap: 8px;
@@ -539,8 +541,8 @@ export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portability
       border-radius: 8px;
       column-gap: 4px;
       display: grid;
-      grid-template-columns: minmax(94px, 1fr) minmax(112px, 1fr) minmax(90px, 0.8fr) 40px;
-      overflow: hidden;
+      grid-template-columns: minmax(94px, 1fr) minmax(112px, 1fr) minmax(90px, 0.8fr) 40px 40px;
+      overflow: visible;
       padding: 12px;
       row-gap: 10px;
     }
@@ -582,9 +584,10 @@ export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portability
       background: transparent;
       border-color: transparent;
       color: var(--error-color, #c62828);
+      height: 38px;
       min-width: 0;
       padding: 0;
-      width: auto;
+      width: 38px;
     }
 
     .editable-block .icon-button.danger:hover {
@@ -630,6 +633,155 @@ export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portability
 
     .editable-block .select-wrap {
       margin-top: 0;
+    }
+
+    .advanced-climate-options {
+      align-self: start;
+      display: block;
+      grid-column: auto;
+      min-width: 0;
+      position: relative;
+      z-index: 8;
+    }
+
+    .advanced-climate-options-placeholder {
+      display: block;
+      height: 38px;
+      width: 38px;
+    }
+
+    .advanced-climate-options[open] {
+      z-index: 1000;
+    }
+
+    .advanced-climate-options summary {
+      background: transparent;
+      border-color: transparent;
+      color: var(--secondary-text-color);
+      height: 38px;
+      list-style: none;
+      min-width: 0;
+      padding: 0;
+      position: relative;
+      width: 38px;
+    }
+
+    .advanced-climate-options summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .advanced-climate-options summary ha-icon {
+      --mdc-icon-size: 18px;
+      color: var(--primary-color);
+    }
+
+    .climate-options-badge {
+      align-items: center;
+      background: var(--primary-color);
+      border: 2px solid var(--card-background-color);
+      border-radius: 999px;
+      color: var(--text-primary-color);
+      display: inline-flex;
+      font-size: 10px;
+      font-weight: 700;
+      height: 17px;
+      justify-content: center;
+      line-height: 1;
+      min-width: 17px;
+      padding: 0 4px;
+      position: absolute;
+      right: -5px;
+      top: -6px;
+    }
+
+    .advanced-climate-options[open] summary {
+      background: transparent;
+      border-color: transparent;
+      color: var(--primary-text-color);
+    }
+
+    .advanced-climate-options summary:hover {
+      background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+      border-color: transparent;
+    }
+
+    .climate-options-scrim {
+      -webkit-backdrop-filter: blur(1px);
+      backdrop-filter: blur(1px);
+      background: color-mix(in srgb, var(--primary-background-color, #000) 32%, transparent);
+      border: 0;
+      bottom: 0;
+      cursor: default;
+      display: block;
+      left: 0;
+      padding: 0;
+      position: fixed;
+      right: 0;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .advanced-climate-options-fields {
+      background: color-mix(in srgb, var(--card-background-color) 96%, var(--primary-color) 4%);
+      border: 1px solid color-mix(in srgb, var(--primary-color) 28%, var(--divider-color));
+      border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), var(--ha-card-box-shadow, 0 2px 8px rgba(0, 0, 0, 0.16));
+      box-sizing: border-box;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      margin: 0;
+      max-height: min(560px, var(--climate-options-max-height, calc(100vh - 48px)));
+      min-width: 0;
+      overflow-y: auto;
+      padding: 10px;
+      position: fixed;
+      left: var(--climate-options-left, 16px);
+      top: var(--climate-options-top, 50%);
+      transform: translateY(var(--climate-options-translate-y, 0));
+      width: var(--climate-options-width, min(420px, calc(100vw - 32px)));
+      z-index: 1001;
+    }
+
+    .advanced-climate-options-fields legend {
+      background: var(--card-background-color);
+      color: var(--secondary-text-color);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      margin-left: 4px;
+      padding: 0 5px;
+      text-transform: uppercase;
+    }
+
+    .climate-options-inline-summary {
+      align-self: start;
+      background: color-mix(in srgb, var(--primary-color) 4%, transparent);
+      border-radius: 0 0 6px 6px;
+      border-top: 1px solid color-mix(in srgb, var(--primary-color) 18%, var(--divider-color));
+      color: var(--secondary-text-color);
+      display: block;
+      font-size: 11px;
+      grid-column: 1 / -1;
+      line-height: 1.3;
+      margin: -6px 0 4px;
+      min-width: 0;
+      overflow: hidden;
+      padding: 6px 8px 3px 18px;
+      position: relative;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .climate-options-inline-summary::before {
+      background: color-mix(in srgb, var(--primary-color) 42%, transparent);
+      border-radius: 999px;
+      bottom: 5px;
+      content: "";
+      left: 8px;
+      position: absolute;
+      top: 6px;
+      width: 2px;
     }
 
     input,
