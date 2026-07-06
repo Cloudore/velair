@@ -1,16 +1,34 @@
 import { ACTION_SET_TEMPERATURE, WEEKDAYS } from "../constants";
-import type { ScheduleTemplate, StoredScheduleTemplate } from "../types";
+import type { DraftScheduleBlock, ScheduleTemplate, StoredScheduleTemplate } from "../types";
 
 export function scheduleTemplatesFromStored(templates: StoredScheduleTemplate[] | undefined): ScheduleTemplate[] {
   return (templates ?? []).map((template) => ({
     key: template.key,
     name: template.name,
-    blocks: template.blocks.map((block) => ({
-      action: block.action ?? ACTION_SET_TEMPERATURE,
-      start: block.start,
-      temperature: Number(block.temperature ?? 21),
-      hvac_mode: block.hvac_mode ?? "",
-    })),
+    blocks: template.blocks.map((block) => {
+      const draft: DraftScheduleBlock = {
+        action: block.action ?? ACTION_SET_TEMPERATURE,
+        start: block.start,
+        temperature: Number(block.temperature ?? 21),
+        hvac_mode: block.hvac_mode ?? "",
+      };
+      if (block.fan_mode) {
+        draft.fan_mode = block.fan_mode;
+      }
+      if (block.preset_mode) {
+        draft.preset_mode = block.preset_mode;
+      }
+      if (block.swing_mode) {
+        draft.swing_mode = block.swing_mode;
+      }
+      if (block.swing_horizontal_mode) {
+        draft.swing_horizontal_mode = block.swing_horizontal_mode;
+      }
+      if (block.humidity != null) {
+        draft.humidity = block.humidity;
+      }
+      return draft;
+    }),
   }));
 }
 

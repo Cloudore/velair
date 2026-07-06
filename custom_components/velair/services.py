@@ -19,8 +19,13 @@ from .const import (
     ATTR_APPLY_CURRENT_SCHEDULE,
     ATTR_BLOCKS,
     ATTR_DURATION_MINUTES,
+    ATTR_FAN_MODE,
     ATTR_HVAC_MODE,
+    ATTR_HUMIDITY,
+    ATTR_PRESET_MODE,
     ATTR_SOURCE_WEEKDAY,
+    ATTR_SWING_HORIZONTAL_MODE,
+    ATTR_SWING_MODE,
     ATTR_TARGET_WEEKDAYS,
     ATTR_TEMPERATURE,
     ATTR_WEEKDAY,
@@ -30,8 +35,11 @@ from .const import (
     MODE_PAUSED,
     SERVICE_APPLY_SCHEDULE,
     SERVICE_BOOST,
+    SERVICE_CANCEL_BOOST,
     SERVICE_CLEAR_SCHEDULE,
     SERVICE_COPY_DAY_SCHEDULE,
+    SERVICE_DISABLE_ROOM_SENSOR_ASSIST,
+    SERVICE_ENABLE_ROOM_SENSOR_ASSIST,
     SERVICE_PAUSE,
     SERVICE_PAUSE_ZONE,
     SERVICE_RESUME,
@@ -49,6 +57,11 @@ SCHEDULE_BLOCK_SCHEMA = vol.Schema(
         vol.Optional(ATTR_ACTION, default=ACTION_SET_TEMPERATURE): vol.In(ACTION_OPTIONS),
         vol.Optional(ATTR_TEMPERATURE): vol.Coerce(float),
         vol.Optional(ATTR_HVAC_MODE): vol.In(HVAC_MODE_OPTIONS),
+        vol.Optional(ATTR_FAN_MODE): cv.string,
+        vol.Optional(ATTR_PRESET_MODE): cv.string,
+        vol.Optional(ATTR_SWING_MODE): cv.string,
+        vol.Optional(ATTR_SWING_HORIZONTAL_MODE): cv.string,
+        vol.Optional(ATTR_HUMIDITY): vol.All(vol.Coerce(float), vol.Range(min=0, max=100)),
     }
 )
 
@@ -57,6 +70,11 @@ SET_TEMPERATURE_SCHEMA = vol.Schema(
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
         vol.Required(ATTR_TEMPERATURE): vol.Coerce(float),
         vol.Optional(ATTR_HVAC_MODE): vol.In(HVAC_MODE_OPTIONS),
+        vol.Optional(ATTR_FAN_MODE): cv.string,
+        vol.Optional(ATTR_PRESET_MODE): cv.string,
+        vol.Optional(ATTR_SWING_MODE): cv.string,
+        vol.Optional(ATTR_SWING_HORIZONTAL_MODE): cv.string,
+        vol.Optional(ATTR_HUMIDITY): vol.All(vol.Coerce(float), vol.Range(min=0, max=100)),
     }
 )
 
@@ -73,6 +91,17 @@ BOOST_SCHEMA = vol.Schema(
         vol.Required(ATTR_TEMPERATURE): vol.Coerce(float),
         vol.Required(ATTR_DURATION_MINUTES): vol.All(vol.Coerce(int), vol.Range(min=1)),
         vol.Optional(ATTR_HVAC_MODE): vol.In(HVAC_MODE_OPTIONS),
+        vol.Optional(ATTR_FAN_MODE): cv.string,
+        vol.Optional(ATTR_PRESET_MODE): cv.string,
+        vol.Optional(ATTR_SWING_MODE): cv.string,
+        vol.Optional(ATTR_SWING_HORIZONTAL_MODE): cv.string,
+        vol.Optional(ATTR_HUMIDITY): vol.All(vol.Coerce(float), vol.Range(min=0, max=100)),
+    }
+)
+
+CANCEL_BOOST_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
     }
 )
 
@@ -126,6 +155,12 @@ CLEAR_SCHEDULE_SCHEMA = vol.Schema(
     }
 )
 
+ROOM_SENSOR_ASSIST_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+    }
+)
+
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Register integration services."""
@@ -141,8 +176,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 entity_id,
                 call.data[ATTR_TEMPERATURE],
                 ensure_on=True,
+                fan_mode=call.data.get(ATTR_FAN_MODE),
                 hvac_mode=call.data.get(ATTR_HVAC_MODE),
+                humidity=call.data.get(ATTR_HUMIDITY),
                 log_action=False,
+                preset_mode=call.data.get(ATTR_PRESET_MODE),
+                swing_mode=call.data.get(ATTR_SWING_MODE),
+                swing_horizontal_mode=call.data.get(ATTR_SWING_HORIZONTAL_MODE),
+                event_source="service_set_temperature",
             )
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
@@ -166,20 +207,25 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         ).isoformat()
 
         try:
-            await scheduler.async_set_temperature(
-                entity_id,
-                call.data[ATTR_TEMPERATURE],
-                ensure_on=True,
-                hvac_mode=call.data.get(ATTR_HVAC_MODE),
-            )
             await scheduler.async_set_zone_boost(
                 entity_id,
                 call.data[ATTR_TEMPERATURE],
                 paused_until,
                 call.data.get(ATTR_HVAC_MODE),
+                fan_mode=call.data.get(ATTR_FAN_MODE),
+                humidity=call.data.get(ATTR_HUMIDITY),
+                preset_mode=call.data.get(ATTR_PRESET_MODE),
+                swing_mode=call.data.get(ATTR_SWING_MODE),
+                swing_horizontal_mode=call.data.get(ATTR_SWING_HORIZONTAL_MODE),
             )
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
+
+    async def async_cancel_boost(call: ServiceCall) -> None:
+        scheduler = _get_scheduler(hass)
+        entity_id = call.data[ATTR_ENTITY_ID]
+        _ensure_managed_entity(scheduler, entity_id)
+        await scheduler.async_cancel_zone_boost(entity_id)
 
     async def async_pause(call: ServiceCall) -> None:
         scheduler = _get_scheduler(hass)
@@ -263,6 +309,24 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
 
+    async def async_enable_room_sensor_assist(call: ServiceCall) -> None:
+        scheduler = _get_scheduler(hass)
+        entity_id = call.data[ATTR_ENTITY_ID]
+        _ensure_managed_entity(scheduler, entity_id)
+        try:
+            await scheduler.async_set_room_sensor_assist(entity_id, True)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+
+    async def async_disable_room_sensor_assist(call: ServiceCall) -> None:
+        scheduler = _get_scheduler(hass)
+        entity_id = call.data[ATTR_ENTITY_ID]
+        _ensure_managed_entity(scheduler, entity_id)
+        try:
+            await scheduler.async_set_room_sensor_assist(entity_id, False)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_TEMPERATURE,
@@ -280,6 +344,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_BOOST,
         async_boost,
         schema=BOOST_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CANCEL_BOOST,
+        async_cancel_boost,
+        schema=CANCEL_BOOST_SCHEMA,
     )
     hass.services.async_register(
         DOMAIN,
@@ -322,6 +392,18 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         async_clear_schedule,
         schema=CLEAR_SCHEDULE_SCHEMA,
     )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ENABLE_ROOM_SENSOR_ASSIST,
+        async_enable_room_sensor_assist,
+        schema=ROOM_SENSOR_ASSIST_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DISABLE_ROOM_SENSOR_ASSIST,
+        async_disable_room_sensor_assist,
+        schema=ROOM_SENSOR_ASSIST_SCHEMA,
+    )
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
@@ -330,6 +412,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_SET_TEMPERATURE,
         SERVICE_APPLY_SCHEDULE,
         SERVICE_BOOST,
+        SERVICE_CANCEL_BOOST,
         SERVICE_PAUSE,
         SERVICE_PAUSE_ZONE,
         SERVICE_RESUME,
@@ -337,6 +420,8 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_SET_DAILY_SCHEDULE,
         SERVICE_COPY_DAY_SCHEDULE,
         SERVICE_CLEAR_SCHEDULE,
+        SERVICE_ENABLE_ROOM_SENSOR_ASSIST,
+        SERVICE_DISABLE_ROOM_SENSOR_ASSIST,
     ):
         hass.services.async_remove(DOMAIN, service)
 

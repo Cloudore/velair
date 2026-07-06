@@ -73,6 +73,8 @@ Supported `view` values:
 - `overview-timeline`: today's timeline.
 - `overview-zones`: zone overview.
 - `schedules`: full schedule editor.
+- `sensors`: Room Assist configuration and live status.
+- `preconditioning`: adaptive preconditioning configuration and local learning status.
 
 ## Updating
 

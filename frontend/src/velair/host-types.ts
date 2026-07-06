@@ -10,6 +10,7 @@ import type {
   NormalizedBlocks,
   PanelSettings,
   PortableSection,
+  PreconditioningSettings,
   ScheduleBlock,
   ScheduleEvent,
   ScheduleResponse,
@@ -33,6 +34,7 @@ export type VelairViewHost = {
 
   _applyingTemplateTargets: boolean;
   _applyingZones: boolean;
+  _changedNextEventIds: Set<string>;
   _config: VelairCardConfig;
   _controlAction?: "pause" | "resume";
   _copying: boolean;
@@ -42,6 +44,7 @@ export type VelairViewHost = {
   _dirtyEntityId?: string;
   _draftBlocks: DraftScheduleBlock[];
   _error?: string;
+  _expandedPreconditioningZones: Set<string>;
   _exportSections: Set<PortableSection>;
   _importFileName: string;
   _importPayload?: VelairPortablePayload;
@@ -49,6 +52,7 @@ export type VelairViewHost = {
   _loading: boolean;
   _maintenanceAction?: "reset";
   _nextEventsOpen: boolean;
+  _nextEventChangeRevision: number;
   _overviewTimelineDetail?: string;
   _overviewTimelineDetailAnchor?: number;
   _overviewTimelineDetailEntityId?: string;
@@ -90,14 +94,21 @@ export type VelairViewHost = {
   _effectiveView(): VelairCardView;
   _entityDiagnostic(entityId: string): EntityDiagnostic;
   _entityExists(entityId: string): boolean;
+  _entityFanModeOptions(entityId: string): string[];
+  _entityHumidityLimits(entityId: string): [number, number] | undefined;
+  _entityPresetModeOptions(entityId: string): string[];
+  _entitySwingHorizontalModeOptions(entityId: string): string[];
+  _entitySwingModeOptions(entityId: string): string[];
   _entityTemperatureLimits(entityId?: string): [number, number];
   _entityTemperatureStep(entityId?: string): number;
+  _fanModeOptions(source?: BlockDraftSource): string[];
   _exportPortableData(): Promise<void>;
   _firstWeekday(): string;
   _formatDateTime(value: string): string;
   _formatEventAction(event: ScheduleEvent): string;
   _formatEventMode(event: ScheduleEvent): string;
   _formatRemaining(valueMs: number): string;
+  _formatScheduleTime(value: string): string;
   _formatTemperature(value: number, entityId?: string): string;
   _formatTemperatureLimit(value: number): string;
   _friendlyEntityName(entityId: string): string;
@@ -114,6 +125,7 @@ export type VelairViewHost = {
   _handleTimelineDrop(event: DragEvent, fallbackSource?: BlockDraftSource): void;
   _handleTimelineResizeStart(index: number, edge: "start" | "end", source: BlockDraftSource, event: PointerEvent): void;
   _hasDraftValidationError(source?: BlockDraftSource): boolean;
+  _humidityLimits(source?: BlockDraftSource): [number, number] | undefined;
   _hvacModeOptions(source?: BlockDraftSource): string[];
   _importAvailableSections(): PortableSection[];
   _importPortableData(): Promise<void>;
@@ -123,23 +135,30 @@ export type VelairViewHost = {
   _moveSettingsZone(entityId: string, direction: -1 | 1): void;
   _orderedWeekdays(): string[];
   _orderedZoneIds(entityIds: string[]): string[];
+  _visibleZoneIds(entityIds: string[]): string[];
   _pauseExpirationMs(): number | undefined;
   _pauseProgressPercent(expiresAt: number): number;
   _pauseScheduler(indefinite: boolean, options?: { showSuccess?: boolean }): Promise<void>;
+  _presetModeOptions(source?: BlockDraftSource): string[];
   _portableExportSummaryItems(): PortableSummaryViewItem[];
   _portableImportSummaryItems(): PortableSummaryViewItem[];
   _portableSectionLabel(section: PortableSection): string;
   _portableSummaryItem(item: PortableSummaryItem): PortableSummaryViewItem;
   _removeBlock(index: number, source?: BlockDraftSource): void;
   _resetVelairData(): Promise<void>;
+  _resetZonePreconditioningLearning(entityId: string, direction: "heat" | "cool", directionLabel: string): Promise<void>;
+  _resetZonePreconditioningSettings(entityId: string): Promise<void>;
   _resumeScheduler(options?: { showSuccess?: boolean }): Promise<void>;
   _saveSelectedDay(): Promise<void>;
   _saveSelectedTemplateFromLibrary(template: ScheduleTemplate): Promise<void>;
   _saveSettings(settings: Partial<PanelSettings>): Promise<void>;
+  _saveZonePreconditioning(entityId: string, preconditioning: Partial<PreconditioningSettings>): Promise<void>;
   _saveTemplate(saveAsNew: boolean): Promise<void>;
   _scheduleTemplates(): ScheduleTemplate[];
   _schedulerModeLabel(mode: string): string;
   _schedulerStatusLabel(status: string): string;
+  _swingHorizontalModeOptions(source?: BlockDraftSource): string[];
+  _swingModeOptions(source?: BlockDraftSource): string[];
   _selectEntity(entityId: string): void;
   _selectScheduleTemplate(key: string): void;
   _selectTemplate(key: string): void;
@@ -158,6 +177,7 @@ export type VelairViewHost = {
   _templateNameInputValue(template: ScheduleTemplate): string;
   _timelineBlocks(source?: BlockDraftSource): TimelineBlock[];
   _toggleCopyTarget(weekday: string, checked: boolean): void;
+  _togglePreconditioningZone(entityId: string): void;
   _togglePortableSection(target: "export" | "import", section: PortableSection, checked: boolean): void;
   _toggleTemplateApplyPanel(): void;
   _toggleTemplateApplyTarget(entityId: string, weekday: string, checked: boolean): void;

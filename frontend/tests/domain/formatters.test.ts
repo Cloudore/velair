@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { ACTION_SET_TEMPERATURE, ACTION_TURN_OFF } from "../../src/velair/constants";
-import { formatEventAction, formatEventMode, formatRemaining, formatTemperature } from "../../src/velair/domain/formatters";
+import {
+  formatDateTime,
+  formatEventAction,
+  formatEventMode,
+  formatRemaining,
+  formatScheduleTime,
+  formatTemperature,
+} from "../../src/velair/domain/formatters";
 import type { ScheduleEvent } from "../../src/velair/types";
 
 const baseEvent: ScheduleEvent = {
@@ -24,6 +31,19 @@ describe("formatters", () => {
   it("formats integer and decimal temperatures with the provided unit", () => {
     expect(formatTemperature(21, "°C")).toBe("21 °C");
     expect(formatTemperature(21.5, "°C")).toBe("21.5 °C");
+  });
+
+  it("formats date times using the Home Assistant time preference", () => {
+    const value = "2026-06-08T14:45:00";
+
+    expect(formatDateTime(value, "en-US", "12")).toContain("2:45 PM");
+    expect(formatDateTime(value, "en-US", "24")).toContain("14:45");
+  });
+
+  it("formats schedule times using the Home Assistant time preference", () => {
+    expect(formatScheduleTime("14:45", "en-US", "12")).toBe("2:45 PM");
+    expect(formatScheduleTime("14:45", "en-US", "24")).toBe("14:45");
+    expect(formatScheduleTime("25:00", "en-US", "12")).toBe("25:00");
   });
 
   it("uses off, temperature, and keep labels for schedule event summaries", () => {

@@ -4,6 +4,7 @@ import { ACTION_SET_TEMPERATURE } from "../../src/velair/constants";
 import {
   applySelectedTemplate,
   applyTemplateToTargets,
+  saveTemplate,
   selectScheduleTemplate,
   toggleTemplateApplyTargetForHost,
   updateTemplateNameDraft,
@@ -17,7 +18,10 @@ const template: ScheduleTemplate = {
 };
 
 function host() {
-  const api = { setDailySchedule: vi.fn().mockResolvedValue({ ok: true }) };
+  const api = {
+    setDailySchedule: vi.fn().mockResolvedValue({ ok: true }),
+    setScheduleTemplate: vi.fn().mockResolvedValue({ ok: true }),
+  };
   const state = {
     renderRoot: { querySelector: () => undefined },
     _applyingTemplateTargets: false,
@@ -48,7 +52,7 @@ function host() {
     },
     _markDirty: vi.fn(),
     _newTemplateKey: () => "custom_key",
-    _normalizeDraftBlocks: () => ({ ok: true as const, blocks: state._templateDraftBlocks }),
+    _normalizeDraftBlocks: vi.fn(() => ({ ok: true as const, blocks: state._templateDraftBlocks })),
     _resetTemplateDraft: vi.fn(),
     _scheduleTemplates: () => [template],
     _setTemplateListScrollIndicators: vi.fn(),
@@ -77,6 +81,7 @@ describe("template actions controller", () => {
     expect(state._draftBlocks).toEqual(template.blocks);
     expect(state._markDirty).toHaveBeenCalled();
     expect(state._saveMessage).toBeUndefined();
+    expect(state._selectedTemplateKey).toBe("");
   });
 
   it("confirms before replacing existing draft blocks", () => {
@@ -98,6 +103,42 @@ describe("template actions controller", () => {
     expect(state._templateNameDraftKey).toBe("comfort");
     expect(state._templateNameDraft).toBe("New name");
     expect(state._templateDirty).toBe(true);
+  });
+
+  it("saves schedule drafts as templates with optional climate settings intact", async () => {
+    const { api, state } = host();
+    const scheduleBlocks = [
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        humidity: "45",
+        hvac_mode: "cool",
+        preset_mode: "eco",
+        start: "22:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 24,
+      },
+    ];
+    state._normalizeDraftBlocks.mockReturnValue({ ok: true as const, blocks: scheduleBlocks });
+    vi.stubGlobal("window", { prompt: vi.fn().mockReturnValue("Night AC") });
+
+    await saveTemplate(state, true);
+
+    expect(state._normalizeDraftBlocks).toHaveBeenCalledWith();
+    expect(api.setScheduleTemplate).toHaveBeenCalledWith("custom_key", "Night AC", [
+      {
+        action: ACTION_SET_TEMPERATURE,
+        fan_mode: "quiet",
+        humidity: "45",
+        hvac_mode: "cool",
+        preset_mode: "eco",
+        start: "22:00",
+        swing_horizontal_mode: "left",
+        swing_mode: "vertical",
+        temperature: 24,
+      },
+    ]);
   });
 
   it("applies templates only to valid checked targets and validates modes first", async () => {

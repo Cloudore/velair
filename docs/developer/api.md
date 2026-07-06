@@ -38,27 +38,115 @@ Most write commands return the full schedule response:
             "start": "06:00",
             "action": "set_temperature",
             "temperature": 21,
-            "hvac_mode": "heat"
+            "hvac_mode": "heat",
+            "fan_mode": "quiet",
+            "preset_mode": "eco",
+            "swing_mode": "vertical",
+            "swing_horizontal_mode": "left",
+            "humidity": 45
           }
         ]
       },
-      "override": null
+      "override": null,
+      "preconditioning": {
+        "enabled": false,
+        "max_lead_minutes": 1440,
+        "minimum_delta_temperature": 0.3,
+        "learning_history_size": 120,
+        "similar_sample_count": 25,
+        "comfort_percentile": 80,
+        "adaptive_percentile_enabled": true,
+        "partial_expiry_days": 30,
+        "recency_decay_days": 30,
+        "min_start_minutes": 10,
+        "fallback_minutes_per_degree": 25,
+        "use_outdoor_temperature": true,
+        "outdoor_temperature_entity_id": "sensor.outdoor_temperature",
+        "room_temperature_entity_id": "sensor.living_room_temperature",
+        "room_sensor_assist_enabled": false,
+        "room_sensor_assist_max_delta": 2.0
+      }
     }
   },
   "operational_status": "scheduled",
   "next_event": null,
   "next_events": [],
   "active_overrides": {},
+  "room_sensor_assist": {
+    "climate.living_room": {
+      "status": "assisting",
+      "enabled": true,
+      "configured": true,
+      "room_temperature_entity_id": "sensor.living_room_temperature",
+      "target_temperature": 21,
+      "applied_temperature": 22.5,
+      "climate_target_temperature": 22.5,
+      "room_temperature": 19.8,
+      "climate_temperature": 20.5,
+      "assist_delta": 1.2,
+      "direction": "heat",
+      "hvac_mode": "heat",
+      "weekday": "monday",
+      "start": "06:00"
+    }
+  },
+  "preconditioning_learning": {
+    "climate.living_room": {
+      "status": "learning",
+      "required_samples": 5,
+      "total_samples": 0,
+      "heat": {
+        "status": "learning",
+        "sample_count": 0,
+        "total_samples": 0,
+        "required_samples": 5,
+        "effective_lead_minutes": null,
+        "effective_lead_source": "initial_model",
+        "partial_sample_count": 0,
+        "complete_sample_count": 0,
+        "invalid_sample_count": 0,
+        "lead_limited_by_max": false,
+        "last_quality": null,
+        "model_source": "initial_model",
+        "comfort_percentile": 80,
+        "similar_sample_count": 25
+      },
+      "cool": {
+        "status": "learning",
+        "sample_count": 0,
+        "total_samples": 0,
+        "required_samples": 5,
+        "effective_lead_minutes": null,
+        "effective_lead_source": "initial_model",
+        "partial_sample_count": 0,
+        "complete_sample_count": 0,
+        "invalid_sample_count": 0,
+        "lead_limited_by_max": false,
+        "last_quality": null,
+        "model_source": "initial_model",
+        "comfort_percentile": 80,
+        "similar_sample_count": 25
+      }
+    }
+  },
   "templates": [],
   "versions": {
     "export_format": "velair_portable_data",
     "portable_model": 1,
     "storage": 1,
     "model": 1,
-    "integration": "1.0.0"
+    "integration": "1.1.0"
   }
 }
 ```
+
+`next_event` is the scheduler's earliest due action. `next_events` is the UI-oriented list of the next visible event per managed climate, sorted by apply time; preconditioning events include `target_when` so the panel can show both the early start and the comfort target time.
+
+`preconditioning_learning` is local runtime/storage status used by the panel. It can be included explicitly in portable exports and is never sent outside Home Assistant by Velair. Direction statuses are `learning`, `ready`, or `unsupported` when the climate does not report a compatible HVAC mode. A direction is `ready` when it has at least 5 complete local samples; before that, Adaptive predictions use the initial event-specific model.
+
+The actual lead is calculated per future event from the current temperature delta and the selected local model source (`initial_model` or `history`).
+
+Stored observations are trimmed per climate direction. `learning_history_size` limits useful `complete` and `partial` samples, while only the 10 newest `invalid` diagnostic samples are retained separately. Invalid samples cannot evict useful learning history. Heat and cool keep separate local histories, so seasonal cooling samples cannot evict heating samples, and heating samples cannot evict cooling samples.
 
 ## Read Schedule State
 
@@ -93,13 +181,22 @@ await hass.connection.sendMessagePromise({
   entity_id: "climate.living_room",
   weekday: "monday",
   blocks: [
-    { start: "06:00", action: "set_temperature", temperature: 21, hvac_mode: "heat" },
+    {
+      start: "06:00",
+      action: "set_temperature",
+      temperature: 21,
+      hvac_mode: "heat",
+      fan_mode: "quiet",
+      preset_mode: "eco"
+    },
     { start: "23:30", action: "turn_off" }
   ],
 });
 ```
 
 If `action` is omitted, the backend treats the block as `set_temperature` for compatibility with older schedules.
+
+Temperature blocks may include optional climate settings: `fan_mode`, `preset_mode`, `swing_mode`, `swing_horizontal_mode`, and `humidity`. The scheduler filters these fields against the target climate capabilities before persisting or applying them. Unsupported fields are dropped; `turn_off` blocks never keep optional climate settings.
 
 ## Copy Day Schedule
 
@@ -142,7 +239,13 @@ await hass.connection.sendMessagePromise({
   type: "velair/set_schedule_template",
   name: "Evening",
   blocks: [
-    { start: "18:00", action: "set_temperature", temperature: 21, hvac_mode: "heat" },
+    {
+      start: "18:00",
+      action: "set_temperature",
+      temperature: 21,
+      hvac_mode: "heat",
+      fan_mode: "quiet"
+    },
     { start: "23:00", action: "set_temperature", temperature: 17 }
   ],
 });
@@ -181,12 +284,68 @@ await hass.connection.sendMessagePromise({
 });
 ```
 
+Templates are capability-neutral storage. They can contain optional climate settings from any managed climate. Filtering happens later when a template is applied to one concrete climate schedule.
+
+## Zone Preconditioning
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/update_zone_preconditioning",
+  entity_id: "climate.living_room",
+  preconditioning: {
+    enabled: true,
+    max_lead_minutes: 1440,
+    minimum_delta_temperature: 0.3,
+    min_start_minutes: 10,
+    fallback_minutes_per_degree: 25,
+    room_temperature_entity_id: "sensor.living_room_temperature",
+    room_sensor_assist_enabled: true,
+    room_sensor_assist_max_delta: 2.0
+  }
+});
+```
+
+When preconditioning moves the apply time earlier than the visible schedule block time, serialized events keep `when` as the apply time and include `target_when` as the comfort target time. These events also include `preconditioning_diagnostics`, a runtime-only calculation breakdown with selected sample counts, complete estimate, partial floor, combined estimate, rounded estimate, final lead, model source, and limit flags. The frontend uses this object for optional calculation details instead of recalculating the prediction.
+
+Preconditioning is adaptive. The scheduler predicts a lead for each concrete future event, using an initial model while learning and switching to similar local history after enough complete samples exist.
+
+Outdoor temperature context is optional and local. In the Preconditioning tab, `outdoor_temperature_entity_id` is selected through a sensor dropdown that lists local `sensor.*` temperature entities. Velair reads the selected sensor's numeric state, stores it with learning samples, and uses it only to compare similar preconditioning samples once enough history exists. It does not call external weather services and does not apply fixed weather-based adjustments to the initial model.
+
+Room temperature sensor support is optional and local. In the Room Assist tab, `room_temperature_entity_id` is selected through a sensor dropdown that lists local `sensor.*` temperature entities. Selecting a sensor stores the configuration, but Velair uses it as the effective room temperature only when `room_sensor_assist_enabled` is true. In that mode Velair can temporarily adjust the target sent to the thermostat by at most `room_sensor_assist_max_delta` while the real scheduled target remains unchanged. `room_sensor_assist_debounce_seconds` controls how many seconds Velair waits after relevant state changes before recalculating the assisted target. Room Sensor Assist can run on normal scheduled blocks and can also provide the temperature source for Adaptive Preconditioning while it is enabled.
+
+`room_sensor_assist` in the schedule response is runtime-only status. It is derived from Home Assistant state and scheduler state when the response is built; it is not persisted as history.
+
+See [Adaptive preconditioning](adaptive-preconditioning.md) for the full learning lifecycle, input/output examples, prediction rules, storage behavior, and known limitations. See [Room Assist](room-assist.md) for the room sensor assistance lifecycle, target calculation, runtime status, restoration behavior, and events.
+
+## Reset Zone Preconditioning Settings
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/reset_zone_preconditioning_settings",
+  entity_id: "climate.living_room"
+});
+```
+
+Restores default tuning parameters for one managed climate. The current enabled state, schedules, and all heat and cool learning samples are preserved.
+
+## Reset Zone Preconditioning Learning
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/reset_zone_preconditioning_learning",
+  entity_id: "climate.living_room",
+  direction: "heat"
+});
+```
+
+Deletes local adaptive preconditioning observations for one managed climate direction. Valid directions are `heat` and `cool`. Schedule blocks, preconditioning settings, and the other direction's observations are kept.
+
 ## Export Data
 
 ```ts
 await hass.connection.sendMessagePromise({
   type: "velair/export_data",
-  sections: ["zones", "templates", "settings"],
+  sections: ["zones", "templates", "settings", "preconditioning_learning"],
 });
 ```
 
@@ -213,6 +372,8 @@ await hass.connection.sendMessagePromise({
 
 Selected sections overwrite existing data.
 
+The `preconditioning_learning` section is incremental by climate entity ID: matching managed climates receive the normalized imported history, unknown climate IDs are ignored, and existing history for local climates absent from the file is preserved.
+
 ## Reset Data
 
 ```ts
@@ -230,4 +391,5 @@ This resets stored schedules, templates, panel preferences, active boosts, and s
 - `invalid_schedule`: a schedule is invalid or targets an unmanaged climate.
 - `invalid_template`: a template is invalid or unknown.
 - `invalid_settings`: settings are invalid.
+- `invalid_preconditioning`: preconditioning settings are invalid or target an unmanaged climate.
 - `invalid_import`: the import file is invalid or incompatible.

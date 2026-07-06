@@ -1,5 +1,6 @@
 import {
   clampBlocksToTemperatureLimits,
+  filterBlocksForClimateOptions,
   firstUnsupportedModeBlock,
   normalizeDraftBlocks as normalizeDraftBlocksDomain,
 } from "../domain/draft-blocks";
@@ -31,6 +32,11 @@ type ScheduleActionsHost = {
   _blocksForSource(source: BlockDraftSource): DraftScheduleBlock[];
   _clampBlocksForEntity(blocks: ScheduleBlock[], entityId: string): ScheduleBlock[];
   _climateSupportedModes(entityId: string): string[];
+  _entityFanModeOptions(entityId: string): string[];
+  _entityHumidityLimits(entityId: string): [number, number] | undefined;
+  _entityPresetModeOptions(entityId: string): string[];
+  _entitySwingHorizontalModeOptions(entityId: string): string[];
+  _entitySwingModeOptions(entityId: string): string[];
   _entityTemperatureLimits(entityId?: string): [number, number];
   _friendlyEntityName(entityId: string): string;
   _modeLabel(mode: string): string;
@@ -190,7 +196,14 @@ export function clampBlocksForEntity(
   entityId: string,
 ): ScheduleBlock[] {
   const [minTemperature, maxTemperature] = host._entityTemperatureLimits(entityId);
-  return clampBlocksToTemperatureLimits(blocks, minTemperature, maxTemperature);
+  const clampedBlocks = clampBlocksToTemperatureLimits(blocks, minTemperature, maxTemperature);
+  return filterBlocksForClimateOptions(clampedBlocks, {
+    fanModes: host._entityFanModeOptions(entityId),
+    humidityLimits: host._entityHumidityLimits(entityId),
+    presetModes: host._entityPresetModeOptions(entityId),
+    swingHorizontalModes: host._entitySwingHorizontalModeOptions(entityId),
+    swingModes: host._entitySwingModeOptions(entityId),
+  });
 }
 
 export function unsupportedModeError(

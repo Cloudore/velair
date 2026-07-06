@@ -15,12 +15,8 @@ export function renderTemplatesView(host: TemplatesViewHost, selectedEntity?: st
   if (!templates.length) {
     return html`
       <section class="template-library">
-        <div class="panel-empty embedded">
-          <ha-icon icon="mdi:content-copy"></ha-icon>
-          <div>
-            <h2>${host._t("templates")}</h2>
-            <p>${host._t("noTemplates")}</p>
-          </div>
+        <div class="template-placeholder compact">
+          <span>${host._t("noTemplates")}</span>
           <button
             class="icon-button primary"
             type="button"
@@ -147,12 +143,8 @@ export function renderTemplatesView(host: TemplatesViewHost, selectedEntity?: st
                 </div>
               `
             : html`
-                <div class="panel-empty embedded template-placeholder">
-                  <ha-icon icon="mdi:content-copy"></ha-icon>
-                  <div>
-                    <h2>${host._t("templates")}</h2>
-                    <p>${host._t("selectTemplateToBegin")}</p>
-                  </div>
+                <div class="template-placeholder compact">
+                  <span>${host._t("selectTemplateToBegin")}</span>
                 </div>
               `}
         </div>
@@ -166,7 +158,7 @@ export function renderTemplateApplyPanel(host: TemplatesViewHost, template: Sche
     return nothing;
   }
 
-  const entities = host._orderedZoneIds(host._data?.configured_entities ?? []);
+  const entities = host._visibleZoneIds(host._data?.configured_entities ?? []);
   const weekdays = host._orderedWeekdays();
   const hasValidationError = host._hasDraftValidationError("template");
   const hasTargets = host._templateApplyTargets.size > 0;

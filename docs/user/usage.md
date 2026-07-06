@@ -8,7 +8,7 @@ Velair manages schedules for the `climate.*` entities selected during integratio
 
 A schedule is made of weekday blocks. A block starts at a specific time and can:
 
-- set a target temperature, optionally with an HVAC mode;
+- set a target temperature, optionally with an HVAC mode and supported climate options such as fan mode, preset mode, swing mode, horizontal swing mode, or target humidity;
 - turn the climate entity off.
 
 Velair calculates upcoming events in the backend and schedules exact one-shot callbacks through Home Assistant. The frontend subscribes to backend updates over WebSocket, so it does not need continuous polling.
@@ -19,6 +19,8 @@ After setup, Velair appears in the Home Assistant sidebar.
 
 The sidebar panel is the recommended interface. The optional Lovelace card is useful when you want to embed specific Velair panels in an existing dashboard.
 
+The Overview next-events list shows the next planned event for each managed climate, including events moved earlier by preconditioning. This list is for user visibility; Velair still schedules the earliest due action internally.
+
 The Lovelace card supports these `view` values:
 
 - `overview-status`;
@@ -26,7 +28,26 @@ The Lovelace card supports these `view` values:
 - `overview-events`;
 - `overview-timeline`;
 - `overview-zones`;
-- `schedules`.
+- `schedules`;
+- `sensors`;
+- `preconditioning`.
+
+Zone-based Lovelace cards can also limit which thermostats they show. This is only a dashboard display filter; it does not change Velair's stored schedules or the scheduler behavior. Global cards such as `overview-status` do not show thermostat selection or weekday options in the card editor because they are not tied to one thermostat or schedule editor.
+
+```yaml
+type: custom:velair-card
+view: preconditioning
+entities:
+  - climate.living_room
+  - climate.bedroom
+zone_order:
+  - climate.bedroom
+  - climate.living_room
+```
+
+If `entities` is omitted, zone-based cards show every Velair-managed thermostat.
+
+For `view: sensors`, the card editor can hide the on/off switch, room sensor picker, maximum assist delta, refresh delay, or live status section so a dashboard card can be display-only or more compact.
 
 ## Create A Daily Schedule
 
@@ -41,6 +62,8 @@ The Lovelace card supports these `view` values:
 
 Velair uses the selected climate entity capabilities when editing a schedule. Unsupported modes are not offered for that climate, and temperatures are constrained to the climate entity range.
 
+When the selected climate exposes extra controls, the block editor also shows those controls. For example, an AC may expose fan mode, preset mode, swing mode, horizontal swing mode, or humidity. Velair only stores and sends options supported by the selected climate; unsupported options are omitted instead of being sent blindly.
+
 If a block uses `Off`, the temperature field is not used because the block turns the climate entity off.
 
 ## Timeline Editing
@@ -50,6 +73,69 @@ The timeline is a visual 24-hour representation of the selected day.
 - Drag a block to move its start time.
 - Drag a block edge to resize the range between adjacent blocks.
 - Use the block list for exact time, mode, and temperature values.
+
+## Preconditioning
+
+Preconditioning lets Velair start a scheduled comfort target before the visible block time for one managed climate.
+
+When enabled for a climate in the Preconditioning tab, the block time represents the desired comfort time. Velair may apply the target earlier using its adaptive prediction, while keeping the original target time visible in upcoming events.
+
+If Velair recalculates while it is already inside the preconditioning window, it applies the target immediately when the current temperature still needs heating or cooling.
+
+The Preconditioning tab lists managed climates in the order configured in Settings. For each climate it lets you:
+
+- enable or disable preconditioning;
+- set a maximum lead time, up to 1440 minutes;
+- set the adaptive model parameters and minimum temperature difference;
+- inspect heat and cool learning independently;
+- restore tuning parameters to their defaults without deleting learning samples;
+- reset one learning direction without affecting the other.
+
+Configuration is grouped into timing and limits, learning model, history, and optional outdoor context. When outdoor context is disabled, its sensor selector is disabled as well. Unavailable climates cannot enable preconditioning and the tab explains why.
+
+Each tuning control includes compact contextual help. Hover, focus, or tap its information icon to see how increasing, decreasing, or enabling that setting affects preconditioning.
+
+Preconditioning is adaptive. Velair predicts each future event from the current temperature difference, first with a local initial model and later with similar local history after enough complete observations exist. Historical predictions learn thermal potential per degree, so small past temperature changes can scale up for larger future gaps and large past changes can scale down for smaller ones. More similar and more recent observations have more influence.
+
+Velair does not start early for `Off` blocks. If the current temperature is already close enough to the target, Velair keeps the normal block time.
+
+Detailed setup, heating, cooling, outdoor sensor, automation, and Lovelace examples are documented in [Adaptive Preconditioning](adaptive-preconditioning.md).
+
+Before an early start begins, Velair listens for relevant temperature changes on managed climates that have preconditioning enabled. By default it uses the thermostat's own `current_temperature`. If Room Sensor Assist is enabled for that climate, Velair uses the selected room sensor as the effective room temperature for preconditioning decisions and learning. When the temperature changes enough to affect the current delta, Velair debounces the update and recalculates the next scheduler action locally. Open panels also group relevant indoor or configured outdoor temperature changes into a single refresh without continuous polling. If the early start for the same visible event changes, its row is highlighted briefly so the adjustment can be noticed without a dialog or global notification.
+
+## Room Assist
+
+The Room Assist tab lists managed climates in the order configured in Settings. For each climate it lets you configure Room Sensor Assist.
+
+The selected room temperature sensor is useful for TRVs or thermostats whose built-in sensor is too close to a radiator, air outlet, or other local heat source. Selecting a sensor alone does not change Velair control. It becomes the effective room temperature only when Room Sensor Assist is enabled, because Velair then also adjusts the thermostat target so the actuator can keep heating or cooling toward the external room reading.
+
+Detailed heating, cooling, automation, and Lovelace examples are documented in [Room Assist](room-assist.md).
+
+Room Sensor Assist is an advanced option that requires a room temperature sensor but does not require Adaptive Preconditioning to be enabled. When enabled, Velair may temporarily adjust the target sent to the thermostat while a scheduled block is active. For heating, if the room sensor is still below the scheduled target, Velair can raise the thermostat target by a limited amount based on the remaining room delta. For cooling, it can lower the applied target in the same way. The maximum assist delta can be configured up to `10 °C` or `18 °F`, depending on the Home Assistant temperature unit, so large room gaps can be supported without allowing unrealistic target jumps. When the room sensor reaches the scheduled target, Velair applies a non-driving target based on the climate entity's own temperature and keeps listening, so assistance can start again if the room drifts away from the scheduled target. This helps TRVs avoid closing too early or continuing to drive after the room sensor is already comfortable while keeping the visible Velair schedule target unchanged.
+
+When Room Sensor Assist is enabled, the Room Assist tab shows a compact live temperature scale while a managed temperature block is active. The scale marks the scheduled target, the room sensor temperature, the climate entity's target, and the thermostat's own room reading so the adjustment can be understood at a glance. These values are derived from Home Assistant state and Velair runtime state; they are not persisted as a new history. If no managed temperature block is active, the tab shows a waiting state instead of placeholder values. If a sensor is selected but Assist is off, the tab shows that the sensor is saved but not operational.
+
+Room Sensor Assist is event-driven. Velair does not poll temperatures. It listens only to the configured room sensor and climate entity while assistance is active, debounces changes using the per-climate Refresh delay setting, aligns temporary targets to the climate entity's supported temperature step, ignores movements smaller than that step, and restores the real scheduled target when the scheduler is paused, a zone is paused, a boost starts, the block turns off, the sensor becomes unusable, or the feature is disabled. If Adaptive Preconditioning has already started a future block early, Room Sensor Assist follows that future target until the scheduled comfort time instead of falling back to the previous time block.
+
+When preconditioning is disabled for a climate, Velair does not register preconditioning temperature listeners, schedule recalculation callbacks, start learning sessions, or save new observations for that climate. Previously learned samples are preserved and can be reused if preconditioning is enabled again.
+
+Velair also keeps a compact local learning history for preconditioning attempts. It opens a runtime learning session when it applies an early comfort target, then stores a compact observation when the climate reaches the target threshold or when the comfort time arrives. Sessions interrupted by boosts, pauses, scheduler stops, or schedule changes are discarded.
+
+The Preconditioning tab shows the local learning state per climate. Heat and cool are tracked separately, and a direction that the climate entity does not support is shown as unavailable. Once Velair has enough complete observations for a supported direction, it can use similar local history instead of the initial model.
+
+Each supported direction has a compact status card showing whether learning is ready, which model source is active, and the counts of complete, partial, and invalid samples.
+
+The tab also provides a reset learning action for each supported direction. This recalibrates heat or cool from zero independently while keeping schedules, preconditioning settings, and the other direction's learning history.
+
+The per-climate restore action is separate from learning reset. It restores only Adaptive Preconditioning tuning parameters, keeps the current enabled state, preserves room sensor settings, and preserves every stored heat and cool sample.
+
+Partial observations do not become fake completion times. They act as lower bounds, meaning Velair knows the required time was longer than the attempted start window. If enough later complete observations prove that less lead time is working, older partial observations stop forcing the prediction upward. This keeps learning conservative without making high leads permanent.
+
+Velair keeps separate compact histories for heat and cool so seasonal use in one direction cannot evict learning from the other.
+
+All preconditioning settings and calculations run locally inside Home Assistant. Velair does not send climate history or schedule data to any external service.
+
+Developer-oriented details about local learning states, API output, and prediction rules are documented in [Adaptive preconditioning internals](../developer/adaptive-preconditioning.md).
 
 ## Templates
 
@@ -66,6 +152,8 @@ The Templates tab lets you:
 The Schedule tab can also save the current day as a new template.
 
 When applying a template to a climate, Velair validates HVAC modes and temperature limits. If a template temperature is outside the target climate range, Velair clamps it to the climate minimum or maximum. If a template uses an unsupported HVAC mode, Velair shows an error so the user can change the block to `Keep` or a supported mode.
+
+Templates can include every optional climate setting available across the managed climates. This makes one template useful for mixed installations. When a template is applied to a specific climate, Velair keeps only the options that climate supports. For example, a template can contain `fan_mode: quiet` for an AC, but that field is dropped automatically when the same template is applied to a TRV that does not expose fan modes.
 
 ## Clone Schedules
 
@@ -127,8 +215,13 @@ The file can contain:
 - thermostat schedules;
 - templates;
 - panel settings.
+- adaptive preconditioning learning.
 
 When importing, Velair lets you choose which sections to overwrite. Importing replaces selected data, so export first if you need a recovery point.
+
+Adaptive preconditioning learning is matched by the exact Home Assistant climate entity ID. Learning from climates that are not currently managed is shown before import and skipped. For matching climates, the imported learning replaces that climate's existing calibration. Learning for local climates that are not present in the file is kept unchanged.
+
+Preconditioning configuration values are already included with **Thermostat schedules**. The separate **Preconditioning learning** section contains the costly local calibration history.
 
 ## Maintenance
 
@@ -148,6 +241,9 @@ Velair exposes Home Assistant services for automations and scripts:
 - `velair.set_temperature`
 - `velair.apply_schedule`
 - `velair.boost`
+- `velair.cancel_boost`
+- `velair.enable_room_sensor_assist`
+- `velair.disable_room_sensor_assist`
 - `velair.pause`
 - `velair.pause_zone`
 - `velair.resume`
@@ -170,12 +266,15 @@ This is a Velair-scoped convenience service, not a replacement for Home Assistan
 
 Use Home Assistant's native climate services when you want generic climate control. Use `velair.set_temperature` when an automation should only act on Velair-managed climates.
 
+Optional `fan_mode`, `preset_mode`, `swing_mode`, `swing_horizontal_mode`, and `humidity` fields can also be provided. Velair applies only the fields supported by the target climate.
+
 ```yaml
 action: velair.set_temperature
 data:
   entity_id: climate.living_room
   temperature: 21
   hvac_mode: heat
+  fan_mode: quiet
 ```
 
 ### `velair.apply_schedule`
@@ -199,6 +298,39 @@ data:
   temperature: 22
   duration_minutes: 45
   hvac_mode: heat
+  fan_mode: high
+```
+
+Velair captures the restorable climate state before applying the boost. A boost is rejected when the climate is unavailable and this state cannot be captured safely.
+
+### `velair.cancel_boost`
+
+Cancel an active boost early. This always uses the same return behavior as normal expiration: Velair applies the active explicit schedule target when one exists; otherwise, including a `Keep` block, it restores the HVAC mode and target captured before the boost. Calling it when no boost is active has no effect.
+
+```yaml
+action: velair.cancel_boost
+data:
+  entity_id: climate.living_room
+```
+
+### `velair.enable_room_sensor_assist`
+
+Enable Room Sensor Assist for one managed climate. The climate must already have a room temperature sensor configured in the Room Assist tab.
+
+```yaml
+action: velair.enable_room_sensor_assist
+data:
+  entity_id: climate.living_room
+```
+
+### `velair.disable_room_sensor_assist`
+
+Disable Room Sensor Assist for one managed climate. If Velair was applying an assisted target, it restores the current scheduled target.
+
+```yaml
+action: velair.disable_room_sensor_assist
+data:
+  entity_id: climate.living_room
 ```
 
 ### `velair.pause`
@@ -261,6 +393,7 @@ data:
       action: set_temperature
       temperature: 21
       hvac_mode: heat
+      fan_mode: quiet
     - start: "09:00"
       action: turn_off
     - start: "18:00"
@@ -268,6 +401,8 @@ data:
       temperature: 20
       hvac_mode: heat
 ```
+
+Schedule blocks may include optional `fan_mode`, `preset_mode`, `swing_mode`, `swing_horizontal_mode`, and `humidity` values. Unsupported values are removed for the target climate before the schedule is stored or applied.
 
 ### `velair.copy_day_schedule`
 
@@ -309,12 +444,49 @@ The event payload includes an `event` field that identifies what happened:
 
 - `scheduler_mode_changed`: fired when the scheduler changes mode, such as pause, stop/resume through automatic mode, or another scheduler mode selection.
 - `climate_target_applied`: fired when Velair applies a schedule target or turn-off action to a managed climate.
+- `preconditioning_plan_updated`: fired when the scheduler calculates a new early start or changes an existing one.
+- `room_sensor_assist_updated`: fired when Velair applies an assisted thermostat target based on a room temperature sensor.
+- `room_sensor_assist_restored`: fired when Velair stops applying an assisted target because the room target is reached or because room sensor assistance ends.
 - `boost_started`: fired when a zone boost starts.
-- `boost_ended`: fired when a zone boost expires.
+- `boost_ended`: fired when a zone boost expires or is cancelled. Its `reason` is `expired` or `manual`.
 - `zone_paused`: fired when automatic schedule execution is paused for one managed climate.
 - `zone_resumed`: fired when automatic schedule execution resumes for one managed climate.
 
 This keeps discovery simple: listen to `velair_event`, then filter by `event_data.event` when an automation only needs one kind of Velair event.
+
+`preconditioning_plan_updated` is emitted by scheduler planning, not by opening or refreshing the panel. Recalculating the same plan does not emit a duplicate event. Its payload includes the original and calculated start times, lead, direction, temperatures, HVAC mode, model source, sample counts, comfort percentile, optional outdoor context, weekday, and block start.
+
+`room_sensor_assist_updated` and `room_sensor_assist_restored` include:
+
+- `entity_id`;
+- `room_temperature_entity_id`;
+- `target_temperature`, the scheduled target Velair is preserving;
+- `applied_temperature`, the temporary target sent to the thermostat, including the non-driving hold target when the room target is reached;
+- `room_temperature`;
+- `climate_temperature`;
+- `assist_delta`;
+- `direction`;
+- `hvac_mode`;
+- `reason`.
+
+Example: react when Velair moves a heating block earlier.
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: velair_event
+    event_data:
+      event: preconditioning_plan_updated
+      entity_id: climate.living_room
+      direction: heat
+actions:
+  - action: logbook.log
+    data:
+      name: Velair prediction
+      message: >
+        Starts {{ trigger.event.data.lead_minutes }} minutes early using
+        {{ trigger.event.data.model_source }}
+```
 
 Example: react when the scheduler is paused.
 
@@ -355,12 +527,16 @@ The `climate_target_applied` payload includes:
 - `action`;
 - `temperature`;
 - `hvac_mode`;
+- optional climate settings when applied: `fan_mode`, `preset_mode`, `swing_mode`, `swing_horizontal_mode`, and `humidity`;
 - `weekday`;
 - `start`;
+- `target_when`, when preconditioning applied the target before the visible block time;
 - `source`.
 
-Common `source` values are `scheduled_event`, `current_schedule`, `schedule_saved`, `scheduler_resumed`, `startup`, `boost_ended`, `zone_paused`, `zone_resumed`, and `zone_pause_expired`.
+Common `source` values are `scheduled_event`, `current_schedule`, `schedule_saved`, `scheduler_resumed`, `startup`, `service_set_temperature`, `boost_ended`, `zone_paused`, `zone_resumed`, and `zone_pause_expired`.
 
-Boost payloads include `entity_id`, `temperature`, `hvac_mode`, `started_at`, and `until`. Scheduler mode payloads include `mode`, `previous_mode`, `paused_until`, and `paused_started_at`.
+Boost payloads include `entity_id`, `temperature`, `hvac_mode`, optional climate settings, `started_at`, and `until`. `boost_ended` also includes `reason: manual` when `velair.cancel_boost` ends it early, or `reason: expired` when its timer ends. Scheduler mode payloads include `mode`, `previous_mode`, `paused_until`, and `paused_started_at`.
 
 Zone pause and resume payloads include `entity_id`, `started_at`, `until`, and `action`. Resume payloads also include `reason`, such as `manual` or `expired`.
+
+These events cover runtime actions: scheduler mode changes, applied climate targets, preconditioning plans, boosts, and zone pause/resume. Schedule, template, settings, import, and reset operations update configuration but do not emit automation events.

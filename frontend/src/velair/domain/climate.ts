@@ -8,6 +8,7 @@ export type ClimateCapabilityKey =
   | "supportedPresetModes"
   | "supportedFanModes"
   | "supportedSwingModes"
+  | "supportedHorizontalSwingModes"
   | "temperatureRange";
 
 export type ClimateCapability = {
@@ -28,11 +29,18 @@ export function climateStateSignature(state?: HassState): string {
     attributes?.min_temp ?? null,
     attributes?.max_temp ?? null,
     attributes?.target_temp_step ?? null,
+    attributes?.fan_mode ?? null,
     attributes?.current_humidity ?? null,
     attributes?.humidity ?? null,
+    attributes?.min_humidity ?? null,
+    attributes?.max_humidity ?? null,
+    attributes?.preset_mode ?? null,
     attributes?.preset_modes ?? [],
     attributes?.fan_modes ?? [],
+    attributes?.swing_mode ?? null,
     attributes?.swing_modes ?? [],
+    attributes?.swing_horizontal_mode ?? null,
+    attributes?.swing_horizontal_modes ?? [],
   ]);
 }
 
@@ -81,6 +89,37 @@ export function climateSupportedModes(state?: HassState): string[] {
   return modes.filter((mode): mode is string => typeof mode === "string");
 }
 
+export function climateFanModeOptions(state?: HassState): string[] {
+  return stringArrayAttribute(state, "fan_modes");
+}
+
+export function climatePresetModeOptions(state?: HassState): string[] {
+  return stringArrayAttribute(state, "preset_modes");
+}
+
+export function climateSwingModeOptions(state?: HassState): string[] {
+  return stringArrayAttribute(state, "swing_modes");
+}
+
+export function climateSwingHorizontalModeOptions(state?: HassState): string[] {
+  return stringArrayAttribute(state, "swing_horizontal_modes");
+}
+
+export function climateHumidityLimits(state?: HassState): [number, number] | undefined {
+  const minHumidity = coerceNumber(state?.attributes?.min_humidity, Number.NaN);
+  const maxHumidity = coerceNumber(state?.attributes?.max_humidity, Number.NaN);
+  if (
+    !Number.isFinite(minHumidity) &&
+    !Number.isFinite(maxHumidity) &&
+    typeof state?.attributes?.humidity !== "number"
+  ) {
+    return undefined;
+  }
+  const minimum = Number.isFinite(minHumidity) ? minHumidity : 0;
+  const maximum = Number.isFinite(maxHumidity) ? maxHumidity : 100;
+  return minimum < maximum ? [minimum, maximum] : undefined;
+}
+
 export function uniqueKnownHvacModes(modes: string[]): string[] {
   const supportedModes = new Set(modes);
   return HVAC_MODES.filter((mode) => supportedModes.has(mode));
@@ -108,6 +147,9 @@ export function climateCapabilities(state?: HassState): ClimateCapability[] {
   if (Array.isArray(attributes.swing_modes) && attributes.swing_modes.length) {
     items.push({ icon: "mdi:swap-vertical", labelKey: "supportedSwingModes" });
   }
+  if (Array.isArray(attributes.swing_horizontal_modes) && attributes.swing_horizontal_modes.length) {
+    items.push({ icon: "mdi:swap-horizontal", labelKey: "supportedHorizontalSwingModes" });
+  }
   if (typeof attributes.target_temp_low === "number" || typeof attributes.target_temp_high === "number") {
     items.push({ icon: "mdi:thermometer-lines", labelKey: "temperatureRange" });
   }
@@ -118,4 +160,9 @@ export function climateCapabilities(state?: HassState): ClimateCapability[] {
 function coerceNumber(value: unknown, fallback: number): number {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function stringArrayAttribute(state: HassState | undefined, attribute: string): string[] {
+  const value = state?.attributes?.[attribute as keyof NonNullable<HassState["attributes"]>];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }

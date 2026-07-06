@@ -136,6 +136,37 @@ export const templateStyles = css`
   gap: 12px;
 }
 
+.template-placeholder.compact {
+  align-items: center;
+  background: var(--secondary-background-color);
+  border: 1px dashed var(--divider-color);
+  border-radius: 8px;
+  color: var(--secondary-text-color);
+  display: grid;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  line-height: 1.35;
+  min-height: 64px;
+  min-width: 0;
+  padding: 12px 56px;
+  position: relative;
+  text-align: center;
+}
+
+.template-placeholder.compact span {
+  min-width: 0;
+}
+
+.template-placeholder.compact > .icon-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .template-editor {
   margin-top: 0;
 }

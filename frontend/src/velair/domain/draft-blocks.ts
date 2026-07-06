@@ -17,12 +17,30 @@ type NormalizeDraftBlockOptions = {
 };
 
 export function draftBlocksFromScheduleBlocks(blocks: ScheduleBlock[]): DraftScheduleBlock[] {
-  return blocks.map((block) => ({
-    action: block.action ?? ACTION_SET_TEMPERATURE,
-    start: block.start,
-    temperature: Number(block.temperature ?? 21),
-    hvac_mode: block.hvac_mode ?? "",
-  }));
+  return blocks.map((block) => {
+    const draft: DraftScheduleBlock = {
+      action: block.action ?? ACTION_SET_TEMPERATURE,
+      start: block.start,
+      temperature: Number(block.temperature ?? 21),
+      hvac_mode: block.hvac_mode ?? "",
+    };
+    if (block.fan_mode) {
+      draft.fan_mode = block.fan_mode;
+    }
+    if (block.preset_mode) {
+      draft.preset_mode = block.preset_mode;
+    }
+    if (block.swing_mode) {
+      draft.swing_mode = block.swing_mode;
+    }
+    if (block.swing_horizontal_mode) {
+      draft.swing_horizontal_mode = block.swing_horizontal_mode;
+    }
+    if (block.humidity != null) {
+      draft.humidity = block.humidity;
+    }
+    return draft;
+  });
 }
 
 export function addDraftBlock(blocks: DraftScheduleBlock[], nextStart: string): DraftScheduleBlock[] {
@@ -144,6 +162,24 @@ export function normalizeDraftBlocks(
     if (block.hvac_mode) {
       normalizedBlock.hvac_mode = block.hvac_mode;
     }
+    if (block.fan_mode) {
+      normalizedBlock.fan_mode = block.fan_mode;
+    }
+    if (block.preset_mode) {
+      normalizedBlock.preset_mode = block.preset_mode;
+    }
+    if (block.swing_mode) {
+      normalizedBlock.swing_mode = block.swing_mode;
+    }
+    if (block.swing_horizontal_mode) {
+      normalizedBlock.swing_horizontal_mode = block.swing_horizontal_mode;
+    }
+    if (String(block.humidity ?? "").trim()) {
+      const humidity = Number(block.humidity);
+      if (Number.isFinite(humidity)) {
+        normalizedBlock.humidity = humidity;
+      }
+    }
 
     blocks.push(normalizedBlock);
     seen.add(start);
@@ -182,4 +218,46 @@ export function firstUnsupportedModeBlock(
     Boolean(block.hvac_mode) &&
     !supported.has(block.hvac_mode ?? "")
   );
+}
+
+export type ClimateOptionSupport = {
+  fanModes: string[];
+  humidityLimits?: [number, number];
+  presetModes: string[];
+  swingHorizontalModes: string[];
+  swingModes: string[];
+};
+
+export function filterBlocksForClimateOptions(
+  blocks: ScheduleBlock[],
+  support: ClimateOptionSupport,
+): ScheduleBlock[] {
+  return blocks.map((block) => {
+    if ((block.action || ACTION_SET_TEMPERATURE) === ACTION_TURN_OFF) {
+      return { start: block.start, action: ACTION_TURN_OFF };
+    }
+
+    const filtered: ScheduleBlock = { ...block };
+    if (!support.fanModes.includes(filtered.fan_mode ?? "")) {
+      delete filtered.fan_mode;
+    }
+    if (!support.presetModes.includes(filtered.preset_mode ?? "")) {
+      delete filtered.preset_mode;
+    }
+    if (!support.swingModes.includes(filtered.swing_mode ?? "")) {
+      delete filtered.swing_mode;
+    }
+    if (!support.swingHorizontalModes.includes(filtered.swing_horizontal_mode ?? "")) {
+      delete filtered.swing_horizontal_mode;
+    }
+    if (
+      filtered.humidity == null ||
+      !support.humidityLimits ||
+      filtered.humidity < support.humidityLimits[0] ||
+      filtered.humidity > support.humidityLimits[1]
+    ) {
+      delete filtered.humidity;
+    }
+    return filtered;
+  });
 }

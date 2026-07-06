@@ -5,6 +5,29 @@ import { languageFromHass, translate, weekdayName } from "../i18n";
 import type { SupportedLanguage, TranslationKey } from "../translations";
 import type { HomeAssistant, ScheduleResponse, VelairCardConfig, VelairCardView } from "../types";
 
+const FIRST_WEEKDAY_CARD_VIEWS = new Set<VelairCardView>(["schedules"]);
+const THERMOSTAT_FILTER_CARD_VIEWS = new Set<VelairCardView>([
+  "overview",
+  "overview-boosts",
+  "overview-events",
+  "overview-timeline",
+  "overview-zones",
+  "schedules",
+  "templates",
+  "sensors",
+  "preconditioning",
+  "settings",
+]);
+const ROOM_ASSIST_VISIBILITY_CARD_VIEWS = new Set<VelairCardView>(["sensors"]);
+const ROOM_ASSIST_VISIBILITY_FIELDS = [
+  ["show_room_assist_switch", "roomAssistShowSwitch"],
+  ["show_room_assist_sensor", "roomAssistShowSensor"],
+  ["show_room_assist_max_delta", "roomAssistShowMaxDelta"],
+  ["show_room_assist_debounce", "roomAssistShowDebounce"],
+  ["show_room_assist_live_status", "roomAssistShowLiveStatus"],
+] as const;
+type RoomAssistVisibilityField = typeof ROOM_ASSIST_VISIBILITY_FIELDS[number][0];
+
 export class VelairCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config: VelairCardConfig = {};
@@ -19,7 +42,13 @@ export class VelairCardEditor extends LitElement {
   }
 
   protected updated(changedProperties: Map<string, unknown>): void {
-    if (changedProperties.has("hass") && this.hass && !this._loaded && !this._loading) {
+    if (
+      (changedProperties.has("hass") || changedProperties.has("_config"))
+      && this.hass
+      && this._showsThermostatOptions()
+      && !this._loaded
+      && !this._loading
+    ) {
       void this._loadManagedEntities();
     }
   }
@@ -27,6 +56,9 @@ export class VelairCardEditor extends LitElement {
   protected render() {
     const firstWeekday = this._firstWeekday();
     const orderedEntities = this._orderedEntities();
+    const showFirstWeekday = this._showsFirstWeekdayOption();
+    const showThermostatOptions = this._showsThermostatOptions();
+    const showRoomAssistVisibilityOptions = this._showsRoomAssistVisibilityOptions();
 
     return html`
       <div class="editor">
@@ -49,36 +81,88 @@ export class VelairCardEditor extends LitElement {
             .value=${this._config.view ?? "overview-status"}
             @change=${(event: Event) => this._updateView(this._inputValue(event))}
           >
-            ${LOVELACE_CARD_VIEWS.map((view) => html`<option value=${view}>${this._viewLabel(view)}</option>`)}
+            ${LOVELACE_CARD_VIEWS.map((view) => html`
+              <option
+                value=${view}
+                ?selected=${view === (this._config.view ?? "overview-status")}
+              >
+                ${this._viewLabel(view)}
+              </option>
+            `)}
           </select>
         </label>
 
-        <label>
-          <span>${this._t("firstWeekday")}</span>
-          <select
-            .value=${firstWeekday}
-            @change=${(event: Event) => this._updateFirstWeekday(this._inputValue(event))}
-          >
-            ${WEEKDAYS.map((weekday) => html`<option value=${weekday}>${this._weekdayName(weekday)}</option>`)}
-          </select>
-        </label>
+        ${showFirstWeekday
+          ? html`
+              <label class="first-weekday-option">
+                <span>${this._t("firstWeekday")}</span>
+                <select
+                  .value=${firstWeekday}
+                  @change=${(event: Event) => this._updateFirstWeekday(this._inputValue(event))}
+                >
+                  ${WEEKDAYS.map((weekday) => html`<option value=${weekday}>${this._weekdayName(weekday)}</option>`)}
+                </select>
+              </label>
+            `
+          : nothing}
 
-        <section class="zone-order">
-          <div>
-            <span class="section-label">${this._t("zoneOrder")}</span>
-            <p>${this._t("reorderZones")}</p>
-          </div>
-          <div class="zone-list">
-            ${orderedEntities.length
-              ? orderedEntities.map((entityId, index) => this._renderZoneOrderRow(entityId, index, orderedEntities.length))
-              : html`<span class="empty">${this._t("noManagedEntities")}</span>`}
-          </div>
-        </section>
+        ${showThermostatOptions
+          ? html`
+              <section class="zone-order">
+                <div>
+                  <span class="section-label">${this._t("cardThermostats")}</span>
+                  <p>${this._t("cardThermostatsDescription")}</p>
+                </div>
+                <div class="zone-list">
+                  ${orderedEntities.length
+                    ? orderedEntities.map((entityId, index) => this._renderZoneOrderRow(entityId, index, orderedEntities.length))
+                    : html`<span class="empty">${this._t("noManagedEntities")}</span>`}
+                </div>
+              </section>
+            `
+          : nothing}
+
+        ${showRoomAssistVisibilityOptions
+          ? html`
+              <section class="card-visibility-options">
+                <div>
+                  <span class="section-label">${this._t("roomAssistCardVisibility")}</span>
+                  <p>${this._t("roomAssistCardVisibilityDescription")}</p>
+                </div>
+                <div class="visibility-list">
+                  ${ROOM_ASSIST_VISIBILITY_FIELDS.map(([field, label]) =>
+                    this._renderVisibilityOption(field, label),
+                  )}
+                </div>
+              </section>
+            `
+          : nothing}
       </div>
     `;
   }
 
+  private _renderVisibilityOption(
+    field: RoomAssistVisibilityField,
+    label: TranslationKey,
+  ) {
+    return html`
+      <label class="visibility-option">
+        <input
+          type="checkbox"
+          .checked=${this._config[field] !== false}
+          @change=${(event: Event) =>
+            this._toggleBooleanConfig(
+              field,
+              Boolean((event.currentTarget as HTMLInputElement).checked),
+            )}
+        />
+        <span>${this._t(label)}</span>
+      </label>
+    `;
+  }
+
   private _renderZoneOrderRow(entityId: string, index: number, total: number) {
+    const checked = this._selectedEntities().includes(entityId);
     return html`
       <div
         class="zone-row"
@@ -89,6 +173,19 @@ export class VelairCardEditor extends LitElement {
         @dragend=${this._handleZoneDragEnd}
       >
         <ha-icon icon="mdi:drag"></ha-icon>
+        <label
+          class="zone-visibility"
+          title=${this._t(checked ? "cardThermostatVisible" : "cardThermostatHidden")}
+          @click=${(event: Event) => event.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            .checked=${checked}
+            ?disabled=${checked && this._selectedEntities().length <= 1}
+            @change=${(event: Event) =>
+              this._toggleEntityVisibility(entityId, Boolean((event.currentTarget as HTMLInputElement).checked))}
+          />
+        </label>
         <span>${this._friendlyEntityName(entityId)}</span>
         <div class="row-actions">
           <button
@@ -147,6 +244,12 @@ export class VelairCardEditor extends LitElement {
     return [...orderedEntities, ...unorderedEntities];
   }
 
+  private _selectedEntities(): string[] {
+    const entities = this._orderedEntities();
+    const selectedEntities = this._config.entities?.filter((entityId) => entities.includes(entityId)) ?? [];
+    return selectedEntities.length ? selectedEntities : entities;
+  }
+
   private _updateConfig(field: "title", value: string): void {
     const nextConfig: VelairCardConfig = { ...this._config };
     const trimmed = value.trim();
@@ -164,6 +267,16 @@ export class VelairCardEditor extends LitElement {
     const nextConfig: VelairCardConfig = { ...this._config };
     nextConfig.first_weekday = WEEKDAYS.includes(value) ? value : "monday";
     delete nextConfig.selected_weekday;
+    this._emitConfig(nextConfig);
+  }
+
+  private _toggleBooleanConfig(field: RoomAssistVisibilityField, checked: boolean): void {
+    const nextConfig: VelairCardConfig = { ...this._config };
+    if (checked) {
+      delete nextConfig[field];
+    } else {
+      nextConfig[field] = false;
+    }
     this._emitConfig(nextConfig);
   }
 
@@ -226,6 +339,28 @@ export class VelairCardEditor extends LitElement {
     this._emitConfig(nextConfig);
   }
 
+  private _toggleEntityVisibility(entityId: string, checked: boolean): void {
+    const entities = this._orderedEntities();
+    const selectedEntities = new Set(this._selectedEntities());
+    if (checked) {
+      selectedEntities.add(entityId);
+    } else if (selectedEntities.size > 1) {
+      selectedEntities.delete(entityId);
+    }
+
+    const orderedSelection = entities.filter((candidate) => selectedEntities.has(candidate));
+    const nextConfig: VelairCardConfig = { ...this._config };
+    if (orderedSelection.length === entities.length) {
+      delete nextConfig.entities;
+    } else {
+      nextConfig.entities = orderedSelection;
+    }
+    if (nextConfig.selected_entity && !orderedSelection.includes(nextConfig.selected_entity)) {
+      delete nextConfig.selected_entity;
+    }
+    this._emitConfig(nextConfig);
+  }
+
   private _emitConfig(nextConfig: VelairCardConfig): void {
     this._config = nextConfig;
     this.dispatchEvent(
@@ -279,9 +414,30 @@ export class VelairCardEditor extends LitElement {
       "overview-zones": "cardViewOverviewZones",
       "schedules": "cardViewSchedules",
       "templates": "templates",
+      "sensors": "cardViewSensors",
+      "preconditioning": "preconditioning",
       "settings": "settings",
     };
     return this._t(labels[view]);
+  }
+
+  private _selectedView(): VelairCardView {
+    const configuredView = this._config.view;
+    return configuredView && LOVELACE_CARD_VIEWS.includes(configuredView)
+      ? configuredView
+      : "overview-status";
+  }
+
+  private _showsFirstWeekdayOption(): boolean {
+    return FIRST_WEEKDAY_CARD_VIEWS.has(this._selectedView());
+  }
+
+  private _showsThermostatOptions(): boolean {
+    return THERMOSTAT_FILTER_CARD_VIEWS.has(this._selectedView());
+  }
+
+  private _showsRoomAssistVisibilityOptions(): boolean {
+    return ROOM_ASSIST_VISIBILITY_CARD_VIEWS.has(this._selectedView());
   }
 
   private _friendlyEntityName(entityId: string): string {
@@ -340,7 +496,9 @@ export class VelairCardEditor extends LitElement {
     }
 
     .zone-order,
-    .zone-list {
+    .zone-list,
+    .card-visibility-options,
+    .visibility-list {
       display: grid;
       gap: 8px;
     }
@@ -353,7 +511,7 @@ export class VelairCardEditor extends LitElement {
       cursor: grab;
       display: grid;
       gap: 8px;
-      grid-template-columns: 24px minmax(0, 1fr) auto;
+      grid-template-columns: 24px 24px minmax(0, 1fr) auto;
       min-height: 42px;
       padding: 8px;
     }
@@ -366,6 +524,55 @@ export class VelairCardEditor extends LitElement {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .zone-visibility {
+      align-items: center;
+      display: inline-flex;
+      justify-content: center;
+      margin: 0;
+      min-height: 24px;
+    }
+
+    .zone-visibility input {
+      cursor: pointer;
+      height: 16px;
+      margin: 0;
+      min-height: 0;
+      padding: 0;
+      width: 16px;
+    }
+
+    .zone-visibility input:disabled {
+      cursor: default;
+    }
+
+    .visibility-option {
+      align-items: center;
+      background: var(--secondary-background-color);
+      border: 1px solid var(--divider-color);
+      border-radius: 8px;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 20px minmax(0, 1fr);
+      margin: 0;
+      min-height: 42px;
+      padding: 8px;
+    }
+
+    .visibility-option input {
+      cursor: pointer;
+      height: 16px;
+      margin: 0;
+      min-height: 0;
+      padding: 0;
+      width: 16px;
+    }
+
+    .visibility-option span {
+      color: var(--primary-text-color);
+      font-size: 13px;
+      margin: 0;
     }
 
     .row-actions {

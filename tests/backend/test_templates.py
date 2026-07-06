@@ -75,6 +75,48 @@ class VelairSchedulerTemplateTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.data["templates"][0]["blocks"][0]["temperature"], 5)
         self.assertEqual(self.save_count, 1)
 
+    async def test_set_schedule_template_preserves_optional_climate_settings(self) -> None:
+        key = await self.scheduler.async_set_schedule_template(
+            "Night AC",
+            [
+                {
+                    "start": "22:00",
+                    "action": ACTION_SET_TEMPERATURE,
+                    "temperature": 24,
+                    "hvac_mode": "cool",
+                    "fan_mode": "quiet",
+                    "preset_mode": "eco",
+                    "swing_mode": "vertical",
+                    "swing_horizontal_mode": "left",
+                    "humidity": 45,
+                }
+            ],
+        )
+
+        self.assertEqual(
+            self.data["templates"],
+            [
+                {
+                    "key": key,
+                    "name": "Night AC",
+                    "blocks": [
+                        {
+                            "start": "22:00",
+                            "action": ACTION_SET_TEMPERATURE,
+                            "temperature": 24,
+                            "hvac_mode": "cool",
+                            "fan_mode": "quiet",
+                            "preset_mode": "eco",
+                            "swing_mode": "vertical",
+                            "swing_horizontal_mode": "left",
+                            "humidity": 45,
+                        }
+                    ],
+                }
+            ],
+        )
+        self.assertEqual(self.save_count, 1)
+
     async def test_delete_schedule_template_removes_template(self) -> None:
         self.data["templates"] = [
             {

@@ -31,6 +31,45 @@ set_temperature:
             - auto
             - dry
             - fan_only
+    fan_mode:
+      name: Fan mode
+      description: Optional fan mode to apply when the climate entity supports it.
+      required: false
+      example: low
+      selector:
+        text:
+    preset_mode:
+      name: Preset mode
+      description: Optional preset to apply when the climate entity supports it.
+      required: false
+      example: sleep
+      selector:
+        text:
+    swing_mode:
+      name: Swing mode
+      description: Optional swing mode to apply when the climate entity supports it.
+      required: false
+      example: vertical
+      selector:
+        text:
+    swing_horizontal_mode:
+      name: Horizontal swing mode
+      description: Optional horizontal swing mode to apply when the climate entity supports it.
+      required: false
+      example: auto
+      selector:
+        text:
+    humidity:
+      name: Target humidity
+      description: Optional target humidity to apply when the climate entity supports it.
+      required: false
+      example: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
 
 apply_schedule:
   name: Apply schedule
@@ -99,6 +138,56 @@ boost:
             - auto
             - dry
             - fan_only
+    fan_mode:
+      name: Fan mode
+      description: Optional fan mode to apply for the boost when supported.
+      required: false
+      example: high
+      selector:
+        text:
+    preset_mode:
+      name: Preset mode
+      description: Optional preset to apply for the boost when supported.
+      required: false
+      example: boost
+      selector:
+        text:
+    swing_mode:
+      name: Swing mode
+      description: Optional swing mode to apply for the boost when supported.
+      required: false
+      example: vertical
+      selector:
+        text:
+    swing_horizontal_mode:
+      name: Horizontal swing mode
+      description: Optional horizontal swing mode to apply for the boost when supported.
+      required: false
+      example: auto
+      selector:
+        text:
+    humidity:
+      name: Target humidity
+      description: Optional target humidity to apply for the boost when supported.
+      required: false
+      example: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+
+cancel_boost:
+  name: Cancel boost
+  description: Cancel one active boost and immediately return the climate to its current explicit schedule target or its state before the boost.
+  fields:
+    entity_id:
+      required: true
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
 
 pause:
   name: Pause
@@ -209,6 +298,9 @@ set_daily_schedule:
           action: set_temperature
           temperature: 24
           hvac_mode: cool
+          fan_mode: low
+          preset_mode: sleep
+          swing_mode: off
       selector:
         object:
 
@@ -276,3 +368,25 @@ clear_schedule:
             - friday
             - saturday
             - sunday
+
+enable_room_sensor_assist:
+  name: Enable Room Sensor Assist
+  description: Enable Room Sensor Assist for one managed climate entity that already has a room temperature sensor configured.
+  fields:
+    entity_id:
+      required: true
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
+
+disable_room_sensor_assist:
+  name: Disable Room Sensor Assist
+  description: Disable Room Sensor Assist for one managed climate entity and restore its current scheduled target when needed.
+  fields:
+    entity_id:
+      required: true
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate

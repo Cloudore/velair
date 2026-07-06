@@ -24,6 +24,16 @@ export const PANEL_TABS: PanelTabDefinition[] = [
     view: "templates",
   },
   {
+    icon: "mdi:home-thermometer-outline",
+    labelKey: "sensors",
+    view: "sensors",
+  },
+  {
+    icon: "mdi:clock-fast",
+    labelKey: "preconditioning",
+    view: "preconditioning",
+  },
+  {
     icon: "mdi:cog-outline",
     labelKey: "settings",
     view: "settings",
