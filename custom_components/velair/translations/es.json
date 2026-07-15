@@ -4,58 +4,110 @@
     "step": {
       "user": {
         "title": "Configurar Velair",
-        "description": "Climate automation that adapts to your life. Elige las entidades climate gestionadas por Velair.",
+        "description": "Automatiza la climatización para adaptarla a tu vida. Selecciona las entidades de climatización que quieres controlar con Velair.",
         "data": {
-          "climate_entities": "Entidades climate",
+          "climate_entities": "Entidades de climatización",
           "apply_active_schedule_on_startup": "Aplicar la planificación activa al iniciar Home Assistant"
         }
       }
     },
     "error": {
-      "no_climate_entities": "Selecciona al menos una entidad climate."
+      "no_climate_entities": "Selecciona al menos una entidad de climatización."
     },
     "abort": {
-      "already_configured": "Velair ya esta configurado."
+      "already_configured": "Velair ya está configurado."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Gestionar entidades climate",
-        "description": "Climate automation that adapts to your life. Elige las entidades climate gestionadas por Velair. Si quitas una entidad, dejara de gestionarse.",
+        "title": "Gestionar entidades de climatización",
+        "description": "Automatiza la climatización para adaptarla a tu vida. Selecciona las entidades de climatización que quieres controlar con Velair. Si eliminas una de la selección, Velair dejará de controlarla.",
         "data": {
-          "climate_entities": "Entidades climate",
+          "climate_entities": "Entidades de climatización",
           "apply_active_schedule_on_startup": "Aplicar la planificación activa al iniciar Home Assistant"
         }
       }
     },
     "error": {
-      "no_climate_entities": "Selecciona al menos una entidad climate."
+      "no_climate_entities": "Selecciona al menos una entidad de climatización."
     }
   },
   "entity": {
     "sensor": {
       "next_climate_event": {
-        "name": "Proximo evento programado"
-      },
-      "current_schedule_state": {
-        "name": "Estado actual del horario"
+        "name": "Próximo evento programado"
       },
       "scheduler_status": {
-        "name": "Estado operativo"
+        "name": "Estado del planificador",
+        "state": {
+          "paused": "En pausa",
+          "override_active": "Anulación activa",
+          "scheduled": "Planificado",
+          "idle": "Inactivo",
+          "temperature_migration_required": "Actualización de temperatura necesaria"
+        }
       },
       "zone_active_target_temperature": {
         "name": "Temperatura objetivo activa de {zone}"
-      }
-    },
-    "select": {
-      "scheduler_mode": {
-        "name": "Modo del scheduler"
+      },
+      "zone_environmental_condition": {
+        "name": "Estado ambiental de {zone}",
+        "state": {
+          "monitoring_off": "Sin supervisión",
+          "no_readings": "Sin lecturas",
+          "temperature_comfortable": "Temperatura confortable",
+          "humidity_comfortable": "Humedad confortable",
+          "comfortable": "Confortable",
+          "cold": "Frío",
+          "hot": "Calor",
+          "dry": "Seco",
+          "humid": "Húmedo",
+          "cold_and_dry": "Frío y seco",
+          "cold_and_humid": "Frío y húmedo",
+          "hot_and_dry": "Caluroso y seco",
+          "hot_and_humid": "Caluroso y húmedo"
+        }
+      },
+      "zone_air_quality": {
+        "name": "Calidad del aire de {zone}",
+        "state": {
+          "not_monitored": "Sin supervisión",
+          "unavailable": "No disponible",
+          "good": "Buena",
+          "elevated": "Elevada",
+          "poor": "Mala"
+        }
+      },
+      "zone_override_state": {
+        "name": "Anulación de {zone}",
+        "state": {
+          "none": "Sin anulación",
+          "boost": "Refuerzo",
+          "paused": "En pausa",
+          "disabled": "Desactivada"
+        }
+      },
+      "zone_preconditioning_start": {
+        "name": "Inicio del preacondicionamiento de {zone}"
+      },
+      "zone_room_assist_state": {
+        "name": "Control por temperatura ambiente de {zone}",
+        "state": {
+          "unavailable": "No disponible",
+          "not_configured": "Sin configurar",
+          "disabled": "Desactivado",
+          "blocked": "Bloqueado",
+          "idle": "Inactivo",
+          "holding": "Manteniendo",
+          "assisting": "Ajustando",
+          "ready": "Preparado"
+        }
       }
     },
     "switch": {
-      "schedule_enabled": {
-        "name": "Horario activado"
+      "automatic_scheduling": {
+        "name": "Planificación automática"
       }
     }
   }

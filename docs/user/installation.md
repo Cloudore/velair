@@ -14,6 +14,16 @@ Velair can be installed through HACS as a custom repository or manually by copyi
 8. Add the Velair integration.
 9. Select the `climate.*` entities Velair may manage.
 
+Velair uses the temperature unit selected in Home Assistant. A new installation
+creates schedules, templates, Comfort thresholds, Room Assist settings, and
+Adaptive Preconditioning defaults for that unit. The unit is shown read-only in
+Velair Settings and must be changed through Home Assistant, not Velair.
+
+Existing installations upgrading from a published Celsius-only Velair version
+may need a reset when Home Assistant uses Fahrenheit. Review
+[Temperature Units and Migration](temperature-units.md) before proceeding so you
+can export a reference copy first if needed.
+
 ## Manual Installation
 
 Manual installation is normally only needed when you do not use HACS or when you want to test a GitHub Actions or GitHub Release build.
@@ -74,6 +84,7 @@ Supported `view` values:
 - `overview-zones`: zone overview.
 - `schedules`: full schedule editor.
 - `sensors`: Room Assist configuration and live status.
+- `comfort`: environmental comfort configuration and status.
 - `preconditioning`: adaptive preconditioning configuration and local learning status.
 
 ## Updating

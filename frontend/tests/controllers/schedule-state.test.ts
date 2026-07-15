@@ -11,6 +11,14 @@ const scheduleResponse = (): ScheduleResponse => ({
   next_event: null,
   next_events: [],
   operational_status: "running",
+  temperature_unit: "°C",
+  home_assistant_temperature_unit: "°F",
+  temperature_migration: {
+    required: true,
+    source_unit: "°C",
+    target_unit: "°F",
+    temperature_revision: 0,
+  },
   settings: { first_weekday: "saturday", zone_order: ["climate.office"] },
   templates: [{ key: "comfort", name: "Comfort", blocks: [{ action: ACTION_SET_TEMPERATURE, start: "08:00", temperature: 21, hvac_mode: "heat" }] }],
   zones: {
@@ -101,6 +109,52 @@ describe("schedule state controller", () => {
 
     expect(state._selectedWeekday).toBe("sunday");
     expect(state._selectedEntity).toBe("climate.bedroom");
+  });
+
+  it("preserves a dirty stored-unit draft when mismatch data reloads", () => {
+    const state = host();
+    applyScheduleData(state, scheduleResponse());
+    state._draftBlocks = [
+      { action: ACTION_SET_TEMPERATURE, hvac_mode: "heat", start: "09:00", temperature: 22.7 },
+    ];
+    state._dirty = true;
+    state._dirtyEntityId = "climate.office";
+
+    const reloaded = scheduleResponse();
+    reloaded.zones["climate.office"].schedule.saturday[0].temperature = 70;
+    applyScheduleData(state, reloaded);
+
+    expect(state._draftBlocks).toEqual([
+      { action: ACTION_SET_TEMPERATURE, hvac_mode: "heat", start: "09:00", temperature: 22.7 },
+    ]);
+    expect(state._dirty).toBe(true);
+  });
+
+  it("replaces a dirty template draft after a forced unit-migration reload", () => {
+    const state = host();
+    applyScheduleData(state, scheduleResponse());
+    state._templateDraftBlocks = [
+      { action: ACTION_SET_TEMPERATURE, hvac_mode: "heat", start: "08:00", temperature: 22 },
+    ];
+    state._templateDirty = true;
+
+    const migrated = scheduleResponse();
+    migrated.temperature_unit = "°F";
+    migrated.home_assistant_temperature_unit = "°F";
+    migrated.temperature_migration = {
+      required: false,
+      source_unit: "°F",
+      target_unit: "°F",
+      temperature_revision: 1,
+    };
+    migrated.templates[0].blocks[0].temperature = 70;
+
+    applyScheduleData(state, migrated, { forceDraft: true });
+
+    expect(state._templateDraftBlocks).toEqual([
+      { action: ACTION_SET_TEMPERATURE, hvac_mode: "heat", start: "08:00", temperature: 70 },
+    ]);
+    expect(state._templateDirty).toBe(false);
   });
 
   it("drops a selected template that no longer exists", () => {

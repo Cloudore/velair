@@ -105,6 +105,24 @@ show_room_assist_live_status: true
 
 Omitted `show_room_assist_*` values default to `true`.
 
+The Comfort card (`view: comfort`) uses the same thermostat filtering and can
+hide its configuration or each live graph independently:
+
+```yaml
+type: custom:velair-card
+view: comfort
+entities:
+  - climate.living_room
+show_comfort_configuration: false
+show_comfort_temperature: true
+show_comfort_humidity: false
+show_comfort_co2: true
+```
+
+Omitted `show_comfort_*` values default to `true`. These values are Lovelace
+display options only; they must not be persisted through Velair storage and must
+not change backend Comfort listeners, thresholds, events, or generated sensors.
+
 Supported Lovelace `view` values:
 
 - `overview-status`
@@ -114,6 +132,7 @@ Supported Lovelace `view` values:
 - `overview-zones`
 - `schedules`
 - `sensors`
+- `comfort`
 - `preconditioning`
 
 Do not keep an old `/local/velair-card.js` resource active while testing an installed or HACS-style build. Browser custom elements cannot be redefined in place, so a second resource URL can still register obsolete elements before Velair's canonical module loads.

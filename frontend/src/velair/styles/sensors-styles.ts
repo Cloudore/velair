@@ -383,7 +383,7 @@ export const sensorsStyles = css`
 }
 
 .sensor-scale-track {
-  min-height: 104px;
+  min-height: 136px;
   min-width: 640px;
   position: relative;
 }
@@ -403,18 +403,37 @@ export const sensorsStyles = css`
   top: 66px;
 }
 
-.sensor-scale-remaining {
-  border-top: 2px dashed color-mix(in srgb, var(--success-color, #43a047) 74%, transparent);
+.sensor-scale-relation {
   display: block;
   height: 0;
   min-width: 18px;
   position: absolute;
+}
+
+.sensor-scale-room-gap {
+  border-top: 2px solid color-mix(in srgb, var(--secondary-text-color) 46%, transparent);
   top: 83px;
 }
 
-.sensor-scale-remaining span {
+.sensor-scale-assist-offset {
+  top: 108px;
+}
+
+.sensor-scale-assist-offset.assist-offset-active {
+  border-top: 3px dashed color-mix(in srgb, var(--success-color, #43a047) 74%, transparent);
+}
+
+.sensor-scale-assist-offset.assist-offset-holding {
+  border-top: 2px dotted color-mix(in srgb, var(--secondary-text-color) 62%, transparent);
+}
+
+.sensor-scale-assist-offset.assist-offset-unknown {
+  border-top: 2px dashed color-mix(in srgb, var(--secondary-text-color) 42%, transparent);
+}
+
+.sensor-scale-relation span {
   background: var(--secondary-background-color);
-  border: 1px solid color-mix(in srgb, var(--success-color, #43a047) 38%, var(--divider-color));
+  border: 1px solid var(--divider-color);
   border-radius: 999px;
   color: var(--primary-text-color);
   font-size: 10px;
@@ -426,6 +445,20 @@ export const sensorsStyles = css`
   top: 6px;
   transform: translateX(-50%);
   white-space: nowrap;
+}
+
+.sensor-scale-room-gap span {
+  color: var(--secondary-text-color);
+}
+
+.sensor-scale-assist-offset.assist-offset-active span {
+  border-color: color-mix(in srgb, var(--success-color, #43a047) 38%, var(--divider-color));
+  color: var(--success-color, #43a047);
+}
+
+.sensor-scale-assist-offset.assist-offset-holding span,
+.sensor-scale-assist-offset.assist-offset-unknown span {
+  color: var(--secondary-text-color);
 }
 
 .sensor-scale-marker {

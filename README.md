@@ -1,7 +1,7 @@
 # Velair
 Climate automation that adapts to your life.
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge)](#)
 [![Last commit](https://img.shields.io/github/last-commit/cgonfer/velair?style=for-the-badge)](#)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Community%20Forum-blue?logo=home-assistant&style=for-the-badge)](https://community.home-assistant.io/t/velair-local-first-climate-scheduling-for-home-assistant-climates/1015394/4)
 [![HACS](https://img.shields.io/badge/HACS-custom-orange?style=for-the-badge)](https://www.hacs.xyz/docs/faq/custom_repositories/)
@@ -11,7 +11,7 @@ Climate automation that adapts to your life.
 ![Velair Logo](custom_components/velair/brand/logo.png)
 
 
-Velair is a Home Assistant custom integration for managing clear, local-first climate schedules on top of standard `climate.*` entities. It provides a sidebar panel, an optional Lovelace card, schedule templates, Adaptive Preconditioning, Room Assist, per-zone boosts, and automation-friendly services without depending on any thermostat vendor cloud.
+Velair is a Home Assistant custom integration for managing clear, local-first climate schedules on top of standard `climate.*` entities. It provides a sidebar panel, an optional Lovelace card, schedule templates, Adaptive Preconditioning, Room Assist, Environmental Comfort monitoring, per-zone boosts, and automation-friendly services without depending on any thermostat vendor cloud.
 
 Velair does not replace your thermostat integration. It works through Home Assistant entities, so it can manage any compatible climate device that is already exposed to Home Assistant.
 
@@ -37,16 +37,18 @@ Contributions, testing, bug reports, and constructive feedback are always welcom
 - Drag and resize interactions on a 24-hour timeline.
 - Day cloning to other weekdays or other managed climates.
 - Editable schedule templates with import/export support.
-- Overview tab with scheduler status, active boosts, next events, and zone summaries.
+- Overview tab with scheduler status, active boosts, next events, and responsive zone cards that surface current intent and relevant attention signals.
 - Dedicated Adaptive preconditioning tab with per-climate controls and local learning status.
 - Dedicated Room Assist tab for setups that need a separate room temperature sensor.
+- Dedicated Comfort tab with readable temperature/humidity conditions, independent CO2 air quality, data-quality warnings, and responsive live visualizations.
 - Optional climate controls per block where supported, including fan mode, preset mode, swing mode, horizontal swing mode, and target humidity.
 - Settings tab with climate ordering, startup behavior, thermostat diagnostics, portability tools, and maintenance information.
 - Global pause, stop, and resume controls, plus per-zone pause and resume.
 - Velair-scoped services for starting and cancelling boosts, pauses, schedule application, schedule editing, day cloning, and schedule clearing.
-- Automation events through `velair_event` for scheduler mode changes, adaptive preconditioning plans, Room Assist changes, climate targets applied by Velair, boosts, and per-zone pause/resume lifecycle changes.
+- Automation events through `velair_event` for scheduler mode changes, Adaptive Preconditioning plans, cancellations and observations, Room Assist state and target changes, Comfort assessments, applied climate targets, boosts, and per-zone pause/resume lifecycle changes.
 - Push updates through Home Assistant WebSocket events, without frontend polling.
 - English and Spanish UI translations.
+- Native Celsius and Fahrenheit workflows using Home Assistant's configured unit, including unit-aware defaults, explicit stored-data migration, and legacy backup conversion.
 
 ## Screenshots
 
@@ -118,6 +120,12 @@ For development builds, see [docs/developer/development.md](docs/developer/devel
 
 See [docs/user/usage.md](docs/user/usage.md) for the full workflow.
 
+Velair uses the temperature unit configured in Home Assistant. New installations
+receive matching defaults automatically. If you are upgrading older Velair data
+or importing a backup created in another unit, read
+[Temperature Units and Migration](docs/user/temperature-units.md) before changing
+stored thermal data.
+
 ## Optional Lovelace Card
 
 The sidebar panel is the main Velair experience. The Lovelace card is optional.
@@ -178,6 +186,19 @@ zone_order:
   - climate.living_room
 ```
 
+Comfort cards can also hide configuration or individual live graphs:
+
+```yaml
+type: custom:velair-card
+view: comfort
+entities:
+  - climate.living_room
+show_comfort_configuration: false
+show_comfort_temperature: true
+show_comfort_humidity: false
+show_comfort_co2: true
+```
+
 Supported `view` values:
 
 - `overview-status`: scheduler state and pause/stop/resume controls.
@@ -187,6 +208,7 @@ Supported `view` values:
 - `overview-zones`: zone overview.
 - `schedules`: full schedule editor.
 - `sensors`: Room Assist configuration and live status.
+- `comfort`: environmental comfort configuration and status.
 - `preconditioning`: adaptive preconditioning configuration and local learning status.
 
 If Home Assistant shows a custom element error, confirm that Velair is installed, the resource URL is exactly `/velair_frontend/velair-card.js`, and the browser or companion app has been reloaded after adding the resource.
@@ -199,6 +221,8 @@ If Home Assistant shows a custom element error, confirm that Velair is installed
 - [Usage guide](docs/user/usage.md)
 - [Adaptive Preconditioning](docs/user/adaptive-preconditioning.md)
 - [Room Assist](docs/user/room-assist.md)
+- [Environmental Comfort](docs/user/comfort.md)
+- [Temperature Units and Migration](docs/user/temperature-units.md)
 - [Installation](docs/user/installation.md)
 - [Troubleshooting](docs/user/troubleshooting.md)
 
@@ -208,6 +232,8 @@ If Home Assistant shows a custom element error, confirm that Velair is installed
 - [WebSocket API](docs/developer/api.md)
 - [Adaptive preconditioning internals](docs/developer/adaptive-preconditioning.md)
 - [Room Assist internals](docs/developer/room-assist.md)
+- [Environmental Comfort internals](docs/developer/comfort.md)
+- [Temperature unit internals](docs/developer/temperature-units.md)
 - [Frontend development](docs/developer/frontend.md)
 - [Development guide](docs/developer/development.md)
 - [Manual testing](docs/developer/manual-testing.md)

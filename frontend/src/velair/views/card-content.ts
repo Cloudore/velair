@@ -1,7 +1,9 @@
 import { html, nothing } from "lit";
 import type { VelairViewHost } from "../host-types";
 import type { ScheduleZone, VelairCardView } from "../types";
+import { incompatibleScheduleTargetCount } from "../domain/schedule-compatibility";
 import { renderNotice } from "./notice-view";
+import { renderComfortView, type ComfortViewOptions } from "./comfort-view";
 import {
   renderOverviewActiveBoosts,
   renderNextEvents,
@@ -25,6 +27,13 @@ export function renderCardContent(host: CardContentHost) {
     ? host._selectedEntity
     : visibleZoneIds[0];
   const selectedZone = selectedEntity ? host._data?.zones[selectedEntity] : undefined;
+  const incompatibleTargets = host._data && !host._data.temperature_migration.required
+    ? incompatibleScheduleTargetCount(
+      host._data.zones,
+      (entityId) => host._entityTemperatureLimits(entityId),
+      (entityId) => host._entityTemperatureStep(entityId),
+    )
+    : 0;
 
   return html`
     <ha-card>
@@ -39,6 +48,43 @@ export function renderCardContent(host: CardContentHost) {
         ${host._error ? renderNotice(host, "error", host._error) : nothing}
         ${host._saveMessage ? renderNotice(host, "success", host._saveMessage) : nothing}
         ${host._loading && !host._data ? html`<div class="notice">${host._t("loading")}</div>` : nothing}
+        ${host._data?.temperature_migration?.required
+          ? html`
+              <div class="temperature-migration-banner" role="alert">
+                <ha-icon icon="mdi:thermometer-alert"></ha-icon>
+                <div>
+                  <strong>${host._t("temperatureMigrationRequired")}</strong>
+                  <span>${host._t(
+                    host._data?.temperature_migration?.reason === "legacy_celsius_upgrade_reset_required"
+                      ? "temperatureLegacyResetStopped"
+                      : "temperatureMigrationStopped",
+                  )}</span>
+                </div>
+              </div>
+            `
+          : nothing}
+        ${host._data?.operation_recovery
+          ? html`
+              <div class="temperature-migration-banner" role="alert">
+                <ha-icon icon="mdi:database-alert"></ha-icon>
+                <div>
+                  <strong>${host._t("operationRecoveryRequired")}</strong>
+                  <span>${host._t("operationRecoveryDescription")}</span>
+                </div>
+              </div>
+            `
+          : nothing}
+        ${incompatibleTargets
+          ? html`
+              <div class="temperature-migration-banner" role="alert">
+                <ha-icon icon="mdi:calendar-alert"></ha-icon>
+                <div>
+                  <strong>${host._t("incompatibleScheduleTargets")}</strong>
+                  <span>${host._t("incompatibleScheduleTargetsDescription", { count: incompatibleTargets })}</span>
+                </div>
+              </div>
+            `
+          : nothing}
 
         ${host._data ? renderViewContent(host, view, zoneIds, visibleZoneIds, selectedEntity, selectedZone) : nothing}
       </div>
@@ -54,6 +100,13 @@ function renderViewContent(
   selectedEntity?: string,
   selectedZone?: ScheduleZone,
 ) {
+  if (host._data?.temperature_migration?.required && view !== "settings") {
+    return html`<div class="notice">${host._t(
+      host._data.temperature_migration.reason === "legacy_celsius_upgrade_reset_required"
+        ? "temperatureLegacyResetStopped"
+        : "temperatureMigrationStopped",
+    )}</div>`;
+  }
   if (view === "overview") {
     return html`
       ${renderOverviewSummary(host, zoneIds)}
@@ -96,6 +149,10 @@ function renderViewContent(
     return renderSensorsView(host, visibleZoneIds, roomSensorViewOptions(host));
   }
 
+  if (view === "comfort") {
+    return renderComfortView(host, visibleZoneIds, comfortViewOptions(host));
+  }
+
   if (view === "preconditioning") {
     return renderPreconditioningView(host, visibleZoneIds);
   }
@@ -105,6 +162,15 @@ function renderViewContent(
   }
 
   return renderOverviewSummary(host, zoneIds);
+}
+
+function comfortViewOptions(host: CardContentHost): ComfortViewOptions {
+  return {
+    showCo2: host._config.show_comfort_co2 !== false,
+    showConfiguration: host._config.show_comfort_configuration !== false,
+    showHumidity: host._config.show_comfort_humidity !== false,
+    showTemperature: host._config.show_comfort_temperature !== false,
+  };
 }
 
 function roomSensorViewOptions(host: CardContentHost): RoomSensorViewOptions {

@@ -25,15 +25,15 @@ custom_components/velair/
   config_helpers.py    config entry helpers
   const.py             constants and service keys
   entity.py            shared entity base
+  entity_registry.py   cleanup for retired and removed-climate entities
   frontend.py          panel and static frontend registration
   models.py            typed normalization, preconditioning prediction, serialization
   scheduler.py         event calculation, timers, overrides, preconditioning runtime
-  sensor.py            diagnostic/status sensors
+  sensor.py            scheduler and per-zone state sensors
   services.py          Home Assistant service actions
   services.yaml        service descriptions
   storage.py           Home Assistant Store wrapper
-  switch.py            schedule enable/disable entity
-  select.py            scheduler mode entity
+  switch.py            automatic scheduling control
   translations/        Home Assistant translations
 ```
 
@@ -224,12 +224,36 @@ If a template temperature is outside a target climate range, the frontend clamps
 
 Exports use a separate portable model version. This lets future imports handle old files even if the internal storage model changes.
 
+Persisted thermal values use the raw runtime unit recorded in storage metadata.
+Load, save, and Home Assistant unit-change events never convert them. Portable
+model v3 preserves those raw values and declares the stored unit. Imports convert
+selected thermal sections when the source and current Home Assistant units
+differ. Model v2 and unitless v1 exports are treated as Celsius for backward
+compatibility.
+
+Live climate state belongs to Home Assistant and is not converted or
+reinterpreted by Velair. Finite `current_temperature` readings are consumed in
+the unit reported by the climate entity. Live target temperatures are accepted
+only when they fall inside that climate's declared target range; invalid values
+are excluded instead of being guessed from their magnitude. When Velair
+compares an external temperature sensor with a climate, it converts the sensor
+from its declared unit to the climate unit at that comparison boundary.
+
+Published v1.1 storage without unit metadata and `celsius_v1` storage are
+treated as Celsius. Whenever the stored unit differs from Home Assistant's
+current unit, scheduler execution and thermal writes are blocked and a
+persistent notification directs the user to Settings. Migration requires a
+unique id and expected revision under a lock, converts all thermal scopes, and
+persists before replacing runtime data. An exact retry is a no-op and a failed
+write leaves the original runtime untouched.
+
 The current export format is:
 
 ```json
 {
   "format": "velair_portable_data",
-  "model_version": 1,
+  "model_version": 3,
+  "temperature_unit": "°F",
   "exported_at": "2026-05-25T00:00:00+00:00",
   "sections": {
     "zones": {},
@@ -241,3 +265,6 @@ The current export format is:
 ```
 
 `preconditioning_learning` is an optional incremental section keyed by the exact climate entity ID. Import replaces learning only for matching managed climates contained in the section. Unknown IDs are ignored, while existing learning for local climates absent from the file is preserved.
+
+The complete persistence, conversion, validation, and recovery boundaries are
+documented in [Temperature unit internals](temperature-units.md).

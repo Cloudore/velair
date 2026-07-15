@@ -43,9 +43,14 @@ export function combinedTemperatureLimits(limits: Array<[number, number]>): [num
   ];
 }
 
-export function lowestTemperatureStep(steps: number[]): number {
-  const validSteps = steps.filter((step) => Number.isFinite(step) && step > 0);
-  return validSteps.length ? Math.min(...validSteps) : 0.5;
+export function commonTemperatureStep(steps: Array<number | undefined>): number | undefined {
+  const validSteps = steps.filter((step): step is number => step !== undefined && Number.isFinite(step) && step > 0);
+  if (validSteps.length !== steps.length || !validSteps.length) {
+    return undefined;
+  }
+  return validSteps.every((step) => Math.abs(step - validSteps[0]) <= 0.000000001)
+    ? validSteps[0]
+    : undefined;
 }
 
 export function formatTemperatureLimit(value: number): string {

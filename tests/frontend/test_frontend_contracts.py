@@ -366,7 +366,7 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn('from "./velair/views/panel"', source)
         self.assertIn("export type ScheduleResponse", types_source)
         self.assertIn(
-            "export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`",
+            "export const cardStyles = [baseStyles, comfortStyles, noticeStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`",
             styles_source,
         )
         self.assertIn("`, responsiveStyles];", styles_source)
@@ -609,7 +609,7 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn('state: "stopped"', source)
         self.assertIn("activeBoosts", source)
         self.assertIn("overview-zone-table", source)
-        self.assertIn("overview-zone-table-scroll", source)
+        self.assertIn("overview-zone-table-scroll", overview_styles_source)
         self.assertIn("overview-zone-cell sticky", source)
         self.assertIn("renderOverviewZoneSetpoint", source)
         self.assertIn("renderOverviewZoneState", source)
@@ -631,7 +631,6 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertNotIn('renderOverviewMetric(host._t("managedZones")', source)
         self.assertNotIn('renderOverviewMetric(host._t("boost")', source)
         self.assertNotIn('renderOverviewMetric(host._t("nextEvents")', source)
-        self.assertNotIn("renderOverviewMetric", source)
         self.assertNotIn("overview-block-summary", source)
         self.assertNotIn("overview-zone-next", source)
         self.assertNotIn("zoneScheduleBlockCounts", source)
@@ -879,7 +878,7 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn("private _stopTimelineNowTick", source)
         self.assertIn("this._stopTimelineNowTick()", source)
         self.assertIn("export function renderDraftListHeader", source)
-        self.assertIn("renderDraftListHeader(host)", source)
+        self.assertIn('renderDraftListHeader(host, "schedule")', source)
         self.assertIn("export function renderAddBlockButton", source)
         self.assertIn('renderAddBlockButton(host, "schedule")', source)
         self.assertIn('aria-label=${host._t("addBlock")}', source)
@@ -927,13 +926,16 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn("export function normalizeDraftBlocks", draft_blocks_domain_source)
         self.assertIn("export function draftBlockTemperatureError", draft_blocks_domain_source)
         self.assertIn("export function clampBlocksToTemperatureLimits", draft_blocks_domain_source)
-        self.assertIn("draftBlocksFromScheduleBlocks(blocks)", source)
+        self.assertIn("draftBlocksFromScheduleBlocks(\n    blocks,", source)
         self.assertIn("addDraftBlock(blocks, nextStartTime", source)
         self.assertIn("removeDraftBlockDomain(host._blocksForSource(source), index)", source)
         self.assertIn("updateDraftBlockDomain(blocks, index, field, value)", source)
         self.assertIn("export function draftBlocksFromScheduleBlocks", draft_blocks_domain_source)
         self.assertIn("export function addDraftBlock", draft_blocks_domain_source)
-        self.assertIn("temperature: Number(lastBlock?.temperature || 21)", draft_blocks_domain_source)
+        self.assertIn(
+            "temperature: Number(lastBlock?.temperature || defaultTargetTemperature(unit))",
+            draft_blocks_domain_source,
+        )
         self.assertIn('hvac_mode: ""', draft_blocks_domain_source)
         self.assertIn("export function updateDraftBlock", draft_blocks_domain_source)
         self.assertIn("export function isActiveBoostOverride", overrides_domain_source)
@@ -1002,7 +1004,10 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn("selectTemplateToBegin", source)
         self.assertIn("template.key === host._selectedTemplateKey", source)
         self.assertNotIn("?? templates[0]", source)
-        self.assertIn("scheduleTemplatesFromStored(this._data?.templates)", source)
+        self.assertIn(
+            "scheduleTemplatesFromStored(this._data?.templates, this._temperatureUnit())",
+            source,
+        )
         self.assertIn("export function scheduleTemplatesFromStored", templates_domain_source)
         self.assertIn("export function uniqueTemplateName", templates_domain_source)
         self.assertIn("export function newTemplateKey", templates_domain_source)

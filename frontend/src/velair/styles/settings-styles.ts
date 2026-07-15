@@ -13,7 +13,8 @@ export const settingsStyles = css`
 .settings-portability,
 .settings-maintenance,
 .settings-reset,
-.settings-startup {
+.settings-startup,
+.settings-temperature {
   background: var(--secondary-background-color);
   border: 1px solid var(--divider-color);
   border-radius: 8px;
@@ -30,6 +31,54 @@ export const settingsStyles = css`
   display: grid;
   gap: 12px;
   grid-template-columns: 36px minmax(0, 1fr) auto;
+}
+
+.settings-temperature {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+}
+
+.settings-temperature.migration-required {
+  border-color: var(--warning-color, #c99500);
+}
+
+.settings-temperature-copy {
+  min-width: 0;
+}
+
+.settings-temperature-copy > p,
+.temperature-migration-action p {
+  color: var(--secondary-text-color);
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+.settings-temperature-value {
+  align-self: center;
+  background: var(--card-background-color);
+  border: 1px solid var(--divider-color);
+  border-radius: 999px;
+  font-size: 16px;
+  padding: 7px 12px;
+}
+
+.temperature-migration-action {
+  border-top: 1px solid var(--divider-color);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.temperature-migration-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.temperature-migration-buttons .command-button {
+  width: auto;
 }
 
 .settings-startup ha-switch {
@@ -284,6 +333,10 @@ export const settingsStyles = css`
   font-size: 12px;
   gap: 4px;
   min-width: 0;
+}
+
+.settings-facts .capability-not-reported {
+  color: var(--secondary-text-color);
 }
 
 .settings-facts ha-icon,

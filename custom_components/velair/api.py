@@ -44,9 +44,17 @@ from .config_helpers import (
     should_apply_active_schedule_on_startup,
 )
 from .models import (
+    DEFAULT_COMFORT_TEMPERATURE_MAX,
+    DEFAULT_COMFORT_TEMPERATURE_MIN,
+    DEFAULT_MAX_TEMPERATURE,
+    DEFAULT_MIN_TEMPERATURE,
+    DEFAULT_PRECONDITIONING_FALLBACK_MINUTES_PER_DEGREE,
+    DEFAULT_PRECONDITIONING_MINIMUM_DELTA,
+    DEFAULT_ROOM_SENSOR_ASSIST_MAX_DELTA,
     WEEKDAYS,
     ClimateEvent,
     MIN_PRECONDITIONING_COMPLETE_SAMPLES,
+    normalize_comfort_data,
     normalize_panel_settings,
     normalize_preconditioning_data,
     normalize_preconditioning_learning_data,
@@ -57,11 +65,21 @@ from .models import (
     normalize_schedule_templates,
     serialize_schedule_data,
 )
-from .storage import STORAGE_VERSION
+from .storage import STORAGE_VERSION, convert_portable_temperature_data
+from .temperature import (
+    CELSIUS,
+    FAHRENHEIT,
+    absolute_temperature,
+    rate_per_degree,
+    temperature_delta,
+)
+from .temperature_migration import (
+    async_dismiss_temperature_migration_notification,
+)
 
 API_REGISTERED = f"{DOMAIN}_websocket_api_registered"
 EXPORT_FORMAT = "velair_portable_data"
-EXPORT_MODEL_VERSION = 1
+EXPORT_MODEL_VERSION = 3
 EXPORT_SECTIONS = ("zones", "templates", "settings", "preconditioning_learning")
 EXPORT_SECTION_SCHEMA = vol.All(
     cv.ensure_list,
@@ -99,7 +117,7 @@ PRECONDITIONING_SCHEMA = vol.Schema(
         ),
         vol.Optional("minimum_delta_temperature"): vol.All(
             vol.Coerce(float),
-            vol.Range(min=0, max=5),
+            vol.Range(min=0, max=9),
         ),
         vol.Optional("learning_history_size"): vol.All(
             vol.Coerce(int),
@@ -127,8 +145,8 @@ PRECONDITIONING_SCHEMA = vol.Schema(
             vol.Range(min=0, max=1440),
         ),
         vol.Optional("fallback_minutes_per_degree"): vol.All(
-            vol.Coerce(int),
-            vol.Range(min=1, max=120),
+            vol.Coerce(float),
+            vol.Range(min=5 / 9, max=120),
         ),
         vol.Optional("use_outdoor_temperature"): bool,
         vol.Optional("outdoor_temperature_entity_id"): vol.Any(None, cv.entity_id),
@@ -145,6 +163,44 @@ PRECONDITIONING_SCHEMA = vol.Schema(
     }
 )
 
+COMFORT_SCHEMA = vol.Schema(
+    {
+        vol.Optional("enabled"): bool,
+        vol.Optional("temperature_entity_id"): vol.Any(None, cv.entity_id),
+        vol.Optional("humidity_enabled"): bool,
+        vol.Optional("humidity_entity_id"): vol.Any(None, cv.entity_id),
+        vol.Optional("co2_entity_id"): vol.Any(None, cv.entity_id),
+        vol.Optional("temperature_min"): vol.All(
+            vol.Coerce(float),
+            vol.Range(min=-58, max=212),
+        ),
+        vol.Optional("temperature_max"): vol.All(
+            vol.Coerce(float),
+            vol.Range(min=-58, max=212),
+        ),
+        vol.Optional("humidity_min"): vol.All(
+            vol.Coerce(float),
+            vol.Range(min=0, max=100),
+        ),
+        vol.Optional("humidity_max"): vol.All(
+            vol.Coerce(float),
+            vol.Range(min=0, max=100),
+        ),
+        vol.Optional("co2_attention"): vol.All(
+            vol.Coerce(float),
+            vol.Range(min=400, max=10000),
+        ),
+        vol.Optional("co2_poor"): vol.All(
+            vol.Coerce(int),
+            vol.Range(min=400, max=10000),
+        ),
+        vol.Optional("stale_after_minutes"): vol.All(
+            vol.Coerce(int),
+            vol.Range(min=5, max=1440),
+        ),
+    }
+)
+
 
 def async_setup_api(hass: HomeAssistant) -> None:
     """Register WebSocket API commands."""
@@ -152,6 +208,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
         return
 
     websocket_api.async_register_command(hass, ws_get_schedule)
+    websocket_api.async_register_command(hass, ws_resolve_temperature_migration)
     websocket_api.async_register_command(hass, ws_set_daily_schedule)
     websocket_api.async_register_command(hass, ws_copy_day_schedule)
     websocket_api.async_register_command(hass, ws_clear_schedule)
@@ -159,6 +216,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_delete_schedule_template)
     websocket_api.async_register_command(hass, ws_update_settings)
     websocket_api.async_register_command(hass, ws_update_zone_preconditioning)
+    websocket_api.async_register_command(hass, ws_update_zone_comfort)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_learning)
     websocket_api.async_register_command(hass, ws_export_data)
@@ -257,6 +315,8 @@ async def ws_set_daily_schedule(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         blocks = normalize_schedule_blocks(msg[ATTR_BLOCKS])
         await scheduler.async_set_daily_schedule(
             msg[ATTR_ENTITY_ID],
@@ -296,6 +356,8 @@ async def ws_copy_day_schedule(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         await scheduler.async_copy_day_schedule(
             msg[ATTR_ENTITY_ID],
             msg[ATTR_SOURCE_WEEKDAY],
@@ -329,6 +391,8 @@ async def ws_clear_schedule(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         await scheduler.async_clear_schedule(
             msg[ATTR_ENTITY_ID],
             msg.get(ATTR_WEEKDAY),
@@ -360,6 +424,8 @@ async def ws_set_schedule_template(
         connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
         return
 
+    if _reject_temperature_migration_mutation(runtime, connection, msg):
+        return
     name = msg[ATTR_NAME].strip()
     if not name:
         connection.send_error(msg["id"], "invalid_template", "Template name is required")
@@ -402,6 +468,8 @@ async def ws_update_settings(
         connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
         return
 
+    if _reject_temperature_migration_mutation(runtime, connection, msg):
+        return
     if CONF_APPLY_ACTIVE_SCHEDULE_ON_STARTUP in msg:
         entry = runtime["entry"]
         next_options = {
@@ -454,12 +522,128 @@ async def ws_update_zone_preconditioning(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         await scheduler.async_update_zone_preconditioning(
             msg[ATTR_ENTITY_ID],
             msg["preconditioning"],
         )
     except ValueError as err:
         connection.send_error(msg["id"], "invalid_preconditioning", str(err))
+        return
+
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/resolve_temperature_migration",
+        vol.Required("source_unit"): vol.In((CELSIUS, FAHRENHEIT)),
+        vol.Required("migration_id"): cv.string,
+        vol.Required("expected_revision"): vol.All(vol.Coerce(int), vol.Range(min=0)),
+    }
+)
+@websocket_api.async_response
+async def ws_resolve_temperature_migration(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Resolve ambiguous legacy temperatures and restart automatic scheduling."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+
+    storage = runtime["storage"]
+    scheduler = runtime["scheduler"]
+    entry = runtime["entry"]
+    if not _begin_exclusive_operation(
+        runtime, connection, msg, "temperature_migration"
+    ):
+        return
+    source_unit = msg["source_unit"]
+    target_unit = getattr(storage, "home_assistant_temperature_unit", CELSIUS)
+    persisted = False
+    try:
+        applied = await storage.async_resolve_temperature_migration(
+            source_unit,
+            migration_id=msg["migration_id"],
+            expected_revision=msg["expected_revision"],
+        )
+    except ValueError as err:
+        runtime["operation_active"] = None
+        scheduler.set_temperature_migration_blocked(
+            storage.temperature_migration_required
+        )
+        connection.send_error(msg["id"], "invalid_temperature_migration", str(err))
+        return
+    except Exception as err:
+        runtime["operation_active"] = None
+        scheduler.set_temperature_migration_blocked(
+            storage.temperature_migration_required
+        )
+        connection.send_error(msg["id"], "temperature_migration_failed", str(err))
+        return
+    try:
+        persisted = applied
+        if applied:
+            if not storage.temperature_migration_required:
+                await scheduler.async_restore_room_sensor_assist_after_temperature_operation(
+                    source_unit, target_unit, reason="temperature_migration"
+                )
+                scheduler.handle_temperature_unit_change()
+        blocked = _finish_exclusive_operation(runtime)
+        if not blocked:
+            await async_dismiss_temperature_migration_notification(hass, entry.entry_id)
+            await scheduler.async_start(
+                apply_current_schedule=should_apply_active_schedule_on_startup(entry)
+            )
+    except Exception as err:  # Recovery must remain visible after persistence.
+        if persisted:
+            _mark_operation_recovery(runtime, "temperature_migration", err)
+            connection.send_error(
+                msg["id"],
+                "operation_recovery_required",
+                "Velair saved the data but could not restore climate state. "
+                "The scheduler remains stopped. Reload the Velair integration or "
+                "restart Home Assistant to recover. "
+                f"Details: {err}",
+            )
+            return
+        raise
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/update_zone_comfort",
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required("comfort"): COMFORT_SCHEMA,
+    }
+)
+@websocket_api.async_response
+async def ws_update_zone_comfort(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle persisted zone comfort monitoring setting updates."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+
+    scheduler = runtime["scheduler"]
+    try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
+        await scheduler.async_update_zone_comfort(
+            msg[ATTR_ENTITY_ID],
+            msg["comfort"],
+        )
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_comfort", str(err))
         return
 
     connection.send_result(msg["id"], _build_schedule_response(runtime))
@@ -485,6 +669,8 @@ async def ws_reset_zone_preconditioning_settings(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         await scheduler.async_reset_zone_preconditioning_settings(
             msg[ATTR_ENTITY_ID]
         )
@@ -516,6 +702,8 @@ async def ws_reset_zone_preconditioning_learning(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         await scheduler.async_reset_zone_preconditioning_learning(
             msg[ATTR_ENTITY_ID],
             msg["direction"],
@@ -544,7 +732,13 @@ def ws_export_data(
     if runtime is None:
         connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
         return
-
+    if runtime.get("operation_active"):
+        connection.send_error(
+            msg["id"],
+            "operation_in_progress",
+            "Another Velair data operation is in progress",
+        )
+        return
     connection.send_result(
         msg["id"],
         _build_export_payload(runtime, msg["sections"]),
@@ -570,23 +764,57 @@ async def ws_import_data(
         connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
         return
 
+    if _reject_temperature_migration_mutation(runtime, connection, msg):
+        return
     try:
         import_data = _build_import_data(runtime, msg["payload"], msg["sections"])
     except ValueError as err:
         connection.send_error(msg["id"], "invalid_import", str(err))
         return
 
-    startup_option = import_data.pop("apply_active_schedule_on_startup", None)
-    if startup_option is not None:
-        entry = runtime["entry"]
-        next_options = {
-            **entry.options,
-            CONF_APPLY_ACTIVE_SCHEDULE_ON_STARTUP: bool(startup_option),
-        }
-        hass.config_entries.async_update_entry(entry, options=next_options)
+    if not _begin_exclusive_operation(runtime, connection, msg, "portable_import"):
+        return
 
+    startup_option = import_data.pop("apply_active_schedule_on_startup", None)
     scheduler = runtime["scheduler"]
-    await scheduler.async_replace_portable_data(**import_data)
+    source_unit = getattr(runtime["storage"], "effective_temperature_unit", CELSIUS)
+    target_unit = getattr(runtime["storage"], "effective_temperature_unit", CELSIUS)
+    persisted = False
+    try:
+        await scheduler.async_replace_portable_data(**import_data)
+        persisted = True
+        if startup_option is not None:
+            entry = runtime["entry"]
+            next_options = {
+                **entry.options,
+                CONF_APPLY_ACTIVE_SCHEDULE_ON_STARTUP: bool(startup_option),
+            }
+            hass.config_entries.async_update_entry(entry, options=next_options)
+        if not runtime["storage"].temperature_migration_required:
+            await scheduler.async_restore_room_sensor_assist_after_temperature_operation(
+                source_unit, target_unit, reason="portable_import"
+            )
+        blocked = _finish_exclusive_operation(runtime)
+        if not blocked:
+            await scheduler.async_start(apply_current_schedule=False)
+    except Exception as err:
+        if persisted:
+            _mark_operation_recovery(runtime, "portable_import", err)
+            connection.send_error(
+                msg["id"],
+                "operation_recovery_required",
+                "Velair saved the imported data but could not restore climate state. "
+                "The scheduler remains stopped. Reload the Velair integration or "
+                "restart Home Assistant to recover. "
+                f"Details: {err}",
+            )
+            return
+        runtime["operation_active"] = None
+        scheduler.set_temperature_migration_blocked(
+            runtime["storage"].temperature_migration_required
+        )
+        connection.send_error(msg["id"], "invalid_import", str(err))
+        return
     connection.send_result(msg["id"], _build_schedule_response(runtime))
 
 
@@ -607,16 +835,57 @@ async def ws_reset_data(
     if runtime is None:
         connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
         return
+    storage = runtime["storage"]
+    if (
+        storage.temperature_migration_required
+        and not getattr(storage, "legacy_temperature_reset_required", False)
+    ):
+        _reject_temperature_migration_mutation(runtime, connection, msg)
+        return
 
     entry = runtime["entry"]
     next_options = {
         **entry.options,
         CONF_APPLY_ACTIVE_SCHEDULE_ON_STARTUP: False,
     }
-    hass.config_entries.async_update_entry(entry, options=next_options)
 
-    data = normalize_schedule_data(None, get_configured_climate_entities(entry))
-    await runtime["scheduler"].async_reset_data(data)
+    scheduler = runtime["scheduler"]
+    if not _begin_exclusive_operation(runtime, connection, msg, "data_reset"):
+        return
+    source_unit = getattr(storage, "effective_temperature_unit", CELSIUS)
+    persisted = False
+    try:
+        await storage.async_reset_to_defaults()
+        persisted = True
+        hass.config_entries.async_update_entry(entry, options=next_options)
+        await scheduler.async_prepare_data_reset()
+        target_unit = getattr(storage, "effective_temperature_unit", CELSIUS)
+        if not storage.temperature_migration_required:
+            await scheduler.async_restore_room_sensor_assist_after_temperature_operation(
+                source_unit, target_unit, reason="data_reset"
+            )
+            scheduler.handle_temperature_unit_change()
+        blocked = _finish_exclusive_operation(runtime)
+        if not blocked:
+            await async_dismiss_temperature_migration_notification(hass, entry.entry_id)
+            await scheduler.async_start(apply_current_schedule=False)
+    except Exception as err:
+        if persisted:
+            _mark_operation_recovery(runtime, "data_reset", err)
+            connection.send_error(
+                msg["id"],
+                "operation_recovery_required",
+                "Velair reset the stored data but could not restore climate state. "
+                "The scheduler remains stopped. Reload the Velair integration or "
+                "restart Home Assistant to recover. "
+                f"Details: {err}",
+            )
+            return
+        runtime["operation_active"] = None
+        blocker = getattr(scheduler, "set_temperature_migration_blocked", None)
+        if blocker is not None:
+            blocker(storage.temperature_migration_required)
+        raise
     connection.send_result(msg["id"], _build_schedule_response(runtime))
 
 
@@ -640,6 +909,8 @@ async def ws_delete_schedule_template(
 
     scheduler = runtime["scheduler"]
     try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
         await scheduler.async_delete_schedule_template(msg[ATTR_KEY])
     except ValueError as err:
         connection.send_error(msg["id"], "invalid_template", str(err))
@@ -656,7 +927,90 @@ def _get_runtime(hass: HomeAssistant) -> dict[str, Any] | None:
         for key, runtime in entries.items()
         if isinstance(key, str) and key != API_REGISTERED
     ]
-    return entry_runtimes[0] if entry_runtimes else None
+    runtime = entry_runtimes[0] if entry_runtimes else None
+    if runtime is not None:
+        runtime["scheduler"].set_temperature_migration_blocked(bool(
+            runtime["storage"].temperature_migration_required
+            or runtime.get("operation_active")
+            or runtime.get("operation_recovery")
+        ))
+    return runtime
+
+
+def _reject_temperature_migration_mutation(
+    runtime: dict[str, Any],
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> bool:
+    """Reject writes while the source unit of legacy temperatures is unresolved."""
+    if runtime.get("operation_active"):
+        connection.send_error(
+            msg["id"],
+            "operation_in_progress",
+            "Another Velair data operation is in progress",
+        )
+        return True
+    if runtime.get("operation_recovery"):
+        connection.send_error(
+            msg["id"],
+            "operation_recovery_required",
+            "Velair is stopped because a persisted data operation needs recovery",
+        )
+        return True
+    if not runtime["storage"].temperature_migration_required:
+        return False
+    connection.send_error(
+        msg["id"],
+        "temperature_migration_required",
+        "The Velair scheduler is stopped until the existing temperature unit is confirmed",
+    )
+    return True
+
+
+def _begin_exclusive_operation(
+    runtime: dict[str, Any],
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+    operation: str,
+) -> bool:
+    """Acquire the runtime-wide write guard and stop scheduler side effects."""
+    if runtime.get("operation_active") or runtime.get("operation_recovery"):
+        _reject_temperature_migration_mutation(runtime, connection, msg)
+        return False
+    runtime["operation_active"] = operation
+    blocker = getattr(runtime["scheduler"], "set_temperature_migration_blocked", None)
+    if blocker is not None:
+        blocker(True)
+    return True
+
+
+def _finish_exclusive_operation(runtime: dict[str, Any]) -> bool:
+    """Release a successful operation and return whether scheduling stays blocked."""
+    runtime["operation_active"] = None
+    blocked = bool(
+        runtime["storage"].temperature_migration_required
+        or runtime.get("operation_recovery")
+    )
+    blocker = getattr(runtime["scheduler"], "set_temperature_migration_blocked", None)
+    if blocker is not None:
+        blocker(blocked)
+    return blocked
+
+
+def _mark_operation_recovery(
+    runtime: dict[str, Any], operation: str, err: Exception
+) -> None:
+    """Keep scheduling stopped after a failure following persisted mutation."""
+    runtime["operation_active"] = None
+    runtime["operation_recovery"] = {
+        "operation": operation,
+        "phase": "recovery",
+        "persisted": True,
+        "message": str(err),
+    }
+    blocker = getattr(runtime["scheduler"], "set_temperature_migration_blocked", None)
+    if blocker is not None:
+        blocker(True)
 
 
 def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
@@ -674,6 +1028,16 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "configured_entities": list(storage.data["zones"]),
+        "temperature_unit": getattr(storage, "effective_temperature_unit", CELSIUS),
+        "home_assistant_temperature_unit": getattr(
+            storage, "home_assistant_temperature_unit", CELSIUS
+        ),
+        "temperature_migration": (
+            storage.temperature_migration_status()
+            if hasattr(storage, "temperature_migration_status")
+            else {"required": False, "reason": None}
+        ),
+        "operation_recovery": runtime.get("operation_recovery"),
         "global": stored_data["global"],
         "settings": settings,
         "zones": stored_data["zones"],
@@ -684,7 +1048,18 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
             for event in _schedule_response_next_events(scheduler)
         ],
         "active_overrides": scheduler.get_active_overrides(),
-        "room_sensor_assist": scheduler.get_room_sensor_assist_statuses(),
+        "room_sensor_assist": (
+            {} if getattr(scheduler, "temperature_migration_blocked", False)
+            else scheduler.get_room_sensor_assist_statuses()
+        ),
+        "comfort": (
+            {} if getattr(scheduler, "temperature_migration_blocked", False)
+            else scheduler.get_comfort_assessments()
+        ),
+        "zone_runtime": (
+            {} if getattr(scheduler, "temperature_migration_blocked", False)
+            else getattr(scheduler, "get_zone_runtime_statuses", lambda: {})()
+        ),
         "preconditioning_learning": _build_preconditioning_learning_response(
             stored_data,
             _runtime_climate_manager(runtime),
@@ -707,7 +1082,12 @@ def _build_export_payload(
     """Build a versioned portable export payload."""
     storage = runtime["storage"]
     entry = runtime["entry"]
-    stored_data = serialize_schedule_data(storage.data)
+    raw_data = getattr(storage, "raw_data", None)
+    stored_data = (
+        raw_data()
+        if callable(raw_data)
+        else serialize_schedule_data(storage.data)
+    )
     exported_sections: dict[str, Any] = {}
 
     if "zones" in sections:
@@ -729,6 +1109,7 @@ def _build_export_payload(
     return {
         "format": EXPORT_FORMAT,
         "model_version": EXPORT_MODEL_VERSION,
+        "temperature_unit": getattr(storage, "effective_temperature_unit", CELSIUS),
         "exported_at": datetime.now(UTC).isoformat(),
         "sections": exported_sections,
     }
@@ -742,6 +1123,8 @@ def _build_import_data(
     """Validate a portable import payload and return normalized scheduler data."""
     payload_sections = _validate_import_payload(payload)
     storage = runtime["storage"]
+    payload_unit = payload.get("temperature_unit", CELSIUS)
+    target_unit = getattr(storage, "effective_temperature_unit", CELSIUS)
     current_zones = storage.data["zones"]
     import_data: dict[str, Any] = {}
 
@@ -752,6 +1135,17 @@ def _build_import_data(
         raise ValueError(
             f"Import file does not contain: {', '.join(missing_sections)}"
         )
+
+    selected_payload = {
+        section: deepcopy(payload_sections[section]) for section in sections
+    }
+    _hydrate_portable_temperature_defaults(selected_payload, payload_unit)
+    payload_sections = convert_portable_temperature_data(
+        selected_payload,
+        payload_unit,
+        target_unit,
+        getattr(storage, "_hass", None),
+    )
 
     if "zones" in sections:
         import_data["zones"] = _normalize_import_zones(
@@ -786,6 +1180,65 @@ def _build_import_data(
     return import_data
 
 
+def _hydrate_portable_temperature_defaults(
+    sections: dict[str, Any], source_unit: str
+) -> None:
+    """Add source-unit defaults before a portable payload is converted."""
+    settings = sections.get("settings")
+    if isinstance(settings, dict):
+        settings.setdefault(
+            "min_temperature",
+            absolute_temperature(DEFAULT_MIN_TEMPERATURE, CELSIUS, source_unit),
+        )
+        settings.setdefault(
+            "max_temperature",
+            absolute_temperature(DEFAULT_MAX_TEMPERATURE, CELSIUS, source_unit),
+        )
+
+    zones = sections.get("zones")
+    if not isinstance(zones, dict):
+        return
+    for zone in zones.values():
+        if not isinstance(zone, dict):
+            continue
+        comfort = zone.setdefault("comfort", {})
+        if isinstance(comfort, dict):
+            comfort.setdefault(
+                "temperature_min",
+                absolute_temperature(
+                    DEFAULT_COMFORT_TEMPERATURE_MIN, CELSIUS, source_unit
+                ),
+            )
+            comfort.setdefault(
+                "temperature_max",
+                absolute_temperature(
+                    DEFAULT_COMFORT_TEMPERATURE_MAX, CELSIUS, source_unit
+                ),
+            )
+        preconditioning = zone.setdefault("preconditioning", {})
+        if isinstance(preconditioning, dict):
+            preconditioning.setdefault(
+                "minimum_delta_temperature",
+                temperature_delta(
+                    DEFAULT_PRECONDITIONING_MINIMUM_DELTA, CELSIUS, source_unit
+                ),
+            )
+            preconditioning.setdefault(
+                "room_sensor_assist_max_delta",
+                temperature_delta(
+                    DEFAULT_ROOM_SENSOR_ASSIST_MAX_DELTA, CELSIUS, source_unit
+                ),
+            )
+            preconditioning.setdefault(
+                "fallback_minutes_per_degree",
+                rate_per_degree(
+                    DEFAULT_PRECONDITIONING_FALLBACK_MINUTES_PER_DEGREE,
+                    CELSIUS,
+                    source_unit,
+                ),
+            )
+
+
 def _validate_import_payload(payload: dict[str, Any]) -> dict[str, Any]:
     """Validate portable payload metadata and return its sections."""
     if payload.get("format") != EXPORT_FORMAT:
@@ -796,6 +1249,10 @@ def _validate_import_payload(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Import file has an invalid model version")
     if model_version > EXPORT_MODEL_VERSION:
         raise ValueError("Import file was created by a newer Velair version")
+    if model_version == 2 and payload.get("temperature_unit", CELSIUS) != CELSIUS:
+        raise ValueError("Portable model version 2 contains Celsius data")
+    if payload.get("temperature_unit", CELSIUS) not in (CELSIUS, FAHRENHEIT):
+        raise ValueError("Portable temperature_unit must be °C or °F")
 
     sections = payload.get("sections")
     if not isinstance(sections, dict) or not sections:
@@ -810,9 +1267,8 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
         entity_id: {
             "enabled": bool(zone.get("enabled", True)),
             "schedule": deepcopy(zone.get("schedule", {})),
-            "preconditioning": normalize_preconditioning_data(
-                zone.get("preconditioning")
-            ),
+            "preconditioning": deepcopy(zone.get("preconditioning", {})),
+            "comfort": deepcopy(zone.get("comfort", {})),
         }
         for entity_id, zone in zones.items()
     }
@@ -914,6 +1370,10 @@ def _runtime_climate_manager(runtime: dict[str, Any]):
 
 def _schedule_response_next_events(scheduler) -> list[ClimateEvent]:
     """Return upcoming events intended for the UI response."""
+    cached = getattr(scheduler, "next_events_by_zone", None)
+    if isinstance(cached, list):
+        return cached
+
     calculate_by_zone = getattr(scheduler, "calculate_next_events_by_zone", None)
     if callable(calculate_by_zone):
         return calculate_by_zone(dt_util.now())

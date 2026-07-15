@@ -23,8 +23,9 @@ import {
   type TimelinePauseBlock,
 } from "../domain/timeline";
 import { scheduledEventAt } from "../domain/schedule-events";
+import { signedAssistDelta } from "../domain/room-assist";
 import type { VelairViewHost } from "../host-types";
-import type { ScheduleBlock, ScheduleEvent, ScheduleZone } from "../types";
+import type { ComfortAssessment, RoomSensorAssistStatus, ScheduleBlock, ScheduleEvent, ScheduleZone, ZoneRuntimeStatus } from "../types";
 
 type OverviewViewHost = VelairViewHost;
 type OverviewSchedulerState = "running" | "paused" | "stopped";
@@ -192,19 +193,189 @@ export function renderOverviewZones(host: OverviewViewHost, zoneIds: string[]) {
   return html`
     <section class="overview-zones">
       ${renderOverviewSectionHeading(host._t("overviewZones"), "mdi:thermostat")}
-      <div class="overview-zone-table-scroll">
-        <div class="overview-zone-table" role="table" aria-label=${host._t("overviewZones")}>
-          <div class="overview-zone-table-row header" role="row">
-            <div class="overview-zone-cell sticky" role="columnheader">${host._t("thermostat")}</div>
-            <div class="overview-zone-cell" role="columnheader">${host._t("currentTemperature")}</div>
-            <div class="overview-zone-cell" role="columnheader">${host._t("targetTemperature")} / ${host._t("mode")}</div>
-            <div class="overview-zone-cell" role="columnheader">${host._t("status")}</div>
-          </div>
-          ${zoneIds.map((entityId) => renderOverviewZoneRow(host, entityId, host._data?.zones[entityId]))}
-        </div>
+      <div class="overview-zone-cards">
+        ${zoneIds.map((entityId) => renderOverviewRuntimeZone(host, entityId))}
       </div>
     </section>
   `;
+}
+
+const zoneStatePresentation: Record<ZoneRuntimeStatus["state"], { icon: string; key: string }> = {
+  stopped: { icon: "mdi:stop-circle-outline", key: "overviewZoneStopped" },
+  paused: { icon: "mdi:pause-circle", key: "overviewZonePaused" },
+  boost: { icon: "mdi:lightning-bolt", key: "overviewZoneBoost" },
+  preconditioning: { icon: "mdi:clock-fast", key: "overviewZonePreconditioning" },
+  scheduled: { icon: "mdi:calendar-clock", key: "overviewZoneScheduled" },
+  idle: { icon: "mdi:hand-back-right-outline", key: "overviewZoneIdle" },
+};
+
+function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
+  const runtime = host._data?.zone_runtime?.[entityId];
+  const hasRuntime = runtime !== undefined && runtime !== null;
+  const fallback: ZoneRuntimeStatus = { state: "idle" };
+  const status = (runtime ?? fallback) as ZoneRuntimeStatus & {
+    active_from: string;
+    target_when: string;
+    until: string;
+  };
+  const climateState = host.hass?.states?.[entityId];
+  const climateAvailable = climateState
+    && climateState.state !== "off"
+    && climateState.state !== "unknown"
+    && climateState.state !== "unavailable";
+  const roomTemperature = numericTemperature(status.room_temperature)
+    ?? (!hasRuntime ? numericTemperature(climateState?.attributes?.current_temperature) : undefined);
+  const targetTemperature = numericTemperature(status.target_temperature)
+    ?? (!hasRuntime && climateAvailable ? numericTemperature(climateState.attributes?.temperature) : undefined);
+  const appliedTemperature = numericTemperature(status.applied_temperature);
+  const presentation = zoneStatePresentation[status.state];
+  const assist = host._data?.room_sensor_assist?.[entityId];
+  const comfort = host._data?.comfort?.[entityId];
+  const assistIsActive = Boolean(assist && (assist.status === "assisting" || assist.status === "holding")
+    && hasRoomAssistThermalData(assist));
+  const hasStandardDetails = roomTemperature !== undefined
+    || targetTemperature !== undefined
+    || (appliedTemperature !== undefined && targetTemperature !== undefined
+      && Math.abs(appliedTemperature - targetTemperature) >= 0.05);
+  return html`
+    <article class=${`overview-zone-card state-${status.state}`}>
+      <div class="overview-zone-card-heading">
+        <div class="overview-zone-card-name">
+          <strong>${host._friendlyEntityName(entityId)}</strong><span>${entityId}</span>
+        </div>
+        <div class="overview-zone-signals">
+          ${renderRoomAssistSignal(host, assist)}
+          ${renderOverviewComfortSignals(host, comfort)}
+        </div>
+        ${renderOverviewStateBadge(host, entityId, status, presentation)}
+      </div>
+      ${assistIsActive || hasStandardDetails ? html`<div class="overview-zone-details">
+        ${assistIsActive ? renderRoomAssistThermalFlow(host, entityId, assist!) : html`<div class="overview-zone-metrics">
+          ${roomTemperature !== undefined
+            ? renderOverviewMetric(host._t("overviewZoneRoom"), roomTemperature, host, entityId)
+            : nothing}
+          ${targetTemperature !== undefined
+            ? renderOverviewMetric(host._t("overviewZoneTarget"), targetTemperature, host, entityId)
+            : nothing}
+          ${appliedTemperature !== undefined && targetTemperature !== undefined
+            && Math.abs(appliedTemperature - targetTemperature) >= 0.05
+            ? renderOverviewMetric(host._t("overviewZoneApplied"), appliedTemperature, host, entityId)
+            : nothing}
+        </div>`}
+      </div>` : nothing}
+    </article>`;
+}
+
+function renderOverviewStateBadge(host: OverviewViewHost, entityId: string, status: ZoneRuntimeStatus, presentation: { icon: string; key: string }) {
+  let context = "";
+  if (status.state === "paused") context = status.until ? host._t("overviewZoneResumes", { time: host._formatDateTime(status.until) }) : host._t("overviewZoneUntilResumed");
+  if (status.state === "boost" && status.until) context = host._t("overviewZoneUntil", { time: host._formatDateTime(status.until) });
+  if (status.state === "preconditioning" && status.target_when) context = host._t("overviewZoneReadyAt", { time: host._formatDateTime(status.target_when) });
+  if (status.state === "scheduled") {
+    const next = host._data?.next_events?.find((event) => event.entity_id === entityId);
+    context = next?.when ? host._t("overviewZoneNextAt", { time: host._formatDateTime(next.when) }) : status.hvac_mode ? host._modeLabel(status.hvac_mode) : "";
+  }
+  if (status.state === "idle" && status.hvac_mode) context = host._t("overviewZoneManualMode", { mode: host._modeLabel(status.hvac_mode) });
+  if (status.state === "stopped") context = host._t("overviewZoneAutomationOff");
+  const label = host._t(presentation.key as never);
+  return html`<section class=${`overview-zone-activity state-${status.state}`} aria-label=${context ? `${label}: ${context}` : label} title=${context || label}>
+    <span class="overview-zone-activity-icon"><ha-icon icon=${presentation.icon}></ha-icon></span>
+    <span class="overview-zone-activity-copy">
+      <small class="overview-zone-activity-eyebrow">${host._t("overviewZoneCurrentState")}</small>
+      <strong>${label}</strong>
+      <small class="overview-zone-activity-context" aria-hidden=${context ? "false" : "true"}>${context || "\u00a0"}</small>
+    </span>
+  </section>`;
+}
+
+function hasRoomAssistThermalData(assist: RoomSensorAssistStatus): boolean {
+  return [assist.room_temperature, assist.climate_temperature, assist.target_temperature, assist.climate_target_temperature, assist.applied_temperature, assist.assist_delta].some((value) => numericTemperature(value) !== undefined);
+}
+
+function renderRoomAssistThermalFlow(host: OverviewViewHost, entityId: string, assist: RoomSensorAssistStatus) {
+  const applied = assist.status === "assisting" || assist.status === "holding"
+    ? numericTemperature(assist.applied_temperature) ?? numericTemperature(assist.climate_target_temperature)
+    : numericTemperature(assist.climate_target_temperature) ?? numericTemperature(assist.applied_temperature);
+  const delta = numericTemperature(assist.assist_delta);
+  return html`<div class="overview-assist-flow" aria-label=${host._t("overviewZoneRoomAssistThermalFlow")}>
+    ${renderAssistGroup(host._t("overviewZoneTemperature"), [
+      renderOptionalAssistMetric(host, entityId, "overviewZoneClimate", assist.climate_temperature),
+      renderOptionalAssistMetric(host, entityId, "overviewZoneSensor", assist.room_temperature),
+    ])}
+    ${renderAssistGroup(host._t("overviewZoneSetpoint"), [
+      renderOptionalAssistMetric(host, entityId, "overviewZoneClimate", applied),
+      renderOptionalAssistMetric(host, entityId, "overviewZoneScheduledSetpoint", assist.target_temperature),
+    ])}
+    ${delta !== undefined ? html`<span class="overview-assist-offset"><small>${host._t("overviewZoneOffset")}</small><strong>${formatSignedAssistDelta(host, entityId, signedAssistDelta(delta, assist.direction))}</strong></span>` : nothing}
+  </div>`;
+}
+
+function renderAssistGroup(label: string, metrics: unknown[]) {
+  const available = metrics.filter((metric) => metric !== nothing);
+  return available.length ? html`<section class="overview-assist-group"><small>${label}</small><div>${available}</div></section>` : nothing;
+}
+
+function renderOptionalAssistMetric(host: OverviewViewHost, entityId: string, key: string, value: unknown) {
+  const numeric = numericTemperature(value);
+  return numeric === undefined ? nothing : html`<span class="overview-assist-metric"><small>${host._t(key as never)}</small><strong>${host._formatTemperature(numeric, entityId)}</strong></span>`;
+}
+
+function formatSignedAssistDelta(host: OverviewViewHost, entityId: string, value: number): string {
+  const formatted = host._formatTemperature(Math.abs(value), entityId);
+  return value > 0 ? `+${formatted}` : value < 0 ? `-${formatted}` : formatted;
+}
+
+function renderRoomAssistSignal(host: OverviewViewHost, assist?: RoomSensorAssistStatus) {
+  if (!assist || !["assisting", "holding"].includes(assist.status)) return nothing;
+  const value = host._t(assist.status === "holding" ? "overviewZoneRoomAssistHolding" : "overviewZoneRoomAssistActive");
+  return renderOverviewSignal("room-assist", "mdi:thermometer-auto", host._t("roomSensorAssistBadge"), value);
+}
+
+function numericTemperature(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function renderOverviewMetric(label: string, value: number, host: OverviewViewHost, entityId: string) {
+  return html`<span class="overview-zone-metric"><small>${label}</small><strong>${host._formatTemperature(value, entityId)}</strong></span>`;
+}
+
+function renderOverviewComfortSignals(host: OverviewViewHost, comfort?: ComfortAssessment) {
+  if (!comfort?.enabled) return nothing;
+  const qualityIssue = comfort.data_quality !== "complete" && comfort.condition !== "no_readings";
+  const conditionKeys: Record<string, string> = {
+    comfortable: "comfortConditionComfortable",
+    temperature_comfortable: "comfortConditionTemperatureComfortable",
+    humidity_comfortable: "comfortConditionHumidityComfortable",
+    cold: "comfortConditionCold", hot: "comfortConditionHot", dry: "comfortConditionDry", humid: "comfortConditionHumid",
+    cold_and_dry: "comfortConditionColdAndDry", cold_and_humid: "comfortConditionColdAndHumid",
+    hot_and_dry: "comfortConditionHotAndDry", hot_and_humid: "comfortConditionHotAndHumid", no_readings: "comfortConditionNoReadings",
+  };
+  const airKeys: Record<string, string> = {
+    good: "comfortAirQualityGood",
+    elevated: "comfortAirQualityElevated",
+    poor: "comfortAirQualityPoor",
+    unavailable: "comfortAirQualityUnavailable",
+  };
+  const environmentIssue = !["comfortable", "temperature_comfortable", "humidity_comfortable"].includes(comfort.condition);
+  const environmentSeverity = comfort.condition === "no_readings"
+    ? "error"
+    : environmentIssue ? "warning" : "normal";
+  const airSeverity = comfort.air_quality === "poor"
+    ? "error"
+    : comfort.air_quality === "elevated" || comfort.air_quality === "unavailable" ? "warning" : "normal";
+  return html`
+    ${renderOverviewSignal("comfort-environment", "mdi:home-thermometer-outline", host._t("overviewZoneComfortLabel"), host._t((conditionKeys[comfort.condition] ?? "comfortConditionNoReadings") as never), environmentSeverity)}
+    ${comfort.air_quality !== "not_monitored"
+      ? renderOverviewSignal("comfort-air", "mdi:molecule-co2", host._t("overviewZoneAirLabel"), host._t(airKeys[comfort.air_quality] as never), airSeverity)
+      : nothing}
+    ${qualityIssue
+      ? renderOverviewSignal("comfort-data", "mdi:alert-circle-outline", host._t("overviewZoneDataLabel"), host._t("overviewZoneSensorIssue"), "warning")
+      : nothing}
+  `;
+}
+
+function renderOverviewSignal(category: string, icon: string, label: string, value: string, severity = "normal") {
+  return html`<span class=${`overview-zone-signal ${category} ${severity}`} title=${`${label}: ${value}`}><ha-icon icon=${icon}></ha-icon><span><small>${label}:</small><strong>${value}</strong></span></span>`;
 }
 
 function renderOverviewZoneRow(host: OverviewViewHost, entityId: string, zone?: ScheduleZone) {

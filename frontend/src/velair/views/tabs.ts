@@ -29,6 +29,11 @@ export const PANEL_TABS: PanelTabDefinition[] = [
     view: "sensors",
   },
   {
+    icon: "mdi:home-heart",
+    labelKey: "comfort",
+    view: "comfort",
+  },
+  {
     icon: "mdi:clock-fast",
     labelKey: "preconditioning",
     view: "preconditioning",

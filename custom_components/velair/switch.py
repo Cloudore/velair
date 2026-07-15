@@ -17,13 +17,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Velair switches."""
-    async_add_entities([ScheduleEnabledSwitch(entry)])
+    async_add_entities([AutomaticSchedulingSwitch(entry)])
 
 
-class ScheduleEnabledSwitch(VelairEntity, SwitchEntity):
+class AutomaticSchedulingSwitch(VelairEntity, SwitchEntity):
     """Switch controlling automatic schedule execution."""
 
-    _attr_translation_key = "schedule_enabled"
+    _attr_translation_key = "automatic_scheduling"
 
     def __init__(self, entry: VelairConfigEntry) -> None:
         """Initialize the switch."""
@@ -33,6 +33,11 @@ class ScheduleEnabledSwitch(VelairEntity, SwitchEntity):
     def is_on(self) -> bool:
         """Return whether automatic scheduling is enabled."""
         return self.scheduler.mode == MODE_AUTO
+
+    @property
+    def available(self) -> bool:
+        """Return whether scheduler controls are safe to use."""
+        return not self.scheduler.temperature_migration_blocked
 
     async def async_turn_on(self, **kwargs) -> None:
         """Enable automatic scheduling."""

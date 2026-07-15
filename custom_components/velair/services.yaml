@@ -13,10 +13,7 @@ set_temperature:
       example: 21
       selector:
         number:
-          min: 5
-          max: 35
-          step: 0.5
-          unit_of_measurement: C
+          mode: box
     hvac_mode:
       name: HVAC mode
       description: Optional mode to apply before setting the temperature. If omitted, the current mode is kept when the climate entity is already on.
@@ -111,10 +108,7 @@ boost:
       example: 22
       selector:
         number:
-          min: 5
-          max: 35
-          step: 0.5
-          unit_of_measurement: C
+          mode: box
     duration_minutes:
       required: true
       example: 45

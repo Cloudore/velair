@@ -8,7 +8,7 @@ export type PortableValidationResult =
     }
   | {
       ok: false;
-      errorKey: "invalidImportFile" | "noImportSections";
+      errorKey: "invalidImportFile" | "legacyImportTemperatureUnit" | "noImportSections";
     };
 
 export type PortableSummaryValue = number | "included";
@@ -19,12 +19,18 @@ export type PortableSummaryItem = {
 };
 
 export function validatePortablePayload(payload: VelairPortablePayload): PortableValidationResult {
+  const modelVersion = Number(payload?.model_version);
+  const declaredUnit = payload?.temperature_unit;
+  const validUnit = declaredUnit === undefined
+    || declaredUnit === "°C"
+    || (modelVersion >= 3 && declaredUnit === "°F");
   if (
     !payload ||
     payload.format !== PORTABLE_FORMAT ||
     !Number.isInteger(payload.model_version) ||
-    Number(payload.model_version) < 1 ||
-    Number(payload.model_version) > PORTABLE_MODEL_VERSION ||
+    modelVersion < 1 ||
+    modelVersion > PORTABLE_MODEL_VERSION ||
+    !validUnit ||
     !payload.sections ||
     typeof payload.sections !== "object"
   ) {

@@ -14,6 +14,8 @@ export function renderSettingsView(host: SettingsViewHost, zoneIds: string[]) {
 
   return html`
     <section class="settings-view">
+      ${renderTemperatureUnitSettings(host)}
+
       <label class="settings-field">
         <span class="label">${host._t("firstWeekday")}</span>
         <span class="select-wrap">
@@ -71,6 +73,66 @@ export function renderSettingsView(host: SettingsViewHost, zoneIds: string[]) {
   `;
 }
 
+export function renderTemperatureUnitSettings(host: SettingsViewHost) {
+  const migrationRequired = Boolean(host._data?.temperature_migration?.required);
+  const unit = host._data?.home_assistant_temperature_unit ?? host._temperatureUnit();
+  const migration = host._data?.temperature_migration;
+  const legacyResetRequired = migration?.reason === "legacy_celsius_upgrade_reset_required";
+  const sourceUnit = migration?.source_unit;
+  const targetUnit = migration?.target_unit ?? unit;
+  return html`
+    <section class=${migrationRequired ? "settings-temperature migration-required" : "settings-temperature"}>
+      <ha-icon class="settings-startup-icon" icon="mdi:thermometer-lines"></ha-icon>
+      <div class="settings-temperature-copy">
+        <span class="section-label">${host._t("temperatureUnit")}</span>
+        <p>${host._t("temperatureUnitManagedByHomeAssistant")}</p>
+        ${migrationRequired
+          ? html`
+              <div class="temperature-migration-action" role="alert">
+                <strong>${legacyResetRequired
+                  ? host._t("temperatureLegacyResetQuestion", { target: targetUnit })
+                  : host._t("temperatureMigrationQuestion", { source: sourceUnit ?? "?", target: targetUnit })}</strong>
+                <p>${legacyResetRequired
+                  ? host._t("temperatureLegacyResetExplanation", { target: targetUnit })
+                  : host._t("temperatureMigrationExplanation", { source: sourceUnit ?? "?", target: targetUnit })}</p>
+                <div class="temperature-migration-buttons">
+                  ${legacyResetRequired
+                    ? html`
+                      <button
+                        class="command-button danger"
+                        type="button"
+                        ?disabled=${host._maintenanceAction === "reset"}
+                        @click=${() => host._resetVelairData()}
+                      >
+                        ${host._maintenanceAction === "reset"
+                          ? host._t("resetting")
+                          : host._t("resetVelair")}
+                      </button>
+                    `
+                    : sourceUnit
+                    ? html`
+                      <button
+                        class="command-button primary"
+                        type="button"
+                        ?disabled=${Boolean(host._temperatureMigrationAction)}
+                        @click=${() => host._resolveTemperatureMigration(sourceUnit)}
+                      >
+                        ${host._temperatureMigrationAction === sourceUnit
+                          ? host._t("applying")
+                          : host._t("temperatureMigrationUse", { source: sourceUnit, target: targetUnit })}
+                      </button>
+                    `
+                    : nothing}
+                </div>
+              </div>
+            `
+          : nothing}
+      </div>
+      <strong class="settings-temperature-value">${unit}</strong>
+    </section>
+  `;
+}
+
 export function renderMaintenanceSettings(host: SettingsViewHost) {
   const versions = host._data?.versions ?? {};
   const portableVersion = versions.portable_model ?? PORTABLE_MODEL_VERSION;
@@ -78,6 +140,8 @@ export function renderMaintenanceSettings(host: SettingsViewHost) {
   const modelVersion = versions.model ?? 1;
   const integrationVersion = VELAIR_RELEASE_VERSION || versions.integration || "-";
   const resetting = host._maintenanceAction === "reset";
+  const migrationRequired = Boolean(host._data?.temperature_migration?.required);
+  const legacyResetRequired = host._data?.temperature_migration?.reason === "legacy_celsius_upgrade_reset_required";
 
   return html`
     <section class="settings-maintenance">
@@ -106,7 +170,7 @@ export function renderMaintenanceSettings(host: SettingsViewHost) {
       <button
         class="command-button danger"
         type="button"
-        ?disabled=${resetting}
+        ?disabled=${resetting || (migrationRequired && !legacyResetRequired)}
         @click=${() => host._resetVelairData()}
       >
         <ha-icon icon="mdi:restore"></ha-icon>
@@ -127,7 +191,8 @@ export function renderMaintenanceItem(label: string, value: string | number) {
 
 export function renderPortabilitySettings(host: SettingsViewHost) {
   const importSections = host._importAvailableSections();
-  const canExport = host._exportSections.size > 0 && !host._portabilityAction;
+  const canExport = host._exportSections.size > 0
+    && !host._portabilityAction;
   const canImport = Boolean(host._importPayload) && host._importSections.size > 0 && !host._portabilityAction;
   const exportItems = new Map(host._portableExportSummaryItems().map((item) => [item.section, item]));
   const importItems = new Map(host._portableImportSummaryItems().map((item) => [item.section, item]));
@@ -137,6 +202,9 @@ export function renderPortabilitySettings(host: SettingsViewHost) {
         host._data?.configured_entities ?? [],
       )
     : [];
+  const legacyTemperatureUnit = Boolean(
+    host._importPayload && host._importPayload.temperature_unit === undefined,
+  );
 
   return html`
     <section class="settings-portability">
@@ -195,6 +263,17 @@ export function renderPortabilitySettings(host: SettingsViewHost) {
                 <div class="portable-warning" role="alert">
                   <ha-icon icon="mdi:alert-outline"></ha-icon>
                   <span>${host._t("importOverwriteWarning")}</span>
+                </div>
+              `
+            : nothing}
+          ${legacyTemperatureUnit
+            ? html`
+                <div class="portable-warning" role="status">
+                  <ha-icon icon="mdi:thermometer-alert"></ha-icon>
+                  <span>${host._t("legacyImportTemperatureUnit", {
+                    target: host._data?.home_assistant_temperature_unit
+                      ?? host._temperatureUnit(),
+                  })}</span>
                 </div>
               `
             : nothing}
@@ -273,6 +352,7 @@ export function renderSettingsZoneOrderRow(
 ) {
   const exists = host._entityExists(entityId);
   const [minTemperature, maxTemperature] = host._entityTemperatureLimits(entityId);
+  const temperatureStep = host._entityTemperatureStep(entityId);
   const modes = host._climateSupportedModes(entityId);
   const providedData = host._climateProvidedData(entityId);
   const diagnostic = host._entityDiagnostic(entityId);
@@ -365,9 +445,16 @@ export function renderSettingsZoneOrderRow(
                       ${host._formatTemperatureLimit(minTemperature)}-${host._formatTemperatureLimit(maxTemperature)}
                       ${host._temperatureUnit(entityId)}
                     </span>
-                    <span title=${host._t("temperatureStep")}>
+                    <span
+                      class=${temperatureStep === undefined ? "capability-not-reported" : ""}
+                      title=${temperatureStep === undefined
+                        ? host._t("temperatureStepNotReportedDescription")
+                        : host._t("temperatureStep")}
+                    >
                       <ha-icon icon="mdi:delta"></ha-icon>
-                      ${host._t("temperatureStep")}: ${host._formatTemperatureLimit(host._entityTemperatureStep(entityId))}
+                      ${host._t("temperatureStep")}: ${temperatureStep === undefined
+                        ? host._t("temperatureStepNotReported")
+                        : host._formatTemperatureLimit(temperatureStep)}
                     </span>
                   </div>
                 </div>

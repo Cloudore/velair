@@ -6,11 +6,286 @@ from datetime import datetime, timezone
 import importlib
 from types import SimpleNamespace
 import unittest
+from unittest.mock import AsyncMock, Mock
 
 from . import helpers
 
 
 api_module = importlib.import_module("custom_components.velair.api")
+
+
+class ResetDataOrderingTest(unittest.IsolatedAsyncioTestCase):
+    """Verify reset publishes no side effects before durable storage."""
+
+    async def test_failed_store_does_not_change_options_or_clear_runtime(self) -> None:
+        storage = SimpleNamespace(
+            temperature_migration_required=False,
+            async_reset_to_defaults=AsyncMock(side_effect=OSError("storage unavailable")),
+        )
+        scheduler = SimpleNamespace(async_prepare_data_reset=AsyncMock())
+        entry = SimpleNamespace(options={"apply_active_schedule_on_startup": True})
+        runtime = {"entry": entry, "scheduler": scheduler, "storage": storage}
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+        update_entry = Mock()
+        hass = SimpleNamespace(config_entries=SimpleNamespace(async_update_entry=update_entry))
+
+        with self.assertRaisesRegex(OSError, "storage unavailable"):
+            await api_module.ws_reset_data(
+                hass,
+                SimpleNamespace(),
+                {"id": 1, "type": "velair/reset_data", "confirmation": "reset"},
+            )
+
+        storage.async_reset_to_defaults.assert_awaited_once_with()
+        update_entry.assert_not_called()
+        scheduler.async_prepare_data_reset.assert_not_awaited()
+
+    async def test_post_persist_reset_failure_stays_blocked_and_visible(self) -> None:
+        storage = SimpleNamespace(
+            temperature_migration_required=False,
+            effective_temperature_unit=api_module.CELSIUS,
+            async_reset_to_defaults=AsyncMock(),
+        )
+        scheduler = SimpleNamespace(
+            async_prepare_data_reset=AsyncMock(),
+            set_temperature_migration_blocked=Mock(),
+        )
+        entry = SimpleNamespace(options={})
+        runtime = {
+            "entry": entry,
+            "scheduler": scheduler,
+            "storage": storage,
+            "operation_active": None,
+            "operation_recovery": None,
+        }
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+        update_entry = Mock(side_effect=RuntimeError("options unavailable"))
+        hass = SimpleNamespace(config_entries=SimpleNamespace(async_update_entry=update_entry))
+        connection = SimpleNamespace(send_result=Mock(), send_error=Mock())
+
+        await api_module.ws_reset_data(
+            hass,
+            connection,
+            {"id": 2, "type": "velair/reset_data", "confirmation": "reset"},
+        )
+
+        storage.async_reset_to_defaults.assert_awaited_once_with()
+        scheduler.async_prepare_data_reset.assert_not_awaited()
+        self.assertIsNone(runtime["operation_active"])
+        self.assertEqual(runtime["operation_recovery"]["operation"], "data_reset")
+        scheduler.set_temperature_migration_blocked.assert_called_with(True)
+        connection.send_result.assert_not_called()
+        self.assertEqual(
+            connection.send_error.call_args.args[1], "operation_recovery_required"
+        )
+
+
+class TemperatureMigrationFailureTest(unittest.IsolatedAsyncioTestCase):
+    """Verify failed persistence always releases the exclusive operation guard."""
+
+    async def test_store_error_releases_operation_and_keeps_scheduler_blocked(self) -> None:
+        storage = SimpleNamespace(
+            temperature_migration_required=True,
+            home_assistant_temperature_unit=api_module.FAHRENHEIT,
+            async_resolve_temperature_migration=AsyncMock(
+                side_effect=OSError("storage unavailable")
+            ),
+        )
+        scheduler = SimpleNamespace(set_temperature_migration_blocked=Mock())
+        runtime = {
+            "entry": SimpleNamespace(entry_id="entry"),
+            "scheduler": scheduler,
+            "storage": storage,
+            "operation_active": None,
+            "operation_recovery": None,
+        }
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+        connection = SimpleNamespace(send_result=Mock(), send_error=Mock())
+
+        await api_module.ws_resolve_temperature_migration(
+            SimpleNamespace(),
+            connection,
+            {
+                "id": 3,
+                "type": "velair/resolve_temperature_migration",
+                "source_unit": api_module.CELSIUS,
+                "migration_id": "migration",
+                "expected_revision": 1,
+            },
+        )
+
+        self.assertIsNone(runtime["operation_active"])
+        scheduler.set_temperature_migration_blocked.assert_called_with(True)
+        connection.send_result.assert_not_called()
+        connection.send_error.assert_called_once_with(
+            3, "temperature_migration_failed", "storage unavailable"
+        )
+
+
+class PortableTemperatureContractTest(unittest.TestCase):
+    """Verify portable files remain recoverable across unit systems."""
+
+    def _runtime(self, unit: str, *, step: float | None = 1):
+        data = helpers.normalize_schedule_data(None, ["climate.salon"])
+        attributes = {
+            "min_temp": 41,
+            "max_temp": 86,
+        }
+        if step is not None:
+            attributes["target_temp_step"] = step
+        hass = SimpleNamespace(
+            states={
+                "climate.salon": SimpleNamespace(
+                    attributes=attributes
+                )
+            }
+        )
+        return {
+            "storage": SimpleNamespace(
+                data=data,
+                effective_temperature_unit=unit,
+                _hass=hass,
+            ),
+        }
+
+    def test_legacy_payload_without_unit_defaults_to_celsius_and_converts(self) -> None:
+        payload = {
+            "format": api_module.EXPORT_FORMAT,
+            "model_version": 1,
+            "sections": {
+                "zones": {
+                    "climate.salon": {
+                        "schedule": {
+                            "monday": [{"start": "08:00", "temperature": 20}]
+                        }
+                    }
+                }
+            },
+        }
+
+        imported = api_module._build_import_data(
+            self._runtime(api_module.FAHRENHEIT), payload, ["zones"]
+        )
+
+        self.assertEqual(
+            imported["zones"]["climate.salon"]["schedule"]["monday"][0][
+                "temperature"
+            ],
+            68,
+        )
+        self.assertEqual(
+            imported["zones"]["climate.salon"]["comfort"]["temperature_min"],
+            68,
+        )
+
+    def test_cross_unit_import_does_not_convert_unselected_local_zones(self) -> None:
+        runtime = self._runtime(api_module.FAHRENHEIT)
+        runtime["storage"].data = helpers.normalize_schedule_data(
+            None, ["climate.salon", "climate.bedroom"]
+        )
+        runtime["storage"].data["zones"]["climate.bedroom"]["schedule"]["monday"] = [
+            {"start": "08:00", "temperature": 72, "action": "set_temperature"}
+        ]
+        payload = {
+            "format": api_module.EXPORT_FORMAT,
+            "model_version": 3,
+            "temperature_unit": api_module.CELSIUS,
+            "sections": {
+                "zones": {
+                    "climate.salon": {
+                        "schedule": {
+                            "monday": [{"start": "08:00", "temperature": 20}]
+                        }
+                    }
+                }
+            },
+        }
+
+        imported = api_module._build_import_data(runtime, payload, ["zones"])
+
+        self.assertEqual(
+            imported["zones"]["climate.bedroom"]["schedule"]["monday"][0][
+                "temperature"
+            ],
+            72,
+        )
+
+    def test_legacy_unitless_import_rounds_to_tenth_without_climate_step(self) -> None:
+        payload = {
+            "format": api_module.EXPORT_FORMAT,
+            "model_version": 1,
+            "sections": {
+                "zones": {
+                    "climate.salon": {
+                        "schedule": {
+                            "monday": [{"start": "08:00", "temperature": 20.3}]
+                        }
+                    }
+                }
+            },
+        }
+
+        imported = api_module._build_import_data(
+            self._runtime(api_module.FAHRENHEIT, step=None), payload, ["zones"]
+        )
+
+        self.assertEqual(
+            imported["zones"]["climate.salon"]["schedule"]["monday"][0][
+                "temperature"
+            ],
+            68.5,
+        )
+
+    def test_export_remains_available_while_temperature_migration_is_blocked(self) -> None:
+        data = helpers.normalize_schedule_data(None, ["climate.salon"])
+        runtime = {
+            "entry": SimpleNamespace(data={}, options={}),
+            "storage": SimpleNamespace(
+                data=data,
+                effective_temperature_unit=api_module.CELSIUS,
+                temperature_migration_required=True,
+                raw_data=lambda: helpers.models_module.serialize_schedule_data(data),
+            ),
+        }
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+        connection = SimpleNamespace(send_result=Mock(), send_error=Mock())
+
+        api_module.ws_export_data(
+            SimpleNamespace(),
+            connection,
+            {"id": 9, "type": "velair/export_data", "sections": ["zones"]},
+        )
+
+        connection.send_error.assert_not_called()
+        connection.send_result.assert_called_once()
+
+    def test_export_is_rejected_only_while_an_operation_is_writing(self) -> None:
+        runtime = {"operation_active": "data_reset"}
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+        connection = SimpleNamespace(send_result=Mock(), send_error=Mock())
+
+        api_module.ws_export_data(
+            SimpleNamespace(),
+            connection,
+            {"id": 10, "type": "velair/export_data", "sections": ["zones"]},
+        )
+
+        connection.send_result.assert_not_called()
+        connection.send_error.assert_called_once_with(
+            10,
+            "operation_in_progress",
+            "Another Velair data operation is in progress",
+        )
 
 
 class FakeClimateCapabilities:
@@ -136,8 +411,26 @@ class PreconditioningLearningResponseTest(unittest.TestCase):
                 next_events=[],
                 get_active_overrides=lambda: {},
                 get_operational_status=lambda: "idle",
+                get_comfort_assessments=lambda: {
+                    entity_id: {
+                        "enabled": False,
+                        "condition": "monitoring_off",
+                        "air_quality": "not_monitored",
+                        "data_quality": "unavailable",
+                        "data_issues": [],
+                    }
+                },
                 get_room_sensor_assist_statuses=lambda: {
                     entity_id: {"status": "not_configured"}
+                },
+                get_zone_runtime_statuses=lambda: {
+                    entity_id: {
+                        "state": "scheduled",
+                        "room_temperature": 20.5,
+                        "target_temperature": 21.0,
+                        "applied_temperature": 21.5,
+                        "hvac_mode": "heat",
+                    }
                 },
             ),
             "storage": SimpleNamespace(data=data),
@@ -153,6 +446,12 @@ class PreconditioningLearningResponseTest(unittest.TestCase):
             response["room_sensor_assist"][entity_id]["status"],
             "not_configured",
         )
+        self.assertEqual(
+            response["comfort"][entity_id]["condition"],
+            "monitoring_off",
+        )
+        self.assertEqual(response["zone_runtime"][entity_id]["state"], "scheduled")
+        self.assertEqual(response["zone_runtime"][entity_id]["applied_temperature"], 21.5)
 
     def test_schedule_response_serializes_next_events_by_zone_for_ui(self) -> None:
         data = helpers.normalize_schedule_data(None, ["climate.salon", "climate.bedroom"])
@@ -186,6 +485,7 @@ class PreconditioningLearningResponseTest(unittest.TestCase):
                 ],
                 get_active_overrides=lambda: {},
                 get_operational_status=lambda: "scheduled",
+                get_comfort_assessments=lambda: {},
                 get_room_sensor_assist_statuses=lambda: {},
             ),
             "storage": SimpleNamespace(data=data),
@@ -414,6 +714,33 @@ class PreconditioningLearningPortabilityTest(unittest.TestCase):
                 ]
             ),
             1,
+        )
+
+    def test_export_zones_preserves_canonical_rate_above_runtime_limit(self) -> None:
+        zones = {
+            "climate.salon": {
+                "enabled": True,
+                "schedule": {},
+                "preconditioning": {
+                    "fallback_minutes_per_degree": 216.0,
+                    "minimum_delta_temperature": 5.0,
+                },
+                "comfort": {
+                    "temperature_min": 20.0,
+                    "temperature_max": 24.0,
+                },
+            }
+        }
+
+        exported = api_module._export_zones(zones)
+
+        self.assertEqual(
+            exported["climate.salon"]["preconditioning"]["fallback_minutes_per_degree"],
+            216.0,
+        )
+        self.assertEqual(
+            exported["climate.salon"]["preconditioning"]["minimum_delta_temperature"],
+            5.0,
         )
 
 

@@ -45,6 +45,7 @@ class ClimateFeatureDocsTest(unittest.TestCase):
             self.assertIn(heading, guide)
 
         for expected in (
+            "room_sensor_assist_state_changed",
             "room_sensor_assist_updated",
             "room_sensor_assist_restored",
             "velair.enable_room_sensor_assist",
@@ -102,6 +103,8 @@ class ClimateFeatureDocsTest(unittest.TestCase):
 
         for expected in (
             "preconditioning_plan_updated",
+            "preconditioning_plan_cancelled",
+            "preconditioning_observation_recorded",
             "view: preconditioning",
             "Room Assist](room-assist.md)",
             "../developer/adaptive-preconditioning.md",

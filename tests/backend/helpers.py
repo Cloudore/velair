@@ -37,6 +37,7 @@ def _install_homeassistant_stubs() -> None:
 
     const = ModuleType("homeassistant.const")
     const.ATTR_ENTITY_ID = "entity_id"
+    const.UnitOfTemperature = SimpleNamespace(CELSIUS="°C", FAHRENHEIT="°F")
     const.Platform = SimpleNamespace(
         SENSOR="sensor",
         SELECT="select",
@@ -47,8 +48,13 @@ def _install_homeassistant_stubs() -> None:
     core = ModuleType("homeassistant.core")
     core.CALLBACK_TYPE = object
     core.HomeAssistant = object
+    core.ServiceCall = object
     core.callback = _callback
     sys.modules["homeassistant.core"] = core
+
+    exceptions = ModuleType("homeassistant.exceptions")
+    exceptions.HomeAssistantError = RuntimeError
+    sys.modules["homeassistant.exceptions"] = exceptions
 
     config_entries = ModuleType("homeassistant.config_entries")
     config_entries.ConfigEntry = object
@@ -59,6 +65,7 @@ def _install_homeassistant_stubs() -> None:
     sys.modules["homeassistant.helpers"] = helpers
 
     config_validation = ModuleType("homeassistant.helpers.config_validation")
+    config_validation.boolean = bool
     config_validation.entity_id = str
     config_validation.string = str
     config_validation.ensure_list = _ensure_list
@@ -184,17 +191,30 @@ empty_week_schedule = models_module.empty_week_schedule
 normalize_schedule_blocks = models_module.normalize_schedule_blocks
 normalize_schedule_data = models_module.normalize_schedule_data
 normalize_panel_settings = models_module.normalize_panel_settings
+normalize_comfort_data = models_module.normalize_comfort_data
 normalize_preconditioning_data = models_module.normalize_preconditioning_data
 ACTION_SET_TEMPERATURE = const_module.ACTION_SET_TEMPERATURE
 ACTION_TURN_OFF = const_module.ACTION_TURN_OFF
 EVENT_TYPE_BOOST_ENDED = const_module.EVENT_TYPE_BOOST_ENDED
 EVENT_TYPE_BOOST_STARTED = const_module.EVENT_TYPE_BOOST_STARTED
 EVENT_TYPE_CLIMATE_TARGET_APPLIED = const_module.EVENT_TYPE_CLIMATE_TARGET_APPLIED
+EVENT_TYPE_COMFORT_ASSESSMENT_CHANGED = (
+    const_module.EVENT_TYPE_COMFORT_ASSESSMENT_CHANGED
+)
+EVENT_TYPE_PRECONDITIONING_OBSERVATION_RECORDED = (
+    const_module.EVENT_TYPE_PRECONDITIONING_OBSERVATION_RECORDED
+)
+EVENT_TYPE_PRECONDITIONING_PLAN_CANCELLED = (
+    const_module.EVENT_TYPE_PRECONDITIONING_PLAN_CANCELLED
+)
 EVENT_TYPE_PRECONDITIONING_PLAN_UPDATED = (
     const_module.EVENT_TYPE_PRECONDITIONING_PLAN_UPDATED
 )
 EVENT_TYPE_ROOM_SENSOR_ASSIST_RESTORED = (
     const_module.EVENT_TYPE_ROOM_SENSOR_ASSIST_RESTORED
+)
+EVENT_TYPE_ROOM_SENSOR_ASSIST_STATE_CHANGED = (
+    const_module.EVENT_TYPE_ROOM_SENSOR_ASSIST_STATE_CHANGED
 )
 EVENT_TYPE_ROOM_SENSOR_ASSIST_UPDATED = const_module.EVENT_TYPE_ROOM_SENSOR_ASSIST_UPDATED
 EVENT_TYPE_SCHEDULER_MODE_CHANGED = const_module.EVENT_TYPE_SCHEDULER_MODE_CHANGED
@@ -323,7 +343,6 @@ def _scheduler_data_for_zones(entity_ids: list[str]):
         "version": 1,
         "global_": {
             "mode": MODE_AUTO,
-            "vacation": None,
             "paused_until": None,
             "paused_started_at": None,
         },

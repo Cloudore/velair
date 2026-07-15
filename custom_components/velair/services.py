@@ -432,7 +432,18 @@ def _get_scheduler(hass: HomeAssistant) -> Any:
     if not entries:
         raise RuntimeError("Velair is not loaded")
 
-    return next(iter(entries.values()))["scheduler"]
+    runtime = next(iter(entries.values()))
+    scheduler = runtime["scheduler"]
+    scheduler.set_temperature_migration_blocked(bool(
+        runtime["storage"].temperature_migration_required
+        or runtime.get("operation_active")
+        or runtime.get("operation_recovery")
+    ))
+    if getattr(scheduler, "temperature_migration_blocked", False):
+        raise HomeAssistantError(
+            "Velair is stopped until the temperature-data migration is resolved"
+        )
+    return scheduler
 
 
 def _ensure_managed_entity(scheduler: Any, entity_id: str) -> None:

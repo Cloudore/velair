@@ -40,6 +40,7 @@ type ScheduleStateHost = {
   _scheduleTemplates(): ScheduleTemplate[];
   _syncPauseTick(): void;
   _t(key: string): string;
+  _temperatureUnit(entityId?: string): string;
 };
 
 export function asScheduleStateHost(host: unknown): ScheduleStateHost {
@@ -117,7 +118,7 @@ export function applyScheduleData(
   const selectedTemplate = host._scheduleTemplates().find((template: { key: string }) => template.key === host._selectedTemplateKey);
   if (!selectedTemplate) {
     host._resetTemplateDraft();
-  } else if (!host._templateDirty || host._templateDraftKey !== selectedTemplate.key) {
+  } else if (options.forceDraft || !host._templateDirty || host._templateDraftKey !== selectedTemplate.key) {
     host._resetTemplateDraft(selectedTemplate);
   }
 
@@ -131,7 +132,10 @@ export function applyScheduleData(
 export function resetDraftBlocks(host: ScheduleStateHost): void {
   const zone = host._selectedEntity ? host._data?.zones[host._selectedEntity] : undefined;
   const blocks = zone?.schedule?.[host._selectedWeekday] ?? [];
-  host._draftBlocks = draftBlocksFromScheduleBlocks(blocks);
+  host._draftBlocks = draftBlocksFromScheduleBlocks(
+    blocks,
+    host._temperatureUnit(host._selectedEntity),
+  );
   host._dirty = false;
   host._dirtyEntityId = undefined;
 }

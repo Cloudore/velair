@@ -65,6 +65,14 @@ describe("template domain", () => {
     expect(newTemplateKey(1_800_000_000_000, 0.123456)).toBe("custom_mywpiww0_4fzyo8");
   });
 
+  it("uses the global Fahrenheit unit for temperature-less template blocks", () => {
+    const templates = scheduleTemplatesFromStored([
+      { key: "off", name: "Off", blocks: [{ action: "turn_off", start: "22:00" }] },
+    ], "°F");
+
+    expect(templates[0]?.blocks[0]?.temperature).toBe(70);
+  });
+
   it("keeps apply targets valid for configured entities and weekdays", () => {
     const selected = toggleTemplateApplyTarget(new Set<string>(), "climate.office", "monday", true);
     const unselected = toggleTemplateApplyTarget(selected, "climate.office", "monday", false);

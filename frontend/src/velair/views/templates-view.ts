@@ -129,7 +129,7 @@ export function renderTemplatesView(host: TemplatesViewHost, selectedEntity?: st
                   <div class="draft-list template-block-list">
                     ${templateDraftBlocks.length
                       ? html`
-                          ${renderDraftListHeader(host)}
+                          ${renderDraftListHeader(host, "template")}
                           ${templateDraftBlocks.map((block: DraftScheduleBlock, index: number) =>
                             keyed(
                               editableBlockRowKey("template", selectedTemplate.key, undefined, index),

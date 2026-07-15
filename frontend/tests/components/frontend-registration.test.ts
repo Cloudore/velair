@@ -32,7 +32,8 @@ describe("frontend entrypoint", () => {
 
     expect(panel.shadowRoot?.querySelector(".main-title")?.textContent).toContain("Velair");
     expect(panel.shadowRoot?.querySelector(".version")).toBeNull();
-    expect(panel.shadowRoot?.querySelectorAll("ha-tab-group-tab")).toHaveLength(6);
+    expect(panel.shadowRoot?.querySelectorAll("ha-tab-group-tab")).toHaveLength(7);
+    expect(panel.shadowRoot?.textContent).toContain("Comfort");
     expect(panel.shadowRoot?.textContent).toContain("Room Assist");
     expect(panel.shadowRoot?.textContent).toContain("Preconditioning");
     expect(panel.shadowRoot?.querySelector("velair-panel-card")?.getAttribute("view")).toBe("overview");
@@ -133,6 +134,57 @@ describe("frontend entrypoint", () => {
     editor.setConfig({ view: "overview-status" });
     await editor.updateComplete;
     expect(editor.shadowRoot?.querySelector(".card-visibility-options")).toBeNull();
+
+    editor.remove();
+  });
+
+  it("shows thermostat and visibility options for the Comfort Lovelace card view", async () => {
+    await import("../../src/velair-card");
+    const editor = document.createElement("velair-card-editor") as HTMLElement & {
+      hass?: unknown;
+      setConfig(config: { view: string }): void;
+      updateComplete?: Promise<boolean>;
+    };
+
+    editor.setConfig({ view: "comfort" });
+    editor.hass = {
+      connection: {
+        sendMessagePromise: async () => ({
+          configured_entities: ["climate.office"],
+        }),
+      },
+      states: {
+        "climate.office": { attributes: { friendly_name: "Office" } },
+      },
+    };
+    document.body.append(editor);
+    await editor.updateComplete;
+    await Promise.resolve();
+    await editor.updateComplete;
+
+    expect(editor.shadowRoot?.querySelector(".zone-order")?.textContent).toContain("Office");
+    expect(editor.shadowRoot?.textContent).toContain("Comfort card visibility");
+    expect(editor.shadowRoot?.textContent).toContain("Show configuration");
+    expect(editor.shadowRoot?.textContent).toContain("Show temperature graph");
+    const visibilityOptions = [
+      ...(editor.shadowRoot?.querySelectorAll<HTMLInputElement>(".visibility-option input") ?? []),
+    ];
+    expect(visibilityOptions).toHaveLength(4);
+    expect(visibilityOptions.every((input) => input.checked)).toBe(true);
+
+    const changed = new Promise<Record<string, unknown>>((resolve) => {
+      editor.addEventListener("config-changed", ((event: CustomEvent) => {
+        resolve(event.detail.config);
+      }) as EventListener, { once: true });
+    });
+
+    visibilityOptions[1]!.checked = false;
+    visibilityOptions[1]!.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(await changed).toMatchObject({
+      show_comfort_temperature: false,
+      view: "comfort",
+    });
 
     editor.remove();
   });

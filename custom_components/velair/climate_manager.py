@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any
 
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant
+from homeassistant.const import UnitOfTemperature
 
 from .const import (
     ATTR_FAN_MODE,
@@ -18,6 +20,7 @@ from .const import (
     ATTR_TEMPERATURE,
     HVAC_MODE_OFF,
 )
+from .temperature import absolute_temperature
 
 CLIMATE_DOMAIN = "climate"
 CLIMATE_SERVICE_SET_HVAC_MODE = "set_hvac_mode"
@@ -47,7 +50,6 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_MIN_TEMPERATURE = 5.0
 DEFAULT_MAX_TEMPERATURE = 35.0
-DEFAULT_TARGET_TEMPERATURE_STEP = 0.5
 STATE_UNAVAILABLE = "unavailable"
 STATE_UNKNOWN = "unknown"
 
@@ -74,6 +76,7 @@ class ClimateManager:
         swing_horizontal_mode: str | None = None,
     ) -> None:
         """Set the target temperature for a climate entity."""
+        temperature = self.normalize_target_temperature(entity_id, temperature)
         if hvac_mode is not None:
             await self.async_set_hvac_mode(entity_id, hvac_mode)
         elif ensure_on:
@@ -144,7 +147,12 @@ class ClimateManager:
             temperature = float(state.attributes[ATTR_TEMPERATURE])
         except (KeyError, TypeError, ValueError):
             temperature = None
-        if temperature is not None:
+        minimum, maximum = self.temperature_limits(entity_id)
+        if (
+            temperature is not None
+            and math.isfinite(temperature)
+            and minimum <= temperature <= maximum
+        ):
             snapshot[ATTR_TEMPERATURE] = temperature
         for attr in CLIMATE_MODE_ATTRIBUTES:
             value = state.attributes.get(attr)
@@ -154,7 +162,7 @@ class ClimateManager:
             humidity = float(state.attributes[ATTR_HUMIDITY])
         except (KeyError, TypeError, ValueError):
             humidity = None
-        if humidity is not None:
+        if humidity is not None and math.isfinite(humidity):
             snapshot[ATTR_HUMIDITY] = humidity
 
         return snapshot
@@ -262,29 +270,81 @@ class ClimateManager:
         """Return a climate entity target temperature range."""
         state = self._hass.states.get(entity_id)
         attributes = state.attributes if state is not None else {}
+        unit = self.temperature_unit(entity_id)
+        default_minimum = absolute_temperature(
+            DEFAULT_MIN_TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+            unit,
+        )
+        default_maximum = absolute_temperature(
+            DEFAULT_MAX_TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+            unit,
+        )
         min_temperature = _coerce_temperature(
             attributes.get("min_temp"),
-            DEFAULT_MIN_TEMPERATURE,
+            default_minimum,
         )
         max_temperature = _coerce_temperature(
             attributes.get("max_temp"),
-            DEFAULT_MAX_TEMPERATURE,
+            default_maximum,
         )
 
-        if min_temperature >= max_temperature:
-            return DEFAULT_MIN_TEMPERATURE, DEFAULT_MAX_TEMPERATURE
+        if (
+            min_temperature >= max_temperature
+            or _temperature_grid_is_stale(min_temperature, max_temperature, unit)
+        ):
+            return default_minimum, default_maximum
 
         return min_temperature, max_temperature
 
-    def temperature_step(self, entity_id: str) -> float:
-        """Return the target temperature step for one climate entity."""
+    def normalize_target_temperature(
+        self, entity_id: str, temperature: float
+    ) -> float:
+        """Clamp and snap a target to Home Assistant's zero-anchored step grid."""
+        value = float(temperature)
+        if not math.isfinite(value):
+            raise ValueError("Temperature must be a finite number")
+        minimum, maximum = self.temperature_limits(entity_id)
+        step = self.temperature_step(entity_id)
+        tolerance = step / 2 if step is not None else 0.0
+        if value < minimum - tolerance or value > maximum + tolerance:
+            raise ValueError(
+                f"Temperature must be between {minimum:g} and {maximum:g}"
+            )
+        if step is None:
+            return round(max(minimum, min(maximum, value)), 6)
+        first = math.ceil((minimum / step) - 0.000001) * step
+        last = math.floor((maximum / step) + 0.000001) * step
+        if first > last:
+            return round(max(minimum, min(maximum, value)), 6)
+        bounded = max(first, min(last, value))
+        step_count = math.floor((bounded / step) + 0.5 + 0.000000001)
+        snapped = step_count * step
+        return round(max(first, min(last, snapped)), 6)
+
+    def temperature_step(self, entity_id: str) -> float | None:
+        """Return the exact target step published by Home Assistant, if valid."""
         state = self._hass.states.get(entity_id)
         attributes = state.attributes if state is not None else {}
-        step = _coerce_temperature(
-            attributes.get("target_temp_step"),
-            DEFAULT_TARGET_TEMPERATURE_STEP,
+        step = _coerce_temperature(attributes.get("target_temp_step"), math.nan)
+        return step if math.isfinite(step) and step > 0 else None
+
+    def temperature_unit(self, entity_id: str) -> str:
+        """Return the effective temperature unit for one climate entity."""
+        configured = getattr(
+            getattr(getattr(self._hass, "config", None), "units", None),
+            "temperature_unit",
+            None,
         )
-        return step if step > 0 else DEFAULT_TARGET_TEMPERATURE_STEP
+        if configured in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
+            return configured
+        state = self._hass.states.get(entity_id)
+        attributes = state.attributes if state is not None else {}
+        unit = attributes.get("unit_of_measurement")
+        if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
+            return unit
+        return UnitOfTemperature.CELSIUS
 
     def supported_hvac_modes(self, entity_id: str) -> list[str]:
         """Return supported HVAC modes for one climate entity."""
@@ -347,7 +407,18 @@ def _coerce_temperature(value: object, fallback: float) -> float:
     except (TypeError, ValueError):
         return fallback
 
-    return temperature
+    return temperature if math.isfinite(temperature) else fallback
+
+
+def _temperature_grid_is_stale(
+    minimum: float,
+    maximum: float,
+    unit: str,
+) -> bool:
+    """Return whether entity limits still use the previous HA unit scale."""
+    if unit == UnitOfTemperature.FAHRENHEIT:
+        return maximum <= 60.0 and minimum < 40.0
+    return maximum > 60.0 or minimum > 40.0
 
 
 def _coerce_optional_float(value: object) -> float | None:
@@ -356,4 +427,4 @@ def _coerce_optional_float(value: object) -> float | None:
         number = float(value)
     except (TypeError, ValueError):
         return None
-    return number
+    return number if math.isfinite(number) else None

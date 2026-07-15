@@ -21,6 +21,7 @@ type DraftActionsHost = {
   _blocksForSource(source: BlockDraftSource): DraftScheduleBlock[];
   _markBlocksDirty(source: BlockDraftSource): void;
   _setBlocksForSource(source: BlockDraftSource, blocks: DraftScheduleBlock[]): void;
+  _temperatureUnit(entityId?: string): string;
 };
 
 export function asDraftActionsHost(host: unknown): DraftActionsHost {
@@ -29,7 +30,8 @@ export function asDraftActionsHost(host: unknown): DraftActionsHost {
 
 export function addBlock(host: DraftActionsHost, source: BlockDraftSource = "schedule"): void {
   const blocks = host._blocksForSource(source);
-  host._setBlocksForSource(source, addDraftBlock(blocks, nextStartTime(blocks.at(-1)?.start)));
+  const unit = host._temperatureUnit(source === "schedule" ? host._selectedEntity : undefined);
+  host._setBlocksForSource(source, addDraftBlock(blocks, nextStartTime(blocks.at(-1)?.start), unit));
   host._markBlocksDirty(source);
   host._saveMessage = undefined;
 }

@@ -51,7 +51,7 @@ Scenario:
 - Scheduled block: `21 °C`, `heat`, target time `07:00`
 - Room temperature: `18 °C`
 - Minimum start: `10 min`
-- Initial model: `25 min/°C`
+- Initial model: `25 min/°C` or the equivalent `13.89 min/°F`
 - Maximum start: `24 h`
 
 Calculation:
@@ -146,21 +146,14 @@ This is useful for TRVs or thermostats whose built-in sensor is too close to a r
 
 ## Automation Events
 
-Velair emits `preconditioning_plan_updated` through the standard `velair_event` Home Assistant event when the calculated preconditioning plan changes.
+Velair uses three `velair_event` events for this lifecycle:
 
-The event includes useful automation data such as:
+- `preconditioning_plan_updated` when a calculated plan appears or changes;
+- `preconditioning_plan_cancelled` when a published plan no longer applies;
+- `preconditioning_observation_recorded` after a learning sample is persisted.
 
-- `entity_id`;
-- original scheduled target time;
-- calculated preconditioning start time;
-- lead minutes;
-- target temperature;
-- current temperature;
-- direction;
-- HVAC mode;
-- model source;
-- sample counts;
-- optional outdoor context.
+See [Automation Events](automation-events.md#preconditioning-plan-updated) for
+the precise emission rules and complete payload examples.
 
 Example automation trigger:
 

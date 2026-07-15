@@ -185,6 +185,19 @@ describe("preconditioning view", () => {
     ).toBe(true);
   });
 
+  it("puts thermal units in labels instead of input suffixes", () => {
+    const { viewHost } = host({ expandedZoneIds: ["climate.first"] });
+    (viewHost as any)._temperatureUnit = () => "°F";
+    const container = document.createElement("div");
+
+    render(renderPreconditioningView(viewHost, ["climate.first"]), container);
+
+    const rows = [...container.querySelectorAll(".preconditioning-config-row")];
+    expect(rows.some((row) => row.textContent?.includes("preconditioningMinimumDelta (°F)"))).toBe(true);
+    expect(rows.some((row) => row.textContent?.includes("preconditioningFallbackMinutesPerDegree (minutesShort/°F)"))).toBe(true);
+    expect(container.querySelectorAll(".preconditioning-number-input > span")).toHaveLength(0);
+  });
+
   it("provides concise focusable help for every tuning control", () => {
     const { viewHost } = host({ expandedZoneIds: ["climate.first"] });
     const container = document.createElement("div");

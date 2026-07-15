@@ -4,6 +4,7 @@ import type { TimelineBlock } from "./domain/timeline";
 import type { SupportedLanguage, TranslationKey } from "./translations";
 import type {
   BlockDraftSource,
+  ComfortSettings,
   DraftScheduleBlock,
   EntityDiagnostic,
   HomeAssistant,
@@ -44,6 +45,7 @@ export type VelairViewHost = {
   _dirtyEntityId?: string;
   _draftBlocks: DraftScheduleBlock[];
   _error?: string;
+  _expandedComfortZones: Set<string>;
   _expandedPreconditioningZones: Set<string>;
   _exportSections: Set<PortableSection>;
   _importFileName: string;
@@ -65,6 +67,7 @@ export type VelairViewHost = {
   _selectedTemplateKey: string;
   _selectedWeekday: string;
   _settingsSaving: boolean;
+  _temperatureMigrationAction?: "°C" | "°F";
   _templateAction?: "save" | "delete";
   _templateApplyOpen: boolean;
   _templateApplyTargets: Set<string>;
@@ -100,7 +103,7 @@ export type VelairViewHost = {
   _entitySwingHorizontalModeOptions(entityId: string): string[];
   _entitySwingModeOptions(entityId: string): string[];
   _entityTemperatureLimits(entityId?: string): [number, number];
-  _entityTemperatureStep(entityId?: string): number;
+  _entityTemperatureStep(entityId?: string): number | undefined;
   _fanModeOptions(source?: BlockDraftSource): string[];
   _exportPortableData(): Promise<void>;
   _firstWeekday(): string;
@@ -146,12 +149,14 @@ export type VelairViewHost = {
   _portableSummaryItem(item: PortableSummaryItem): PortableSummaryViewItem;
   _removeBlock(index: number, source?: BlockDraftSource): void;
   _resetVelairData(): Promise<void>;
+  _resolveTemperatureMigration(sourceUnit: "°C" | "°F"): Promise<void>;
   _resetZonePreconditioningLearning(entityId: string, direction: "heat" | "cool", directionLabel: string): Promise<void>;
   _resetZonePreconditioningSettings(entityId: string): Promise<void>;
   _resumeScheduler(options?: { showSuccess?: boolean }): Promise<void>;
   _saveSelectedDay(): Promise<void>;
   _saveSelectedTemplateFromLibrary(template: ScheduleTemplate): Promise<void>;
   _saveSettings(settings: Partial<PanelSettings>): Promise<void>;
+  _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;
   _saveZonePreconditioning(entityId: string, preconditioning: Partial<PreconditioningSettings>): Promise<void>;
   _saveTemplate(saveAsNew: boolean): Promise<void>;
   _scheduleTemplates(): ScheduleTemplate[];
@@ -169,7 +174,7 @@ export type VelairViewHost = {
   _t(key: TranslationKey, replacements?: Record<string, string | number>): string;
   _temperatureError(block: DraftScheduleBlock, source?: BlockDraftSource): string | undefined;
   _temperatureLimits(source?: BlockDraftSource, entityId?: string): [number, number];
-  _temperatureStep(source?: BlockDraftSource, entityId?: string): number;
+  _temperatureStep(source?: BlockDraftSource, entityId?: string): number | undefined;
   _temperatureUnit(entityId?: string): string;
   _templateApplyTargetKey(entityId: string, weekday: string): string;
   _templateLabel(template: ScheduleTemplate): string;
@@ -177,6 +182,7 @@ export type VelairViewHost = {
   _templateNameInputValue(template: ScheduleTemplate): string;
   _timelineBlocks(source?: BlockDraftSource): TimelineBlock[];
   _toggleCopyTarget(weekday: string, checked: boolean): void;
+  _toggleComfortZone(entityId: string): void;
   _togglePreconditioningZone(entityId: string): void;
   _togglePortableSection(target: "export" | "import", section: PortableSection, checked: boolean): void;
   _toggleTemplateApplyPanel(): void;

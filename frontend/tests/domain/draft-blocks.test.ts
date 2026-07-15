@@ -76,6 +76,37 @@ describe("draft block domain", () => {
     ])).toEqual({ ok: false, error: "invalid-temperature:08:00:step" });
   });
 
+  it("validates temperature steps against the zero-anchored grid", () => {
+    const options = {
+      maxTemperature: 95,
+      minTemperature: 41.3,
+      rangeError: "range",
+      stepError: "step",
+      temperatureStep: 1,
+    };
+
+    expect(draftBlockTemperatureError(
+      { action: ACTION_SET_TEMPERATURE, start: "08:00", temperature: 42 },
+      options,
+    )).toBeUndefined();
+    expect(draftBlockTemperatureError(
+      { action: ACTION_SET_TEMPERATURE, start: "08:00", temperature: 42.2 },
+      options,
+    )).toBe("step");
+  });
+
+  it("skips step validation when Home Assistant publishes no valid step", () => {
+    expect(draftBlockTemperatureError(
+      { action: ACTION_SET_TEMPERATURE, start: "08:00", temperature: 42.17 },
+      {
+        maxTemperature: 95,
+        minTemperature: 41,
+        rangeError: "range",
+        stepError: "step",
+      },
+    )).toBeUndefined();
+  });
+
   it("normalizes optional climate settings for temperature blocks only", () => {
     expect(normalize([
       {
