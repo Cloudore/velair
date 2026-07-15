@@ -15,6 +15,8 @@ from .const import (
     ATTR_PRESET_MODE,
     ATTR_SWING_HORIZONTAL_MODE,
     ATTR_SWING_MODE,
+    MODE_AUTO,
+    MODE_PAUSED,
     ZONE_PAUSE_ACTION_NONE,
     ZONE_PAUSE_ACTION_OPTIONS,
 )
@@ -47,6 +49,13 @@ DEFAULT_PRECONDITIONING_RECENCY_DECAY_DAYS = 30
 DEFAULT_PRECONDITIONING_FALLBACK_MINUTES_PER_DEGREE = 25
 DEFAULT_ROOM_SENSOR_ASSIST_MAX_DELTA = 2.0
 DEFAULT_ROOM_SENSOR_ASSIST_DEBOUNCE_SECONDS = 20
+DEFAULT_COMFORT_TEMPERATURE_MIN = 20.0
+DEFAULT_COMFORT_TEMPERATURE_MAX = 24.0
+DEFAULT_COMFORT_HUMIDITY_MIN = 40.0
+DEFAULT_COMFORT_HUMIDITY_MAX = 60.0
+DEFAULT_COMFORT_CO2_ATTENTION = 1000
+DEFAULT_COMFORT_CO2_POOR = 1500
+DEFAULT_COMFORT_STALE_AFTER_MINUTES = 120
 MAX_PRECONDITIONING_INVALID_OBSERVATIONS = 10
 MIN_PRECONDITIONING_COMPLETE_SAMPLES = 5
 PARTIAL_PRECONDITIONING_FLOOR_INCREMENT_RATIO = 0.2
@@ -119,13 +128,30 @@ class PreconditioningData(TypedDict):
     partial_expiry_days: int
     recency_decay_days: int
     min_start_minutes: int
-    fallback_minutes_per_degree: int
+    fallback_minutes_per_degree: float
     use_outdoor_temperature: bool
     outdoor_temperature_entity_id: str | None
     room_temperature_entity_id: str | None
     room_sensor_assist_enabled: bool
     room_sensor_assist_max_delta: float
     room_sensor_assist_debounce_seconds: int
+
+
+class ComfortData(TypedDict):
+    """Stored comfort monitoring settings for one climate zone."""
+
+    enabled: bool
+    temperature_entity_id: str | None
+    humidity_enabled: bool
+    humidity_entity_id: str | None
+    co2_entity_id: str | None
+    temperature_min: float
+    temperature_max: float
+    humidity_min: float
+    humidity_max: float
+    co2_attention: int
+    co2_poor: int
+    stale_after_minutes: int
 
 
 class PreconditioningObservation(TypedDict, total=False):
@@ -209,6 +235,7 @@ class ZoneData(TypedDict):
     schedule: dict[str, list[ScheduleBlock]]
     override: NotRequired[ZoneOverride | None]
     preconditioning: PreconditioningData
+    comfort: ComfortData
 
 
 class ScheduleTemplateData(TypedDict):
@@ -232,7 +259,6 @@ class GlobalData(TypedDict):
     """Stored global scheduler state."""
 
     mode: str
-    vacation: dict[str, Any] | None
     paused_until: NotRequired[str | None]
     paused_started_at: NotRequired[str | None]
 
@@ -496,6 +522,7 @@ def normalize_schedule_data(
             "preconditioning": normalize_preconditioning_data(
                 zone_data.get("preconditioning")
             ),
+            "comfort": normalize_comfort_data(zone_data.get("comfort")),
         }
 
     for entity_id in climate_entities:
@@ -506,15 +533,18 @@ def normalize_schedule_data(
                 "schedule": empty_week_schedule(),
                 "override": None,
                 "preconditioning": normalize_preconditioning_data(None),
+                "comfort": normalize_comfort_data(None),
             },
         )
 
     global_data = data.get("global", data.get("global_", {}))
     if not isinstance(global_data, dict):
         global_data = {}
-    mode = str(global_data.get("mode", "auto"))
+    mode = str(global_data.get("mode", MODE_AUTO))
     if mode == "boost":
-        mode = "auto"
+        mode = MODE_AUTO
+    elif mode not in (MODE_AUTO, MODE_PAUSED):
+        mode = MODE_PAUSED
 
     templates_seeded = bool(data.get("templates_seeded"))
     templates_seeded_version = _normalize_templates_seeded_version(
@@ -543,7 +573,6 @@ def normalize_schedule_data(
         "zones": zones,
         "global_": {
             "mode": mode,
-            "vacation": global_data.get("vacation"),
             "paused_until": global_data.get("paused_until"),
             "paused_started_at": global_data.get("paused_started_at"),
         },
@@ -685,9 +714,10 @@ def normalize_preconditioning_data(raw_data: Any) -> PreconditioningData:
             minimum=0,
             maximum=MAX_PRECONDITIONING_LEAD_MINUTES,
         ),
-        "fallback_minutes_per_degree": _normalize_int(
+        "fallback_minutes_per_degree": _normalize_float(
             data.get("fallback_minutes_per_degree"),
             DEFAULT_PRECONDITIONING_FALLBACK_MINUTES_PER_DEGREE,
+            # Model normalization operates in canonical minutes per °C.
             minimum=1,
             maximum=120,
         ),
@@ -714,6 +744,79 @@ def normalize_preconditioning_data(raw_data: Any) -> PreconditioningData:
     }
 
 
+def normalize_comfort_data(raw_data: Any) -> ComfortData:
+    """Normalize stored comfort monitoring settings."""
+    data = raw_data if isinstance(raw_data, dict) else {}
+
+    temperature_min = _normalize_temperature_limit(
+        data.get("temperature_min"),
+        DEFAULT_COMFORT_TEMPERATURE_MIN,
+    )
+    temperature_max = _normalize_temperature_limit(
+        data.get("temperature_max"),
+        DEFAULT_COMFORT_TEMPERATURE_MAX,
+    )
+    if temperature_min >= temperature_max:
+        temperature_min = DEFAULT_COMFORT_TEMPERATURE_MIN
+        temperature_max = DEFAULT_COMFORT_TEMPERATURE_MAX
+
+    humidity_min = _normalize_float(
+        data.get("humidity_min"),
+        DEFAULT_COMFORT_HUMIDITY_MIN,
+        minimum=0,
+        maximum=100,
+    )
+    humidity_max = _normalize_float(
+        data.get("humidity_max"),
+        DEFAULT_COMFORT_HUMIDITY_MAX,
+        minimum=0,
+        maximum=100,
+    )
+    if humidity_min >= humidity_max:
+        humidity_min = DEFAULT_COMFORT_HUMIDITY_MIN
+        humidity_max = DEFAULT_COMFORT_HUMIDITY_MAX
+
+    co2_attention = _normalize_int(
+        data.get("co2_attention"),
+        DEFAULT_COMFORT_CO2_ATTENTION,
+        minimum=400,
+        maximum=10000,
+    )
+    co2_poor = _normalize_int(
+        data.get("co2_poor"),
+        DEFAULT_COMFORT_CO2_POOR,
+        minimum=400,
+        maximum=10000,
+    )
+    if co2_attention >= co2_poor:
+        co2_attention = DEFAULT_COMFORT_CO2_ATTENTION
+        co2_poor = DEFAULT_COMFORT_CO2_POOR
+
+    return {
+        "enabled": bool(data.get("enabled", False)),
+        "temperature_entity_id": _normalize_optional_entity_id(
+            data.get("temperature_entity_id")
+        ),
+        "humidity_enabled": bool(data.get("humidity_enabled", True)),
+        "humidity_entity_id": _normalize_optional_entity_id(
+            data.get("humidity_entity_id")
+        ),
+        "co2_entity_id": _normalize_optional_entity_id(data.get("co2_entity_id")),
+        "temperature_min": temperature_min,
+        "temperature_max": temperature_max,
+        "humidity_min": humidity_min,
+        "humidity_max": humidity_max,
+        "co2_attention": co2_attention,
+        "co2_poor": co2_poor,
+        "stale_after_minutes": _normalize_int(
+            data.get("stale_after_minutes"),
+            DEFAULT_COMFORT_STALE_AFTER_MINUTES,
+            minimum=5,
+            maximum=1440,
+        ),
+    }
+
+
 def predict_preconditioning_lead(
     raw_observations: Any,
     mode: str,
@@ -723,6 +826,7 @@ def predict_preconditioning_lead(
     config: PreconditioningData,
     now: datetime | None = None,
     outdoor_temp_target: float | None = None,
+    temperature_delta_scale: float = 1.0,
 ) -> PreconditioningPrediction:
     """Predict adaptive lead minutes using similar local learning samples."""
     prediction_now = now or datetime.now().astimezone()
@@ -771,6 +875,7 @@ def predict_preconditioning_lead(
         valid_samples,
         current_context,
         config,
+        temperature_delta_scale,
     )
     complete_samples = [
         sample
@@ -803,6 +908,7 @@ def predict_preconditioning_lead(
                 )
                 * _preconditioning_similarity_weight(
                     _preconditioning_distance(current_context, sample)
+                    * temperature_delta_scale
                 )
                 for sample in complete_samples
             ],
@@ -820,6 +926,7 @@ def predict_preconditioning_lead(
         valid_samples,
         config,
         prediction_now,
+        temperature_delta_scale,
     )
     combined_estimate = max(complete_estimate, partial_floor)
     rounded_estimate = _round_up_to_next_5(combined_estimate)
@@ -923,6 +1030,7 @@ def _similar_preconditioning_samples(
     samples: list[PreconditioningObservation],
     current_context: dict[str, float | None],
     config: PreconditioningData,
+    temperature_delta_scale: float = 1.0,
 ) -> tuple[list[PreconditioningObservation], bool]:
     """Return the most similar samples for the current prediction context."""
     candidate_samples = samples
@@ -943,7 +1051,10 @@ def _similar_preconditioning_samples(
 
     ordered = sorted(
         candidate_samples,
-        key=lambda sample: _preconditioning_distance(current_context, sample),
+        key=lambda sample: (
+            _preconditioning_distance(current_context, sample)
+            * temperature_delta_scale
+        ),
     )
     return ordered[: config["similar_sample_count"]], used_outdoor
 
@@ -988,11 +1099,18 @@ def _partial_preconditioning_floor(
     valid_samples: list[PreconditioningObservation],
     config: PreconditioningData,
     now: datetime,
+    temperature_delta_scale: float = 1.0,
 ) -> int:
     """Return the lower bound implied by active censored partial samples."""
     floor_values: list[int] = []
     for sample in partial_samples:
-        if _partial_preconditioning_sample_expired(sample, valid_samples, config, now):
+        if _partial_preconditioning_sample_expired(
+            sample,
+            valid_samples,
+            config,
+            now,
+            temperature_delta_scale,
+        ):
             continue
         startup_minutes = int(sample["startup_minutes"])
         increment = max(
@@ -1008,6 +1126,7 @@ def _partial_preconditioning_sample_expired(
     valid_samples: list[PreconditioningObservation],
     config: PreconditioningData,
     now: datetime,
+    temperature_delta_scale: float = 1.0,
 ) -> bool:
     """Return whether a partial sample should no longer influence prediction."""
     sample_created = _parse_datetime(str(sample["created_at"]))
@@ -1023,7 +1142,10 @@ def _partial_preconditioning_sample_expired(
         and other.get("reached") is True
         and (other_created := _parse_datetime(str(other.get("created_at", "")))) is not None
         and other_created > sample_created
-        and _sample_to_sample_preconditioning_distance(sample, other) < 2.0
+        and (
+            _sample_to_sample_preconditioning_distance(sample, other)
+            * temperature_delta_scale
+        ) < 2.0
     ]
     return len(later_similar_complete) >= 3
 
@@ -1298,7 +1420,8 @@ def _normalize_temperature_limit(value: Any, fallback: float) -> float:
     except (TypeError, ValueError):
         return fallback
 
-    if temperature < -50 or temperature > 100:
+    # Broad runtime envelope covering -50..100 °C and -58..212 °F.
+    if temperature < -58 or temperature > 212:
         return fallback
 
     return temperature
@@ -1365,7 +1488,7 @@ def _normalize_preconditioning_delta(value: Any) -> float:
     except (TypeError, ValueError):
         return DEFAULT_PRECONDITIONING_MINIMUM_DELTA
 
-    if delta < 0 or delta > 5:
+    if delta < 0 or delta > 9:
         return DEFAULT_PRECONDITIONING_MINIMUM_DELTA
 
     return delta

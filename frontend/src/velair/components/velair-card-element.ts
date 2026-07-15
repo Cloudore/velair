@@ -20,6 +20,7 @@ import {
 } from "../controllers/card-context";
 import type {
   BlockDraftSource,
+  ComfortSettings,
   DraftScheduleBlock,
   EntityDiagnostic,
   HomeAssistant,
@@ -104,6 +105,7 @@ import {
   handleSettingsZoneDrop,
   moveSettingsZone,
   saveSettings,
+  saveZoneComfort,
   saveZonePreconditioning,
   resetZonePreconditioningLearning,
   resetZonePreconditioningSettings,
@@ -212,6 +214,9 @@ export class VelairCard extends LitElement {
 
   public set hass(value: HomeAssistant | undefined) {
     const oldValue = this._hass;
+    const oldGlobalUnit = oldValue?.config?.unit_system?.temperature;
+    const nextGlobalUnit = value?.config?.unit_system?.temperature;
+    const globalUnitChanged = oldGlobalUnit !== nextGlobalUnit;
     const refreshPreconditioning = preconditioningInputsChanged(
       asCardContextHost(this),
       value,
@@ -223,6 +228,13 @@ export class VelairCard extends LitElement {
     }
     if (refreshPreconditioning) {
       this._schedulePreconditioningRefresh();
+    }
+    if (globalUnitChanged && oldValue && this._data) {
+      // Stored values are migrated atomically by the backend. Never mutate
+      // drafts from a Home Assistant state update: doing so can double-convert
+      // values while the scheduler is deliberately blocked.
+      this._temperatureUnitReloadPending = true;
+      void this._loadSchedule();
     }
   }
 
@@ -261,9 +273,11 @@ export class VelairCard extends LitElement {
   @state() private _templateListCanScrollDown = false;
   @state() private _templateAction?: "save" | "delete";
   @state() private _settingsSaving = false;
+  @state() private _temperatureMigrationAction?: "°C" | "°F";
   @state() private _maintenanceAction?: "reset";
   @state() private _portabilityAction?: "export" | "import";
   @state() private _exportSections = new Set<PortableSection>(PORTABLE_SECTIONS);
+  @state() private _expandedComfortZones = new Set<string>();
   @state() private _expandedPreconditioningZones = new Set<string>();
   @state() private _importSections = new Set<PortableSection>();
   @state() private _importPayload?: VelairPortablePayload;
@@ -287,6 +301,7 @@ export class VelairCard extends LitElement {
   private _preconditioningRefreshTimer?: number;
   private _nextEventChangeTimeout?: number;
   private _timelineNowTick?: number;
+  private _temperatureUnitReloadPending = false;
   private _overviewTimelineScrollInitialized = false;
   private _draggedTimelineIndex?: number;
   private _timelineResize?: {
@@ -546,7 +561,7 @@ export class VelairCard extends LitElement {
   }
 
   private _scheduleTemplates(): ScheduleTemplate[] {
-    return scheduleTemplatesFromStored(this._data?.templates);
+    return scheduleTemplatesFromStored(this._data?.templates, this._temperatureUnit());
   }
 
   private _templateLabel(template: ScheduleTemplate): string {
@@ -554,7 +569,13 @@ export class VelairCard extends LitElement {
   }
 
   private async _loadSchedule(): Promise<void> {
-    await loadSchedule(asScheduleStateHost(this));
+    if (this._loading) {
+      return;
+    }
+    do {
+      this._temperatureUnitReloadPending = false;
+      await loadSchedule(asScheduleStateHost(this));
+    } while (this._temperatureUnitReloadPending);
   }
 
   private async _subscribeUpdates(): Promise<void> {
@@ -903,6 +924,44 @@ export class VelairCard extends LitElement {
     await saveZonePreconditioning(asSettingsActionsHost(this), entityId, preconditioning);
   }
 
+  private async _resolveTemperatureMigration(sourceUnit: "°C" | "°F"): Promise<void> {
+    const api = this._api();
+    const migration = this._data?.temperature_migration;
+    if (!api || this._temperatureMigrationAction || !migration?.required) {
+      return;
+    }
+    const targetUnit = migration.target_unit ?? this._temperatureUnit();
+    if (!window.confirm(this._t("temperatureMigrationConfirm", {
+      source: sourceUnit,
+      target: targetUnit,
+    }))) {
+      return;
+    }
+    this._temperatureMigrationAction = sourceUnit;
+    this._error = undefined;
+    try {
+      const migrationId = globalThis.crypto?.randomUUID?.()
+        ?? `velair-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      this._applyScheduleData(await api.resolveTemperatureMigration(
+        sourceUnit,
+        migrationId,
+        migration.temperature_revision ?? 0,
+      ), { forceDraft: true });
+      showSuccess(asNoticeHost(this), this._t("temperatureMigrationComplete"));
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : this._t("temperatureMigrationFailed");
+    } finally {
+      this._temperatureMigrationAction = undefined;
+    }
+  }
+
+  private async _saveZoneComfort(
+    entityId: string,
+    comfort: Partial<ComfortSettings>,
+  ): Promise<void> {
+    await saveZoneComfort(asSettingsActionsHost(this), entityId, comfort);
+  }
+
   private _togglePreconditioningZone(entityId: string): void {
     const expandedZones = new Set(this._expandedPreconditioningZones);
     if (expandedZones.has(entityId)) {
@@ -911,6 +970,16 @@ export class VelairCard extends LitElement {
       expandedZones.add(entityId);
     }
     this._expandedPreconditioningZones = expandedZones;
+  }
+
+  private _toggleComfortZone(entityId: string): void {
+    const expandedZones = new Set(this._expandedComfortZones);
+    if (expandedZones.has(entityId)) {
+      expandedZones.delete(entityId);
+    } else {
+      expandedZones.add(entityId);
+    }
+    this._expandedComfortZones = expandedZones;
   }
 
   private async _resetZonePreconditioningLearning(
@@ -1005,11 +1074,11 @@ export class VelairCard extends LitElement {
     return templateTemperatureLimits(asClimateDisplayHost(this));
   }
 
-  private _temperatureStep(source: BlockDraftSource = "schedule", entityId = this._selectedEntity): number {
+  private _temperatureStep(source: BlockDraftSource = "schedule", entityId = this._selectedEntity): number | undefined {
     return temperatureStep(asClimateDisplayHost(this), source, entityId);
   }
 
-  private _entityTemperatureStep(entityId?: string): number {
+  private _entityTemperatureStep(entityId?: string): number | undefined {
     return entityTemperatureStepForHost(asClimateDisplayHost(this), entityId);
   }
 

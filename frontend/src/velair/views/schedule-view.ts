@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
 import { keyed } from "lit/directives/keyed.js";
+import { firstTemperatureStepAtOrAbove } from "../domain/climate";
 import { ACTION_SET_TEMPERATURE, ACTION_TURN_OFF } from "../constants";
 import { isActiveBoostOverride } from "../domain/overrides";
 import { dateMs } from "../domain/schedule-events";
@@ -93,7 +94,7 @@ export function renderScheduleEditor(host: ScheduleViewHost, entityId: string, z
         <div class="draft-list">
           ${host._draftBlocks.length
             ? html`
-                ${renderDraftListHeader(host)}
+                ${renderDraftListHeader(host, "schedule")}
                 ${host._draftBlocks.map((block: DraftScheduleBlock, index: number) =>
                   keyed(
                     editableBlockRowKey("schedule", entityId, host._selectedWeekday, index),
@@ -323,12 +324,13 @@ export function renderTemplatePanel(host: ScheduleViewHost) {
   `;
 }
 
-export function renderDraftListHeader(host: ScheduleViewHost) {
+export function renderDraftListHeader(host: ScheduleViewHost, source: BlockDraftSource = "schedule") {
+  const unit = host._temperatureUnit?.(source === "schedule" ? host._selectedEntity : undefined) ?? "°C";
   return html`
     <div class="draft-list-header" aria-hidden="true">
       <span>${host._t("time")}</span>
       <span>${host._t("mode")}</span>
-      <span>${host._t("temp")}</span>
+      <span>${host._t("temp")} (${unit})</span>
       <span></span>
       <span></span>
     </div>
@@ -363,6 +365,8 @@ export function renderEditableBlock(
   const temperatureError = host._temperatureError(block, source);
   const [minTemperature, maxTemperature] = host._temperatureLimits(source);
   const temperatureStep = host._temperatureStep(source);
+  const inputMinTemperature = firstTemperatureStepAtOrAbove(minTemperature, temperatureStep);
+  const temperatureUnit = host._temperatureUnit?.(source === "schedule" ? host._selectedEntity : undefined) ?? "°C";
   const modeOptions = host._hvacModeOptions(source);
   const displayedModeOptions = selectedMode && !modeOptions.includes(selectedMode)
     ? [...modeOptions, selectedMode]
@@ -418,13 +422,13 @@ export function renderEditableBlock(
         </span>
       </label>
       <label>
-        <span class="label">${host._t("temp")}</span>
+        <span class="label">${host._t("temp")} (${temperatureUnit})</span>
         <input
           class=${temperatureError ? "invalid" : ""}
           type="number"
-          min=${String(minTemperature)}
+          min=${String(inputMinTemperature)}
           max=${String(maxTemperature)}
-          step=${String(temperatureStep)}
+          step=${temperatureStep === undefined ? "any" : String(temperatureStep)}
           ?disabled=${isTurnOff}
           placeholder=${isTurnOff ? host._t("off") : ""}
           .value=${isTurnOff ? "" : String(block.temperature)}

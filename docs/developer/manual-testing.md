@@ -32,6 +32,52 @@ Restart Home Assistant.
 3. Select one or more `climate.*` entities.
 4. Confirm setup completes without log errors.
 5. Confirm Velair appears in the sidebar.
+6. Open Velair Settings and confirm the read-only temperature unit matches Home
+   Assistant's configured unit system.
+
+## Legacy Temperature Migration
+
+1. Load published unitless v1.1 storage under Fahrenheit and confirm it is
+   treated as Celsius without automatic conversion.
+2. Confirm no climate action is applied,
+   the scheduler status is `temperature_migration_required`, and Home Assistant
+   creates one persistent Velair notification.
+3. Confirm services, normal configuration writes, and import are rejected, while
+   export remains available as a reference backup and Reset Velair is offered.
+4. Reset and confirm fresh schedules, templates, Comfort, Room Assist, and
+   Adaptive Preconditioning defaults are valid Fahrenheit values.
+5. Confirm the notification is dismissed and scheduling resumes only after the
+   reset payload is stored and runtime cleanup succeeds.
+
+## Home Assistant Unit Change
+
+1. Start with runtime-unit storage whose declared unit matches Home Assistant,
+   then change Home Assistant to the other temperature unit.
+2. Confirm scheduling and thermal writes stop, export remains available, and
+   Settings shows the stored source and current target units.
+3. Leave the action untouched and confirm Velair does not convert or resume
+   automatically.
+4. Run the explicit migration and confirm schedules, templates, overrides,
+   Comfort, Room Assist, Adaptive Preconditioning settings, rates, and learning
+   remain physically equivalent.
+5. Confirm known climate targets align to the exact published target step. Test
+   an unavailable climate and confirm incompatible schedules are reported after
+   its capabilities return.
+6. Repeat the same migration id and confirm it is a no-op. Repeat with a stale
+   revision and confirm it is rejected.
+7. Simulate a storage failure and confirm original runtime values remain intact.
+   Simulate a post-persist runtime failure and confirm Velair stays stopped with
+   recovery guidance until the integration reloads or Home Assistant restarts.
+
+## Portable Temperature Data
+
+1. Export in Celsius and Fahrenheit and confirm portable model v3 records the
+   effective `temperature_unit`.
+2. Import into the opposite unit and confirm selected thermal sections convert.
+3. Import a unitless legacy backup and confirm the UI warns that Celsius is
+   assumed before the backend converts it when required.
+4. Confirm known climate targets use exact published steps and standalone values
+   without a common device step use safe fallback precision.
 
 ## Options Flow
 
@@ -48,11 +94,32 @@ The integration should create scheduler status/control entities. Exact entity ID
 
 Expected entity types include:
 
-- scheduler enabled switch;
-- scheduler mode select;
-- next climate event sensor;
-- current schedule state sensor;
-- active target sensors for managed climates.
+- one Automatic scheduling switch and no scheduler mode selector;
+- one next scheduled event sensor;
+- one scheduler status sensor;
+- one active target temperature sensor per managed climate;
+- environmental condition and air-quality sensors per managed climate;
+- zone override, preconditioning start, and Room Assist state sensors per
+  managed climate.
+
+Confirm that:
+
+- active target sensors use each climate entity's temperature unit;
+- their names use the climate friendly name;
+- an active target started early by Adaptive Preconditioning exposes both
+  `when` and `target_when`;
+- comfort and air-quality states remain independent and do not copy raw source
+  readings;
+- optional features expose clear inactive states when they are disabled or not
+  configured;
+- turning Automatic scheduling off stops indefinitely and turning it on resumes
+  the current schedule;
+- removing a climate through the integration options removes its generated zone
+  sensors after the integration reloads, without removing global Velair
+  entities or entities from other integrations;
+- scheduler status values are translated in English and Spanish;
+- changing only a user profile language does not rename existing entities,
+  because Home Assistant stores their original names at entity creation.
 
 ## Services
 
@@ -110,6 +177,21 @@ Heat-only example:
 
 If you only need to verify next-event scheduling, Home Assistant Developer Tools > States can temporarily change the displayed `current_temperature` for a climate state. This is useful for checking whether Velair calculates an early start, but it is not a complete learning test because Velair may still call services on the real climate entity when the event is due.
 
+## Environmental Comfort Smoke Test
+
+1. Open the Comfort tab.
+2. Enable Comfort for one managed climate.
+3. Select a temperature sensor, or leave it automatic and confirm Velair uses the Room Assist room sensor or the climate `current_temperature`.
+4. Set a temperature range that contains the current value and confirm the condition reports that temperature is in range.
+5. Move the test sensor below and above the range and confirm the condition changes to Cold and Hot.
+6. Add a humidity sensor or use a climate that reports `current_humidity`; verify all nine temperature/humidity combinations and the two-dimensional map.
+7. Select `Do not monitor humidity` and confirm the humidity thresholds disappear, the condition uses temperature only, and humidity changes no longer refresh the assessment.
+8. Restore automatic humidity and confirm the saved or automatic source is used again.
+9. Remove one current environmental reading and confirm the UI switches to a single scale with partial data instead of claiming full comfort.
+10. Add a CO2 sensor and confirm Good air, CO2 elevated, and Poor air quality remain separate from the environmental condition.
+11. Make every monitored reading unavailable or stale and confirm No readings or Readings outdated is shown.
+12. Disable Comfort for that climate and confirm changing those sensors no longer emits comfort events.
+
 ## Automation Event Smoke Test
 
 1. Create a temporary automation with an event trigger for `velair_event` filtered by `event: scheduler_mode_changed`.
@@ -122,13 +204,17 @@ If you only need to verify next-event scheduling, Home Assistant Developer Tools
 8. Enable preconditioning for one climate with a future heat or cool block and listen for `event: preconditioning_plan_updated`.
 9. Confirm its payload includes the original and calculated start times, lead, direction, temperatures, and model source.
 10. Refresh Overview and confirm the unchanged plan does not emit another event.
-11. Disable preconditioning, change that climate's temperature, and confirm no new plan event or learning sample is produced.
-12. Start and cancel a boost and confirm `boost_ended` is emitted with `reason: manual`.
+11. Disable preconditioning and confirm one `preconditioning_plan_cancelled` event contains the last plan and a cancellation reason.
+12. Complete or expire a preconditioning session and confirm `preconditioning_observation_recorded` reports the final quality and stored sample count.
+13. Enable and disable Room Assist and confirm `room_sensor_assist_state_changed` only fires when enablement actually changes.
+14. Start and cancel a boost and confirm `boost_ended` contains `reason: manual` and the selected `restoration`.
+15. Enable Comfort for one climate and listen for `event: comfort_assessment_changed`.
+16. Move a tracked temperature, humidity, or CO2 sensor across a configured threshold and confirm the event includes `entity_id`, `condition`, `air_quality`, `data_quality`, `data_issues`, and metric payloads.
 
 ## Frontend Smoke Test
 
 1. Open the sidebar panel.
-2. Confirm the Overview, Schedules, Templates, Preconditioning, and Settings tabs render.
+2. Confirm the Overview, Schedules, Templates, Room Assist, Comfort, Preconditioning, and Settings tabs render.
 3. Confirm Preconditioning lists climates in the order configured in Settings and contains no general Settings sections.
 4. Confirm mobile and desktop layouts do not overflow.
 5. Add, edit, drag, resize, and delete blocks.

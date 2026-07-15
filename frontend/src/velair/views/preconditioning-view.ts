@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
 import { preconditioningSettings, temperatureSensorOptions } from "../domain/preconditioning";
+import { minutesPerDegreeBounds, temperatureDeltaMaximum, temperatureDeltaMinimum } from "../domain/temperature-units";
 import type { VelairViewHost } from "../host-types";
 import type { TranslationKey } from "../translations";
 import type {
@@ -52,8 +53,10 @@ function renderPreconditioningZone(
   entityId: string,
 ) {
   const exists = host._entityExists(entityId);
+  const temperatureUnit = host._temperatureUnit?.(entityId) ?? "°C";
   const preconditioning = preconditioningSettings(
     host._data?.zones[entityId]?.preconditioning,
+    temperatureUnit,
   );
   const learning = host._data?.preconditioning_learning?.[entityId];
   const expanded = exists && host._expandedPreconditioningZones.has(entityId);
@@ -156,6 +159,9 @@ function renderAdaptivePreconditioningFields(
   entityId: string,
   preconditioning: PreconditioningSettings,
 ) {
+  const temperatureUnit = host._temperatureUnit?.(entityId) ?? "°C";
+  const minutesPerDegreeRange = minutesPerDegreeBounds(temperatureUnit);
+  const temperatureDeltaStep = 0.1;
   return html`
     <div class="preconditioning-config-sections">
       ${renderConfigurationSection(
@@ -165,8 +171,8 @@ function renderAdaptivePreconditioningFields(
         html`
           ${renderPreconditioningNumber(host, entityId, "preconditioningMinStart", preconditioning.min_start_minutes, "min_start_minutes", 0, 1440, 5)}
           ${renderPreconditioningNumber(host, entityId, "preconditioningMaxLead", preconditioning.max_lead_minutes, "max_lead_minutes", 0, 1440, 15)}
-          ${renderPreconditioningNumber(host, entityId, "preconditioningMinimumDelta", preconditioning.minimum_delta_temperature, "minimum_delta_temperature", 0, 5, 0.1)}
-          ${renderPreconditioningNumber(host, entityId, "preconditioningFallbackMinutesPerDegree", preconditioning.fallback_minutes_per_degree, "fallback_minutes_per_degree", 1, 120, 1)}
+          ${renderPreconditioningNumber(host, entityId, "preconditioningMinimumDelta", preconditioning.minimum_delta_temperature, "minimum_delta_temperature", 0, temperatureDeltaMaximum(temperatureUnit, 5), temperatureDeltaStep, "", { labelUnit: temperatureUnit })}
+          ${renderPreconditioningNumber(host, entityId, "preconditioningFallbackMinutesPerDegree", preconditioning.fallback_minutes_per_degree, "fallback_minutes_per_degree", minutesPerDegreeRange[0], minutesPerDegreeRange[1], 0.1, "", { labelUnit: `${host._t("minutesShort")}/${temperatureUnit}` })}
         `,
       )}
       ${renderConfigurationSection(
@@ -593,12 +599,13 @@ function renderLearningChip(
 function renderConfigurationLabel(
   host: PreconditioningViewHost,
   labelKey: TranslationKey,
+  unit = "",
 ) {
   const helpKey = PRECONDITIONING_HELP_KEYS[labelKey];
   const help = helpKey ? host._t(helpKey) : "";
   return html`
     <span class="label preconditioning-config-label">
-      <span>${host._t(labelKey)}</span>
+      <span>${host._t(labelKey)}${unit ? ` (${unit})` : ""}</span>
       ${helpKey
         ? html`
             <span
@@ -653,13 +660,14 @@ function renderPreconditioningNumber(
   min: number,
   max: number,
   step: number,
-  options: { inactive?: boolean } = {},
+  unit = "",
+  options: { inactive?: boolean; labelUnit?: string } = {},
 ) {
   const disabled = host._settingsSaving || Boolean(options.inactive);
   return html`
     <label class=${`preconditioning-config-row ${options.inactive ? "inactive" : ""}`}>
-      ${renderConfigurationLabel(host, labelKey)}
-      <input
+      ${renderConfigurationLabel(host, labelKey, options.labelUnit)}
+      <span class="preconditioning-number-input"><input
         type="number"
         min=${String(min)}
         max=${String(max)}
@@ -677,7 +685,7 @@ function renderPreconditioningNumber(
           );
           host._saveZonePreconditioning(entityId, { [field]: boundedValue });
         }}
-      />
+      />${unit ? html`<span>${unit}</span>` : nothing}</span>
     </label>
   `;
 }

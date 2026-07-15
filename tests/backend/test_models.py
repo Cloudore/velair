@@ -10,7 +10,9 @@ from .helpers import (
     ACTION_TURN_OFF,
     DEFAULT_SCHEDULE_TEMPLATES_VERSION,
     MODE_AUTO,
+    MODE_PAUSED,
     empty_week_schedule,
+    normalize_comfort_data,
     normalize_schedule_blocks,
     normalize_schedule_data,
 )
@@ -315,6 +317,17 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
             ],
         )
 
+    def test_legacy_non_automatic_modes_normalize_to_paused(self) -> None:
+        for legacy_mode in ("manual", "vacation", "unexpected"):
+            with self.subTest(legacy_mode=legacy_mode):
+                data = normalize_schedule_data(
+                    {"global": {"mode": legacy_mode}},
+                    ["climate.salon"],
+                )
+
+                self.assertEqual(data["global_"]["mode"], MODE_PAUSED)
+                self.assertNotIn("vacation", data["global_"])
+
     def test_normalize_schedule_data_preserves_panel_settings(self) -> None:
         data = normalize_schedule_data(
             {
@@ -383,6 +396,77 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
             data["zones"]["climate.bedroom"]["preconditioning"]["max_lead_minutes"],
             DEFAULT_PRECONDITIONING_MAX_LEAD_MINUTES,
         )
+
+    def test_normalize_schedule_data_preserves_comfort_settings(self) -> None:
+        data = normalize_schedule_data(
+            {
+                "zones": {
+                    "climate.salon": {
+                        "enabled": True,
+                        "schedule": empty_week_schedule(),
+                        "comfort": {
+                            "enabled": True,
+                            "temperature_entity_id": " sensor.salon_temperature ",
+                            "humidity_enabled": False,
+                            "humidity_entity_id": "sensor.salon_humidity",
+                            "co2_entity_id": "sensor.salon_co2",
+                            "temperature_min": 19,
+                            "temperature_max": 25,
+                            "humidity_min": 35,
+                            "humidity_max": 65,
+                            "co2_attention": 900,
+                            "co2_poor": 1400,
+                            "stale_after_minutes": 45,
+                        },
+                    }
+                }
+            },
+            ["climate.salon", "climate.bedroom"],
+        )
+
+        self.assertEqual(
+            data["zones"]["climate.salon"]["comfort"],
+            {
+                "enabled": True,
+                "temperature_entity_id": "sensor.salon_temperature",
+                "humidity_enabled": False,
+                "humidity_entity_id": "sensor.salon_humidity",
+                "co2_entity_id": "sensor.salon_co2",
+                "temperature_min": 19.0,
+                "temperature_max": 25.0,
+                "humidity_min": 35.0,
+                "humidity_max": 65.0,
+                "co2_attention": 900,
+                "co2_poor": 1400,
+                "stale_after_minutes": 45,
+            },
+        )
+        self.assertFalse(data["zones"]["climate.bedroom"]["comfort"]["enabled"])
+        self.assertTrue(
+            data["zones"]["climate.bedroom"]["comfort"]["humidity_enabled"]
+        )
+
+    def test_normalize_comfort_data_resets_invalid_ranges(self) -> None:
+        data = normalize_comfort_data(
+            {
+                "enabled": True,
+                "temperature_min": 27,
+                "temperature_max": 20,
+                "humidity_min": 80,
+                "humidity_max": 20,
+                "co2_attention": 2000,
+                "co2_poor": 1000,
+                "stale_after_minutes": 5000,
+            }
+        )
+
+        self.assertEqual(data["temperature_min"], 20.0)
+        self.assertEqual(data["temperature_max"], 24.0)
+        self.assertEqual(data["humidity_min"], 40.0)
+        self.assertEqual(data["humidity_max"], 60.0)
+        self.assertEqual(data["co2_attention"], 1000)
+        self.assertEqual(data["co2_poor"], 1500)
+        self.assertEqual(data["stale_after_minutes"], 1440)
 
     def test_normalize_preconditioning_data_preserves_outdoor_temperature_entity(
         self,

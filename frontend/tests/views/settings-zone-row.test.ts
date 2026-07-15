@@ -99,4 +99,32 @@ describe("settings climate row", () => {
 
     expect(container.querySelector(".settings-feature-badge.room-assist")).toBeNull();
   });
+
+  it("explains when Home Assistant does not report a temperature step", () => {
+    const container = document.createElement("div");
+    const viewHost = host(false);
+    viewHost._entityTemperatureStep = () => undefined;
+
+    render(renderSettingsZoneOrderRow(viewHost, "climate.office", 0, 1), container);
+
+    const status = container.querySelector(".capability-not-reported");
+    expect(status?.textContent).toContain(
+      "temperatureStep: temperatureStepNotReported",
+    );
+    expect(status?.getAttribute("title")).toBe(
+      "temperatureStepNotReportedDescription",
+    );
+  });
+
+  it("continues to show the exact reported temperature step", () => {
+    const container = document.createElement("div");
+
+    render(renderSettingsZoneOrderRow(host(false), "climate.office", 0, 1), container);
+
+    const step = [...container.querySelectorAll(".settings-facts > span")].find(
+      (item) => item.textContent?.includes("temperatureStep:"),
+    );
+    expect(step?.textContent).toContain("temperatureStep: 0.5");
+    expect(step?.classList.contains("capability-not-reported")).toBe(false);
+  });
 });

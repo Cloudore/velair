@@ -1,7 +1,8 @@
 import { ACTION_SET_TEMPERATURE, WEEKDAYS } from "../constants";
 import type { DraftScheduleBlock, ScheduleTemplate, StoredScheduleTemplate } from "../types";
+import { defaultTargetTemperature } from "./temperature-units";
 
-export function scheduleTemplatesFromStored(templates: StoredScheduleTemplate[] | undefined): ScheduleTemplate[] {
+export function scheduleTemplatesFromStored(templates: StoredScheduleTemplate[] | undefined, unit?: string): ScheduleTemplate[] {
   return (templates ?? []).map((template) => ({
     key: template.key,
     name: template.name,
@@ -9,7 +10,7 @@ export function scheduleTemplatesFromStored(templates: StoredScheduleTemplate[] 
       const draft: DraftScheduleBlock = {
         action: block.action ?? ACTION_SET_TEMPERATURE,
         start: block.start,
-        temperature: Number(block.temperature ?? 21),
+        temperature: Number(block.temperature ?? defaultTargetTemperature(unit)),
         hvac_mode: block.hvac_mode ?? "",
       };
       if (block.fan_mode) {

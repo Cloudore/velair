@@ -121,6 +121,11 @@ The scheduled target remains `22 °C`. The temporary climate target is only used
 
 ## When Velair Does Nothing
 
+Room Assist requires the managed climate to publish a valid positive
+`target_temp_step`. If that capability is missing, Velair reports Room Assist as
+unavailable with `missing_target_step` and does not infer a fallback or send an
+assisted target.
+
 Room Assist does not apply an assisted target when:
 
 - no room sensor is selected;
@@ -149,8 +154,12 @@ Velair emits the standard `velair_event` Home Assistant event.
 
 Room Assist emits:
 
+- `room_sensor_assist_state_changed`: Room Assist was enabled or disabled.
 - `room_sensor_assist_updated`: Velair applied a temporary assisted climate target.
 - `room_sensor_assist_restored`: Velair stopped driving the assisted target because the room reached target or assistance ended.
+
+See [Automation Events](automation-events.md#room-sensor-assist-state-changed)
+for complete payloads and all restoration reasons.
 
 Example event data:
 
@@ -194,6 +203,8 @@ view: sensors
 entities:
   - climate.living_room
 ```
+
+The live temperature scale separates two relationships. The upper neutral line compares the room sensor with the scheduled target and labels the room as above or below that target. The lower control line compares the climate reading with the climate target: a highlighted dashed line and signed `Offset` label mean Room Assist is applying a non-zero setpoint offset, while a lighter dotted line with `Offset 0 · Holding` means no correction is currently applied. These indicators describe only the setpoint correction sent by Velair; they do not claim that the thermostat, valve, or compressor is actively heating or cooling.
 
 In narrow dashboard columns, the live temperature scale scrolls horizontally so temperature markers remain readable.
 

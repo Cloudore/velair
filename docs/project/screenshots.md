@@ -23,18 +23,23 @@ The following screenshots are captured from a real Home Assistant instance.
 
 | Active | Inactive |
 | --- | --- |
-| ![Velair settings desktop](../../screenshots/room-assist-desktop-1.png) | ![Velair settings mobile](../../screenshots/room-assist-desktop-2.png) |
+| ![Velair room assist active desktop](../../screenshots/room-assist-desktop-1.png) | ![Velair room assist inactive desktop](../../screenshots/room-assist-desktop-2.png) |
 
 * Mobile
 
 | Active | Inactive |
 | --- | --- |
-| ![Velair settings desktop](../../screenshots/room-assist-mobile-1.png) | ![Velair settings mobile](../../screenshots/room-assist-mobile-2.png) |
+| ![Velair room assist active mobile](../../screenshots/room-assist-mobile-1.png) | ![Velair room assist inactive mobile](../../screenshots/room-assist-mobile-2.png) |
+
+### Comfort
+| Desktop | Mobile |
+| --- | --- |
+| ![Velair comfort desktop](../../screenshots/comfort-desktop.png) | ![Velair comfort mobile](../../screenshots/comfort-mobile.png) |
 
 ### Preconditioning
 | Desktop | Mobile |
 | --- | --- |
-| ![Velair settings desktop](../../screenshots/preconditioning-desktop.png) | ![Velair settings mobile](../../screenshots/preconditioning-mobile.png) |
+| ![Velair preconditioning desktop](../../screenshots/preconditioning-desktop.png) | ![Velair preconditioning mobile](../../screenshots/preconditioning-mobile.png) |
 
 ### Settings
 | Desktop | Mobile |

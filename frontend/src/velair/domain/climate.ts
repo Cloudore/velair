@@ -69,15 +69,29 @@ export function modeClassName(mode: string): string {
   return mode.replaceAll("_", "-");
 }
 
-export function entityTemperatureLimits(state?: HassState): [number, number] {
-  const minTemperature = coerceNumber(state?.attributes?.min_temp, 5);
-  const maxTemperature = coerceNumber(state?.attributes?.max_temp, 35);
-  return minTemperature < maxTemperature ? [minTemperature, maxTemperature] : [5, 35];
+export function entityTemperatureLimits(state?: HassState, unit?: string): [number, number] {
+  const fallback: [number, number] = isFahrenheit(unit) ? [41, 95] : [5, 35];
+  const minTemperature = coerceNumber(state?.attributes?.min_temp, fallback[0]);
+  const maxTemperature = coerceNumber(state?.attributes?.max_temp, fallback[1]);
+  if (
+    minTemperature >= maxTemperature
+    || gridLooksStaleForUnit(minTemperature, maxTemperature, unit)
+  ) {
+    return fallback;
+  }
+  return [minTemperature, maxTemperature];
 }
 
-export function entityTemperatureStep(state?: HassState): number {
-  const step = coerceNumber(state?.attributes?.target_temp_step, 0.5);
-  return step > 0 ? step : 0.5;
+export function entityTemperatureStep(state?: HassState): number | undefined {
+  const step = coerceNumber(state?.attributes?.target_temp_step, Number.NaN);
+  return Number.isFinite(step) && step > 0 ? step : undefined;
+}
+
+export function firstTemperatureStepAtOrAbove(minimum: number, step?: number): number {
+  if (step === undefined || !Number.isFinite(step) || step <= 0) {
+    return minimum;
+  }
+  return Math.round(Math.ceil((minimum / step) - 0.000001) * step * 1_000_000) / 1_000_000;
 }
 
 export function climateSupportedModes(state?: HassState): string[] {
@@ -160,6 +174,16 @@ export function climateCapabilities(state?: HassState): ClimateCapability[] {
 function coerceNumber(value: unknown, fallback: number): number {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function isFahrenheit(unit?: string): boolean {
+  return String(unit ?? "").toUpperCase().includes("F");
+}
+
+function gridLooksStaleForUnit(minimum: number, maximum: number, unit?: string): boolean {
+  return isFahrenheit(unit)
+    ? maximum <= 60 && minimum < 40
+    : Boolean(unit) && (maximum > 60 || minimum > 40);
 }
 
 function stringArrayAttribute(state: HassState | undefined, attribute: string): string[] {

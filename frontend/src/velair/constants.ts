@@ -20,6 +20,7 @@ export const PANEL_VIEWS: VelairPanelView[] = [
   "schedules",
   "templates",
   "sensors",
+  "comfort",
   "preconditioning",
   "settings",
 ];
@@ -31,10 +32,11 @@ export const LOVELACE_CARD_VIEWS: VelairCardView[] = [
   "overview-zones",
   "schedules",
   "sensors",
+  "comfort",
   "preconditioning",
 ];
 export const PORTABLE_FORMAT = "velair_portable_data";
-export const PORTABLE_MODEL_VERSION = 1;
+export const PORTABLE_MODEL_VERSION = 3;
 export const PORTABLE_SECTIONS: PortableSection[] = [
   "zones",
   "templates",

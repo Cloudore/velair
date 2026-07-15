@@ -38,24 +38,76 @@
       "next_climate_event": {
         "name": "Next scheduled event"
       },
-      "current_schedule_state": {
-        "name": "Current schedule state"
-      },
       "scheduler_status": {
-        "name": "Scheduler status"
+        "name": "Scheduler status",
+        "state": {
+          "paused": "Paused",
+          "override_active": "Override active",
+          "scheduled": "Scheduled",
+          "idle": "Idle",
+          "temperature_migration_required": "Temperature update required"
+        }
       },
       "zone_active_target_temperature": {
         "name": "{zone} active target temperature"
-      }
-    },
-    "select": {
-      "scheduler_mode": {
-        "name": "Scheduler mode"
+      },
+      "zone_environmental_condition": {
+        "name": "{zone} environmental condition",
+        "state": {
+          "monitoring_off": "Not monitored",
+          "no_readings": "No readings",
+          "temperature_comfortable": "Temperature comfortable",
+          "humidity_comfortable": "Humidity comfortable",
+          "comfortable": "Comfortable",
+          "cold": "Cold",
+          "hot": "Hot",
+          "dry": "Dry",
+          "humid": "Humid",
+          "cold_and_dry": "Cold and dry",
+          "cold_and_humid": "Cold and humid",
+          "hot_and_dry": "Hot and dry",
+          "hot_and_humid": "Hot and humid"
+        }
+      },
+      "zone_air_quality": {
+        "name": "{zone} air quality",
+        "state": {
+          "not_monitored": "Not monitored",
+          "unavailable": "Unavailable",
+          "good": "Good",
+          "elevated": "Elevated",
+          "poor": "Poor"
+        }
+      },
+      "zone_override_state": {
+        "name": "{zone} override",
+        "state": {
+          "none": "No override",
+          "boost": "Boost",
+          "paused": "Paused",
+          "disabled": "Disabled"
+        }
+      },
+      "zone_preconditioning_start": {
+        "name": "{zone} preconditioning start"
+      },
+      "zone_room_assist_state": {
+        "name": "{zone} Room Assist",
+        "state": {
+          "unavailable": "Unavailable",
+          "not_configured": "Not configured",
+          "disabled": "Disabled",
+          "blocked": "Blocked",
+          "idle": "Idle",
+          "holding": "Holding",
+          "assisting": "Assisting",
+          "ready": "Ready"
+        }
       }
     },
     "switch": {
-      "schedule_enabled": {
-        "name": "Schedule enabled"
+      "automatic_scheduling": {
+        "name": "Automatic scheduling"
       }
     }
   }

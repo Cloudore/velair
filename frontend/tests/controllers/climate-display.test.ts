@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   fanModeOptions,
+  entityTemperatureStepForHost,
   humidityLimits,
   presetModeOptions,
   swingHorizontalModeOptions,
   swingModeOptions,
+  temperatureUnitForHost,
+  temperatureStep,
 } from "../../src/velair/controllers/climate-display";
 
 function host() {
@@ -40,6 +43,38 @@ function host() {
 }
 
 describe("climate display controller", () => {
+  it("uses the stored unit for persisted values while migration is pending", () => {
+    const viewHost = {
+      _data: {
+        temperature_unit: "°C",
+        home_assistant_temperature_unit: "°F",
+      },
+      hass: { config: { unit_system: { temperature: "°F" } } },
+    } as any;
+
+    expect(temperatureUnitForHost(viewHost)).toBe("°C");
+    expect(temperatureUnitForHost(viewHost, "climate.living_room")).toBe("°C");
+  });
+
+  it("preserves the exact Home Assistant target step without a unit fallback", () => {
+    const viewHost = host() as any;
+    viewHost._temperatureUnit = () => "°F";
+    viewHost.hass.states["climate.living_room"].attributes.target_temp_step = 0.2;
+
+    expect(entityTemperatureStepForHost(viewHost, "climate.living_room")).toBe(0.2);
+
+    delete viewHost.hass.states["climate.living_room"].attributes.target_temp_step;
+    expect(entityTemperatureStepForHost(viewHost, "climate.living_room")).toBeUndefined();
+  });
+
+  it("uses no template step when managed climates publish different steps", () => {
+    const viewHost = host() as any;
+    viewHost._entityTemperatureStep = (entityId: string) =>
+      entityId === "climate.living_room" ? 0.2 : 0.5;
+
+    expect(temperatureStep(viewHost, "template")).toBeUndefined();
+  });
+
   it("uses selected climate options for schedules and all managed options for templates", () => {
     const viewHost = host();
 

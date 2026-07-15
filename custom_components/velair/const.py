@@ -14,8 +14,14 @@ EVENT_VELAIR = f"{DOMAIN}_event"
 EVENT_TYPE_BOOST_ENDED = "boost_ended"
 EVENT_TYPE_BOOST_STARTED = "boost_started"
 EVENT_TYPE_CLIMATE_TARGET_APPLIED = "climate_target_applied"
+EVENT_TYPE_COMFORT_ASSESSMENT_CHANGED = "comfort_assessment_changed"
+EVENT_TYPE_PRECONDITIONING_OBSERVATION_RECORDED = (
+    "preconditioning_observation_recorded"
+)
+EVENT_TYPE_PRECONDITIONING_PLAN_CANCELLED = "preconditioning_plan_cancelled"
 EVENT_TYPE_PRECONDITIONING_PLAN_UPDATED = "preconditioning_plan_updated"
 EVENT_TYPE_ROOM_SENSOR_ASSIST_RESTORED = "room_sensor_assist_restored"
+EVENT_TYPE_ROOM_SENSOR_ASSIST_STATE_CHANGED = "room_sensor_assist_state_changed"
 EVENT_TYPE_ROOM_SENSOR_ASSIST_UPDATED = "room_sensor_assist_updated"
 EVENT_TYPE_SCHEDULER_MODE_CHANGED = "scheduler_mode_changed"
 EVENT_TYPE_ZONE_PAUSED = "zone_paused"
@@ -77,19 +83,18 @@ HVAC_MODE_OPTIONS = [
 ]
 
 MODE_AUTO = "auto"
-MODE_MANUAL = "manual"
 MODE_PAUSED = "paused"
-MODE_VACATION = "vacation"
-
-MODE_OPTIONS = [
-    MODE_AUTO,
-    MODE_MANUAL,
-    MODE_PAUSED,
-    MODE_VACATION,
-]
 
 PLATFORMS: tuple[Platform, ...] = (
     Platform.SENSOR,
-    Platform.SELECT,
     Platform.SWITCH,
+)
+
+ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
+    "active_target_temperature",
+    "environmental_condition",
+    "air_quality",
+    "override_state",
+    "preconditioning_start",
+    "room_assist_state",
 )

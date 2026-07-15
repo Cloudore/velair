@@ -1,12 +1,13 @@
 import { ACTION_SET_TEMPERATURE, ACTION_TURN_OFF } from "../constants";
 import type { DraftScheduleBlock, NormalizedBlocks, ScheduleBlock } from "../types";
+import { defaultTargetTemperature } from "./temperature-units";
 
 type TemperatureErrorOptions = {
   maxTemperature: number;
   minTemperature: number;
   rangeError: string;
   stepError: string;
-  temperatureStep: number;
+  temperatureStep?: number;
 };
 
 type NormalizeDraftBlockOptions = {
@@ -16,12 +17,12 @@ type NormalizeDraftBlockOptions = {
   temperatureError: (block: DraftScheduleBlock) => string | undefined;
 };
 
-export function draftBlocksFromScheduleBlocks(blocks: ScheduleBlock[]): DraftScheduleBlock[] {
+export function draftBlocksFromScheduleBlocks(blocks: ScheduleBlock[], unit?: string): DraftScheduleBlock[] {
   return blocks.map((block) => {
     const draft: DraftScheduleBlock = {
       action: block.action ?? ACTION_SET_TEMPERATURE,
       start: block.start,
-      temperature: Number(block.temperature ?? 21),
+      temperature: Number(block.temperature ?? defaultTargetTemperature(unit)),
       hvac_mode: block.hvac_mode ?? "",
     };
     if (block.fan_mode) {
@@ -43,14 +44,14 @@ export function draftBlocksFromScheduleBlocks(blocks: ScheduleBlock[]): DraftSch
   });
 }
 
-export function addDraftBlock(blocks: DraftScheduleBlock[], nextStart: string): DraftScheduleBlock[] {
+export function addDraftBlock(blocks: DraftScheduleBlock[], nextStart: string, unit?: string): DraftScheduleBlock[] {
   const lastBlock = blocks[blocks.length - 1];
   return [
     ...blocks,
     {
       action: ACTION_SET_TEMPERATURE,
       start: nextStart,
-      temperature: Number(lastBlock?.temperature || 21),
+      temperature: Number(lastBlock?.temperature || defaultTargetTemperature(unit)),
       hvac_mode: "",
     },
   ];
@@ -112,7 +113,10 @@ export function draftBlockTemperatureError(
     return options.rangeError;
   }
 
-  if (Math.abs(temperature / options.temperatureStep - Math.round(temperature / options.temperatureStep)) > 0.0001) {
+  if (
+    options.temperatureStep !== undefined
+    && Math.abs(temperature / options.temperatureStep - Math.round(temperature / options.temperatureStep)) > 0.0001
+  ) {
     return options.stepError;
   }
 

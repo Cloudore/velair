@@ -24,7 +24,7 @@ import {
 import {
   combinedTemperatureLimits,
   formatTemperatureLimit,
-  lowestTemperatureStep,
+  commonTemperatureStep,
 } from "../domain/settings";
 import type { SupportedLanguage } from "../translations";
 import type { BlockDraftSource, EntityDiagnostic, HassState, HomeAssistant, ScheduleEvent, ScheduleResponse } from "../types";
@@ -36,7 +36,7 @@ type ClimateDisplayHost = {
   _climateSupportedModes(entityId: string): string[];
   _dateLocale(): string;
   _entityTemperatureLimits(entityId?: string): [number, number];
-  _entityTemperatureStep(entityId?: string): number;
+  _entityTemperatureStep(entityId?: string): number | undefined;
   _formatTemperature(value: number, entityId?: string): string;
   _language(): SupportedLanguage;
   _modeLabel(mode: string): string;
@@ -62,7 +62,10 @@ export function entityTemperatureLimitsForHost(
   host: ClimateDisplayHost,
   entityId?: string,
 ): [number, number] {
-  return entityTemperatureLimits(entityId ? host.hass?.states?.[entityId] : undefined);
+  return entityTemperatureLimits(
+    entityId ? host.hass?.states?.[entityId] : undefined,
+    host._temperatureUnit(entityId),
+  );
 }
 
 export function templateTemperatureLimits(host: ClimateDisplayHost): [number, number] {
@@ -75,9 +78,9 @@ export function temperatureStep(
   host: ClimateDisplayHost,
   source: BlockDraftSource = "schedule",
   entityId = host._selectedEntity,
-): number {
+): number | undefined {
   if (source === "template") {
-    return lowestTemperatureStep(
+    return commonTemperatureStep(
       (host._data?.configured_entities ?? []).map((climateEntityId: string) =>
         host._entityTemperatureStep(climateEntityId)),
     );
@@ -86,7 +89,7 @@ export function temperatureStep(
   return host._entityTemperatureStep(entityId);
 }
 
-export function entityTemperatureStepForHost(host: ClimateDisplayHost, entityId?: string): number {
+export function entityTemperatureStepForHost(host: ClimateDisplayHost, entityId?: string): number | undefined {
   return entityTemperatureStep(entityId ? host.hass?.states?.[entityId] : undefined);
 }
 
@@ -236,10 +239,9 @@ export function formatEventModeForHost(host: ClimateDisplayHost, event: Schedule
 }
 
 export function temperatureUnitForHost(host: ClimateDisplayHost, entityId?: string): string {
-  return temperatureUnit(
-    entityId ? host.hass?.states?.[entityId]?.attributes?.unit_of_measurement : undefined,
-    host.hass?.config?.unit_system?.temperature,
-  );
+  void entityId;
+  return host._data?.temperature_unit
+    ?? temperatureUnit(undefined, host.hass?.config?.unit_system?.temperature);
 }
 
 export { formatRemaining, formatTemperatureLimit };

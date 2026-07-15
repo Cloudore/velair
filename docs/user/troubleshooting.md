@@ -52,6 +52,33 @@ Enable **Apply active schedule after startup** in Settings if you want Velair to
 
 ## Reset To Defaults
 
-Use **Settings > Maintenance > Reset Velair**. This clears stored schedules, templates, panel preferences, active boosts, and startup behavior, then recreates defaults for the currently managed climates.
+Use **Settings > Maintenance > Reset Velair**. This clears all stored Velair data, including schedules, templates, panel preferences, active boosts and pauses, Comfort and Room Assist settings, Adaptive Preconditioning settings and learning, and startup behavior. It then recreates unit-aware defaults for the currently managed climates.
 
 Export first if you might need to recover existing data.
+
+## Temperature Unit Requires Attention
+
+Velair reads the temperature unit from Home Assistant. If Settings reports that
+the stored unit and Home Assistant unit differ, automatic scheduling and thermal
+writes remain stopped so an old target cannot be applied with the wrong meaning.
+
+- If Velair offers a stored-temperature migration, verify that all stored values
+  still use the source unit shown, then run the migration once. Leaving it
+  untouched simply keeps scheduling stopped; Velair never converts it silently.
+- If an upgrade from published legacy Celsius data requires a reset, export a
+  reference copy first if useful, then use **Reset Velair** to create defaults in
+  Home Assistant's current unit.
+- If a reset, migration, or import was saved but runtime recovery failed, reload
+  the Velair integration or restart Home Assistant. Velair intentionally remains
+  stopped until recovery.
+
+If a schedule is marked incompatible after a climate becomes available, review
+the target against that entity's reported range and exact temperature step.
+Velair does not invent a missing `target_temp_step`.
+
+Older backups without a recorded unit are accepted as Celsius. The import screen
+shows that assumption and converts selected thermal values when the current Home
+Assistant unit is Fahrenheit.
+
+See [Temperature Units and Migration](temperature-units.md) for the full decision
+guide and backup behavior.

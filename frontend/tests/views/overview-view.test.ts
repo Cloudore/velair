@@ -4,6 +4,7 @@ import { html, render } from "lit";
 import { describe, expect, it } from "vitest";
 
 import type { VelairViewHost } from "../../src/velair/host-types";
+import { overviewStyles } from "../../src/velair/styles/overview-styles";
 import type { ScheduleEvent } from "../../src/velair/types";
 import {
   renderEvent,
@@ -12,6 +13,7 @@ import {
   renderOverviewActiveBoosts,
   renderOverviewTimelineName,
   renderOverviewTimelineTrack,
+  renderOverviewZones,
 } from "../../src/velair/views/overview-view";
 
 function host() {
@@ -23,11 +25,405 @@ function host() {
     _formatScheduleTime: (value: string) => `time:${value}`,
     _friendlyEntityName: () => "Office",
     _nextEventChangeRevision: 1,
-    _t: (key: string) => key,
+    _t: (key: string, params?: Record<string, string>) => `${key}${Object.values(params ?? {}).join("")}`,
   } as unknown as VelairViewHost;
 }
 
 describe("overview next events", () => {
+  it("shows authoritative zone state and only relevant secondary signals", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _formatTemperature: (value: number) => `${value} °C`,
+      _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } },
+        zone_runtime: { "climate.office": { state: "scheduled", room_temperature: 20, target_temperature: 21, applied_temperature: 21 } },
+        room_sensor_assist: { "climate.office": { status: "ready" } },
+        comfort: { "climate.office": { enabled: true, condition: "comfortable", air_quality: "good", data_quality: "complete", data_issues: [] } },
+      },
+    } as unknown as VelairViewHost;
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+    const heading = container.querySelector(".overview-zone-card-heading")!;
+    expect([...heading.children].map((node) => node.className)).toEqual([
+      "overview-zone-card-name",
+      "overview-zone-signals",
+      "overview-zone-activity state-scheduled",
+    ]);
+    expect(container.querySelector(".overview-zone-card")).not.toBeNull();
+    expect(container.querySelector(".overview-zone-details .overview-zone-metrics")).not.toBeNull();
+    expect(container.querySelector(".overview-zone-activity")?.textContent).toContain("overviewZoneScheduled");
+    expect(container.querySelector(".overview-zone-activity-eyebrow")?.textContent).toBe("overviewZoneCurrentState");
+    expect(container.querySelectorAll(".overview-zone-metric")).toHaveLength(2);
+    expect(container.querySelectorAll(".overview-zone-signal")).toHaveLength(2);
+    expect(container.querySelector(".comfort-environment.normal")?.textContent)
+      .toContain("overviewZoneComfort");
+    expect(container.querySelector(".comfort-environment.normal")?.textContent)
+      .toContain("comfortConditionComfortable");
+    expect(container.querySelector(".comfort-air.normal")?.textContent)
+      .toContain("comfortAirQualityGood");
+  });
+
+  it("falls back to live climate temperatures when zone runtime is absent", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _formatTemperature: (value: number) => `${value} °C`,
+      hass: {
+        states: {
+          "climate.office": {
+            state: "heat",
+            attributes: { current_temperature: 19.5, temperature: 21 },
+          },
+        },
+      },
+      _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } },
+      },
+    } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    const metrics = [...container.querySelectorAll(".overview-zone-metric")].map(
+      (node) => node.textContent,
+    );
+    expect(metrics).toEqual([
+      "overviewZoneRoom19.5 °C",
+      "overviewZoneTarget21 °C",
+    ]);
+  });
+
+  it("does not bypass null temperatures from an authoritative zone runtime", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _formatTemperature: (value: number) => `${value} °F`,
+      hass: {
+        states: {
+          "climate.office": {
+            state: "heat",
+            attributes: { current_temperature: 316.4, temperature: 145 },
+          },
+        },
+      },
+      _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } },
+        zone_runtime: {
+          "climate.office": {
+            state: "idle",
+            room_temperature: null,
+            target_temperature: null,
+            applied_temperature: null,
+          },
+        },
+      },
+    } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.querySelectorAll(".overview-zone-metric")).toHaveLength(0);
+    expect(container.textContent).not.toContain("316.4");
+    expect(container.textContent).not.toContain("145");
+  });
+
+  it("does not render empty metrics or Applied without a Target", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _formatTemperature: (value: number) => `${value} °C`,
+      _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } },
+        zone_runtime: { "climate.office": { state: "idle", applied_temperature: 22 } },
+      },
+    } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.querySelectorAll(".overview-zone-metric")).toHaveLength(0);
+    expect(container.querySelector(".overview-zone-details")).toBeNull();
+  });
+
+  it("does not present the climate target as the Room temperature", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _formatTemperature: (value: number) => `${value} °C`,
+      hass: {
+        states: {
+          "climate.office": {
+            state: "cool",
+            attributes: { temperature: 24 },
+          },
+        },
+      },
+      _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } },
+      },
+    } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect([...container.querySelectorAll(".overview-zone-metric small")].map(
+      (node) => node.textContent,
+    )).toEqual(["overviewZoneTarget"]);
+  });
+
+  it("shows Applied and signed Room Assist only while assisting", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      zone_runtime: { "climate.office": { state: "scheduled", target_temperature: 21, applied_temperature: 22 } },
+      room_sensor_assist: { "climate.office": {
+        status: "assisting",
+        room_temperature: 20,
+        climate_temperature: 19,
+        target_temperature: 21,
+        climate_target_temperature: 22,
+        assist_delta: 1,
+        direction: "heat",
+      } },
+    } } as unknown as VelairViewHost;
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+    expect(container.querySelector(".overview-zone-details .overview-assist-flow")).not.toBeNull();
+    expect([...container.querySelectorAll(".overview-assist-group > small, .overview-assist-metric small, .overview-assist-offset small")].map((node) => node.textContent))
+      .toEqual([
+        "overviewZoneTemperature",
+        "overviewZoneClimate",
+        "overviewZoneSensor",
+        "overviewZoneSetpoint",
+        "overviewZoneClimate",
+        "overviewZoneScheduledSetpoint",
+        "overviewZoneOffset",
+      ]);
+    expect(container.textContent).not.toContain("overviewZoneBaseTarget");
+    expect(container.textContent).not.toContain("overviewZoneAppliedSetpoint");
+    expect(container.querySelector(".room-assist")?.textContent).toContain("overviewZoneRoomAssistActive");
+    expect(container.querySelector(".room-assist")?.textContent).not.toContain("+1 °C");
+  });
+
+  it("shows a cooling Room Assist offset with a negative sign while holding", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      zone_runtime: { "climate.office": { state: "scheduled" } },
+      room_sensor_assist: { "climate.office": {
+        status: "holding",
+        room_temperature: 26,
+        climate_temperature: 25,
+        target_temperature: 24,
+        climate_target_temperature: 22,
+        assist_delta: 2,
+        direction: "cool",
+      } },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.querySelector(".overview-assist-offset")?.textContent)
+      .toContain("-2 °C");
+    expect(container.querySelector(".room-assist")?.textContent).toContain("overviewZoneRoomAssistHolding");
+    expect(container.querySelector(".room-assist")?.textContent).not.toContain("-2 °C");
+  });
+
+  it("reserves the state badge context line with the same internal structure", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _data: {
+      zones: {
+        "climate.office": { enabled: true, schedule: {} },
+        "climate.bedroom": { enabled: true, schedule: {} },
+      },
+      zone_runtime: {
+        "climate.office": { state: "boost", until: "2026-07-11T18:00:00Z" },
+        "climate.bedroom": { state: "idle" },
+      },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office", "climate.bedroom"]), container);
+
+    const badges = [...container.querySelectorAll(".overview-zone-activity")];
+    expect(badges).toHaveLength(2);
+    expect(badges.every((badge) => badge.querySelector(".overview-zone-activity-icon")
+      && badge.querySelector(".overview-zone-activity-eyebrow")
+      && badge.querySelector(".overview-zone-activity-copy strong")
+      && badge.querySelector(".overview-zone-activity-context"))).toBe(true);
+    expect(badges[1].querySelector(".overview-zone-activity-context")?.textContent).toBe("\u00a0");
+  });
+
+  it("omits missing Room Assist fields and empty groups without changing field order", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      room_sensor_assist: { "climate.office": {
+        status: "assisting",
+        room_temperature: 20,
+        assist_delta: 1,
+        direction: "heat",
+      } },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect([...container.querySelectorAll(".overview-assist-group > small")].map((node) => node.textContent))
+      .toEqual(["overviewZoneTemperature"]);
+    expect([...container.querySelectorAll(".overview-assist-metric small")].map((node) => node.textContent))
+      .toEqual(["overviewZoneSensor"]);
+    expect(container.querySelector(".overview-assist-offset")?.textContent).toContain("+1 °C");
+  });
+
+  it("keeps secondary signals in Room Assist, Comfort, Air, Data order", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      zone_runtime: { "climate.office": { state: "scheduled" } },
+      room_sensor_assist: { "climate.office": { status: "assisting", assist_delta: 1, direction: "heat" } },
+      comfort: { "climate.office": {
+        enabled: true,
+        condition: "cold",
+        air_quality: "poor",
+        data_quality: "partial",
+        data_issues: ["humidity_missing"],
+      } },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect([...container.querySelectorAll(".overview-zone-signal")].map((node) =>
+      ["room-assist", "comfort-environment", "comfort-air", "comfort-data"]
+        .find((className) => node.classList.contains(className)),
+    )).toEqual(["room-assist", "comfort-environment", "comfort-air", "comfort-data"]);
+  });
+
+  it("wraps complete secondary-signal chips instead of shrinking or scrolling them", () => {
+    const cssText = overviewStyles.cssText;
+
+    expect(cssText).toMatch(/\.overview-zone-signals\s*\{[^}]*flex-wrap:\s*wrap/);
+    expect(cssText).toMatch(/\.overview-zone-signals\s*\{[^}]*overflow:\s*visible/);
+    expect(cssText).toMatch(/\.overview-zone-signal\s*\{[^}]*flex:\s*0 0 auto/);
+    expect(cssText).toMatch(/\.overview-zone-signal\s*\{[^}]*white-space:\s*nowrap/);
+    expect(cssText).not.toMatch(/\.overview-zone-signals\s*\{[^}]*overflow-x:\s*auto/);
+  });
+
+  it("surfaces environmental comfort and monitored air quality as separate signals", () => {
+    const chips = (condition: string, airQuality: string) => {
+      const container = document.createElement("div");
+      const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } }, zone_runtime: { "climate.office": { state: "idle" } },
+        comfort: { "climate.office": { enabled: true, condition, air_quality: airQuality, data_quality: "complete", data_issues: [] } },
+      } } as unknown as VelairViewHost;
+      render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+      return container;
+    };
+    const environmentIssue = chips("hot_and_humid", "good");
+    expect(environmentIssue.querySelector(".comfort-environment.warning")?.textContent)
+      .toContain("comfortConditionHotAndHumid");
+    expect(environmentIssue.querySelector(".comfort-air.normal")?.textContent)
+      .toContain("comfortAirQualityGood");
+
+    const airIssue = chips("comfortable", "poor");
+    expect(airIssue.querySelector(".comfort-environment.normal")?.textContent)
+      .toContain("comfortConditionComfortable");
+    expect(airIssue.querySelector(".comfort-air.error")?.textContent)
+      .toContain("comfortAirQualityPoor");
+  });
+
+  it("hides Comfort when disabled and hides only unmonitored air quality", () => {
+    const renderComfort = (enabled: boolean, airQuality: string) => {
+      const container = document.createElement("div");
+      const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } }, zone_runtime: { "climate.office": { state: "idle" } },
+        comfort: { "climate.office": { enabled, condition: "comfortable", air_quality: airQuality, data_quality: "complete", data_issues: [] } },
+      } } as unknown as VelairViewHost;
+      render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+      return container;
+    };
+
+    const disabled = renderComfort(false, "good");
+    expect(disabled.querySelector(".comfort-environment")).toBeNull();
+    expect(disabled.querySelector(".comfort-air")).toBeNull();
+
+    const noAir = renderComfort(true, "not_monitored");
+    expect(noAir.querySelector(".comfort-environment")?.textContent)
+      .toContain("comfortConditionComfortable");
+    expect(noAir.querySelector(".comfort-air")).toBeNull();
+  });
+
+  it("keeps the Comfort condition visible when sensor data is incomplete", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      zone_runtime: { "climate.office": { state: "idle" } },
+      comfort: { "climate.office": {
+        enabled: true,
+        condition: "hot",
+        air_quality: "not_monitored",
+        data_quality: "partial",
+        data_issues: ["humidity_missing"],
+      } },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.querySelector(".comfort-environment")?.textContent)
+      .toContain("comfortConditionHot");
+    expect(container.querySelector(".comfort-data")?.textContent)
+      .toContain("overviewZoneSensorIssue");
+  });
+
+  it("does not duplicate a no-readings Comfort state with a Data signal", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      zone_runtime: { "climate.office": { state: "idle" } },
+      comfort: { "climate.office": {
+        enabled: true,
+        condition: "no_readings",
+        air_quality: "not_monitored",
+        data_quality: "unavailable",
+        data_issues: ["temperature_missing", "humidity_missing"],
+      } },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.querySelector(".comfort-environment.error")?.textContent)
+      .toContain("comfortConditionNoReadings");
+    expect(container.querySelector(".comfort-data")).toBeNull();
+  });
+
+  it("keeps a comfortable condition neutral when only sensor quality needs attention", () => {
+    const container = document.createElement("div");
+    const overviewHost = { ...host(), _data: {
+      zones: { "climate.office": { enabled: true, schedule: {} } },
+      zone_runtime: { "climate.office": { state: "idle" } },
+      comfort: { "climate.office": {
+        enabled: true,
+        condition: "comfortable",
+        air_quality: "not_monitored",
+        data_quality: "partial",
+        data_issues: ["co2_missing"],
+      } },
+    } } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.querySelector(".comfort-environment.normal")).not.toBeNull();
+    expect(container.querySelector(".comfort-data.warning")).not.toBeNull();
+  });
+
+  it("shows boost, pause, and preconditioning timing", () => {
+    const textFor = (runtime: Record<string, unknown>) => {
+      const container = document.createElement("div");
+      const overviewHost = { ...host(), _formatTemperature: (value: number) => `${value} °C`, _data: {
+        zones: { "climate.office": { enabled: true, schedule: {} } }, zone_runtime: { "climate.office": runtime },
+      } } as unknown as VelairViewHost;
+      render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+      return container.textContent ?? "";
+    };
+    expect(textFor({ state: "boost", until: "2026-07-11T18:00:00Z" })).toContain("overviewZoneUntil");
+    expect(textFor({ state: "paused", until: "2026-07-11T18:00:00Z" })).toContain("overviewZoneResumes");
+    expect(textFor({ state: "preconditioning", active_from: "2026-07-11T17:00:00Z", target_when: "2026-07-11T18:00:00Z" }))
+      .toContain("overviewZoneReadyAtdate:2026-07-11T18:00:00Z");
+  });
+
   it("aligns empty boost and next-event messages beside their icons", () => {
     const container = document.createElement("div");
     const emptyHost = {

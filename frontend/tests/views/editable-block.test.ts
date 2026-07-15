@@ -68,6 +68,34 @@ describe("editable schedule block view", () => {
     expect(modeSelect(container).selectedOptions[0]?.textContent).toBe("keep");
   });
 
+  it("aligns the spinner minimum to the zero-anchored climate grid", async () => {
+    const container = document.createElement("div");
+    const viewHost = {
+      ...host(),
+      _temperatureLimits: () => [41.3, 95] as [number, number],
+      _temperatureStep: () => 1,
+    };
+
+    render(renderEditableBlock(viewHost, { ...block("heat"), temperature: 42 }, 0), container);
+
+    const input = container.querySelector<HTMLInputElement>('input[type="number"]');
+    expect(input?.min).toBe("42");
+    expect(input?.step).toBe("1");
+    expect(input?.value).toBe("42");
+  });
+
+  it("uses step any when Home Assistant publishes no valid target step", () => {
+    const container = document.createElement("div");
+    const viewHost = { ...host(), _temperatureStep: () => undefined };
+
+    render(renderEditableBlock(viewHost, { ...block("heat"), temperature: 42.17 }, 0), container);
+
+    const input = container.querySelector<HTMLInputElement>('input[type="number"]');
+    expect(input?.step).toBe("any");
+    expect(input?.min).toBe("5");
+    expect(input?.value).toBe("42.17");
+  });
+
   it("renders optional climate controls when supported by the selected source", async () => {
     const container = document.createElement("div");
 

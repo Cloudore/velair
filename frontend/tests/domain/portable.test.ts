@@ -11,7 +11,8 @@ import type { VelairPortablePayload } from "../../src/velair/types";
 
 const payload: VelairPortablePayload = {
   format: "velair_portable_data",
-  model_version: 1,
+  model_version: 2,
+  temperature_unit: "°C",
   sections: {
     preconditioning_learning: {
       "climate.office": { heat: { observations: [] }, cool: { observations: [] } },
@@ -44,5 +45,23 @@ describe("portable preconditioning learning", () => {
     expect(unmatchedPreconditioningLearningEntities(payload, ["climate.office"])).toEqual([
       "climate.removed",
     ]);
+  });
+
+  it("accepts raw v3 exports in either supported unit", () => {
+    expect(validatePortablePayload({
+      ...payload,
+      model_version: 3,
+      temperature_unit: "°F",
+    })).toEqual({
+      ok: true,
+      sections: ["preconditioning_learning"],
+    });
+  });
+
+  it("accepts legacy v1 temperature data as Celsius when the unit is absent", () => {
+    expect(validatePortablePayload({ ...payload, model_version: 1, temperature_unit: undefined })).toEqual({
+      ok: true,
+      sections: ["preconditioning_learning"],
+    });
   });
 });

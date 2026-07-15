@@ -14,6 +14,7 @@ function host() {
     _exportSections: new Set(),
     _importFileName: "backup.json",
     _importPayload: {
+      temperature_unit: "°C",
       sections: {
         preconditioning_learning: {
           "climate.office": {},
@@ -23,6 +24,7 @@ function host() {
     },
     _importSections: new Set(["preconditioning_learning"]),
     _portabilityAction: undefined,
+    _exportPortableData: vi.fn(),
     _handlePortableImportFile: vi.fn(),
     _importPortableData: vi.fn(),
     _importAvailableSections: () => ["preconditioning_learning"],
@@ -34,6 +36,7 @@ function host() {
       value: 2,
     }],
     _portableSectionLabel: () => "learning",
+    _temperatureUnit: () => "°F",
     _t: (key: string, replacements?: Record<string, string | number>) =>
       replacements
         ? `${key}:${replacements.count}:${replacements.entities}`
@@ -53,5 +56,38 @@ describe("settings portability", () => {
     expect(warnings[1]?.textContent).toContain(
       "preconditioningImportSkipped:1:climate.removed",
     );
+  });
+
+  it("allows export while temperature migration keeps scheduling locked", () => {
+    const container = document.createElement("div");
+    const migrationHost = host();
+    migrationHost._exportSections = new Set(["zones"]);
+    migrationHost._data.temperature_migration = {
+      required: true,
+      source_unit: "°F",
+      target_unit: "°C",
+    };
+
+    render(renderPortabilitySettings(migrationHost), container);
+
+    const exportButton = container.querySelector<HTMLButtonElement>(
+      ".portability-export-card .command-button",
+    );
+    expect(exportButton?.disabled).toBe(false);
+    exportButton?.click();
+    expect(migrationHost._exportPortableData).toHaveBeenCalledOnce();
+  });
+
+  it("explains that a legacy unitless backup is treated as Celsius", () => {
+    const container = document.createElement("div");
+    const legacyHost = host();
+    delete legacyHost._importPayload.temperature_unit;
+
+    render(renderPortabilitySettings(legacyHost), container);
+
+    const warnings = [...container.querySelectorAll(".portable-warning")];
+    expect(warnings.some((warning) =>
+      warning.textContent?.includes("legacyImportTemperatureUnit")
+    )).toBe(true);
   });
 });

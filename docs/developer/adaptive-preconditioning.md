@@ -103,9 +103,15 @@ This is runtime-only behavior:
 - it ignores climates without preconditioning enabled;
 - it ignores climates that are already inside an active preconditioning learning session, because those updates are handled by the learning-session listener.
 
-## Automation Event
+## Automation Events
 
 When the authoritative scheduler plan gains a new preconditioning start or an existing start changes, Velair fires `velair_event` with `event: preconditioning_plan_updated`. Pure calculations used to render the panel or answer the WebSocket API do not fire this event, and an unchanged plan is not emitted repeatedly.
+
+When a previously published plan disappears, the scheduler emits
+`preconditioning_plan_cancelled` with the last plan payload and a cancellation
+reason. When a learning session persists a sample, it emits
+`preconditioning_observation_recorded` with the final `complete`, `partial`, or
+`invalid` observation and the retained sample count.
 
 The payload contains the prediction context already available at planning time:
 
@@ -138,6 +144,9 @@ The payload contains the prediction context already available at planning time:
 - `source`, `used_outdoor_temperature`, and `initial_model_lead_minutes`.
 
 The same diagnostics object is included in `next_events` for events that actually start early, so the frontend can show calculation details without recalculating the model.
+
+See [Automation Events](../user/automation-events.md#preconditioning-plan-updated)
+for the complete public payload examples.
 
 Example:
 

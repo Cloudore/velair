@@ -99,6 +99,10 @@ Velair keeps the runtime state and listeners active while the scheduled block re
 
 The applied target is bounded by the climate entity's min/max target temperatures and aligned to the climate entity's `target_temp_step`. For heating, Velair rounds the assisted target down to the nearest supported step; for cooling, it rounds up to the nearest supported step. This keeps the temporary target valid for the device without making assistance more aggressive than the calculated delta.
 
+If the climate does not publish a finite, positive `target_temp_step`, Room Assist
+reports `missing_target_step`, does not calculate a fallback step, and sends no
+assisted climate service call.
+
 Velair ignores target movements smaller than the climate entity's `target_temp_step`.
 
 ## Clearing And Restoring
@@ -122,10 +126,14 @@ Velair emits the standard `velair_event` Home Assistant event.
 
 Room Assist emits:
 
+- `room_sensor_assist_state_changed` when enablement changes;
 - `room_sensor_assist_updated`: Velair applied a temporary assisted climate target.
 - `room_sensor_assist_restored`: Velair stopped driving the assisted target because the room reached target or assistance ended.
 
 The event payload includes the climate entity, room sensor entity, scheduled target, applied target, measured temperatures, assist delta, direction, HVAC mode, and reason when those values are available.
+
+The public payload contract is centralized in
+[Automation Events](../user/automation-events.md#room-sensor-assist-state-changed).
 
 ## API Summary
 

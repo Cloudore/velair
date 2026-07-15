@@ -56,6 +56,10 @@ export type HomeAssistant = {
 export type VelairCardConfig = {
   entities?: string[];
   first_weekday?: string;
+  show_comfort_co2?: boolean;
+  show_comfort_configuration?: boolean;
+  show_comfort_humidity?: boolean;
+  show_comfort_temperature?: boolean;
   show_room_assist_debounce?: boolean;
   show_room_assist_live_status?: boolean;
   show_room_assist_max_delta?: boolean;
@@ -81,7 +85,7 @@ export type VelairPanelRoute = {
   prefix?: string;
 };
 
-export type VelairPanelView = "overview" | "schedules" | "templates" | "sensors" | "preconditioning" | "settings";
+export type VelairPanelView = "overview" | "schedules" | "templates" | "sensors" | "comfort" | "preconditioning" | "settings";
 export type VelairOverviewCardView =
   | "overview-status"
   | "overview-boosts"
@@ -146,6 +150,66 @@ export type PreconditioningSettings = {
   room_sensor_assist_debounce_seconds: number;
 };
 
+export type ComfortSettings = {
+  enabled: boolean;
+  temperature_entity_id: string | null;
+  humidity_enabled: boolean;
+  humidity_entity_id: string | null;
+  co2_entity_id: string | null;
+  temperature_min: number;
+  temperature_max: number;
+  humidity_min: number;
+  humidity_max: number;
+  co2_attention: number;
+  co2_poor: number;
+  stale_after_minutes: number;
+};
+
+export type ComfortMetricAssessment = {
+  attention?: number;
+  availability: "current" | "missing" | "stale" | "not_monitored";
+  condition:
+    | "cold"
+    | "comfortable"
+    | "hot"
+    | "dry"
+    | "humid"
+    | "good"
+    | "elevated"
+    | "poor"
+    | null;
+  entity_id?: string | null;
+  max?: number;
+  metric: "temperature" | "humidity" | "co2";
+  min?: number;
+  source: string;
+  value?: number | null;
+};
+
+export type ComfortAssessment = {
+  enabled: boolean;
+  condition:
+    | "monitoring_off"
+    | "no_readings"
+    | "comfortable"
+    | "temperature_comfortable"
+    | "humidity_comfortable"
+    | "cold"
+    | "hot"
+    | "dry"
+    | "humid"
+    | "cold_and_dry"
+    | "cold_and_humid"
+    | "hot_and_dry"
+    | "hot_and_humid";
+  air_quality: "not_monitored" | "unavailable" | "good" | "elevated" | "poor";
+  data_quality: "complete" | "partial" | "stale" | "unavailable";
+  data_issues: string[];
+  temperature?: ComfortMetricAssessment;
+  humidity?: ComfortMetricAssessment;
+  co2?: ComfortMetricAssessment;
+};
+
 export type PreconditioningDirectionLearning = {
   status: "learning" | "ready" | "unsupported";
   sample_count: number;
@@ -175,6 +239,7 @@ export type RoomSensorAssistStatus = {
   status: "not_configured" | "disabled" | "idle" | "ready" | "assisting" | "holding" | "blocked" | "unavailable";
   enabled: boolean;
   configured: boolean;
+  reason?: "missing_target_step" | null;
   room_temperature_entity_id?: string | null;
   target_temperature?: number | null;
   applied_temperature?: number | null;
@@ -195,6 +260,18 @@ export type ScheduleZone = {
   schedule: Record<string, ScheduleBlock[]>;
   override?: Record<string, unknown> | null;
   preconditioning?: PreconditioningSettings;
+  comfort?: ComfortSettings;
+};
+
+export type ZoneRuntimeStatus = {
+  state: "stopped" | "paused" | "boost" | "preconditioning" | "scheduled" | "idle";
+  room_temperature?: number | null;
+  target_temperature?: number | null;
+  applied_temperature?: number | null;
+  hvac_mode?: string | null;
+  active_from?: string | null;
+  target_when?: string | null;
+  until?: string | null;
 };
 
 export type PreconditioningDiagnostics = {
@@ -245,6 +322,27 @@ export type PanelSettings = {
 
 export type ScheduleResponse = {
   configured_entities: string[];
+  temperature_unit: "°C" | "°F";
+  home_assistant_temperature_unit: "°C" | "°F";
+  temperature_migration: {
+    required: boolean;
+    reason?: string;
+    source_unit?: "°C" | "°F";
+    target_unit?: "°C" | "°F";
+    temperature_revision?: number;
+    last_temperature_migration?: {
+      migration_id?: string;
+      source_unit?: "°C" | "°F";
+      target_unit?: "°C" | "°F";
+      temperature_revision?: number;
+    } | null;
+  };
+  operation_recovery?: {
+    operation: string;
+    phase: string;
+    persisted: boolean;
+    message: string;
+  } | null;
   global: {
     mode: string;
     paused_started_at?: string | null;
@@ -257,6 +355,8 @@ export type ScheduleResponse = {
   next_events: ScheduleEvent[];
   active_overrides: Record<string, Record<string, unknown>>;
   room_sensor_assist?: Record<string, RoomSensorAssistStatus>;
+  comfort?: Record<string, ComfortAssessment>;
+  zone_runtime?: Record<string, ZoneRuntimeStatus>;
   preconditioning_learning?: Record<string, PreconditioningLearningSummary>;
   templates?: StoredScheduleTemplate[];
   versions?: {
@@ -282,6 +382,7 @@ export type PortableSection =
 export type VelairPortablePayload = {
   format?: string;
   model_version?: number;
+  temperature_unit?: "°C" | "°F";
   exported_at?: string;
   sections?: Partial<Record<PortableSection, unknown>>;
 };

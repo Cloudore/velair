@@ -7,6 +7,7 @@ import type { HomeAssistant, ScheduleResponse, VelairCardConfig, VelairCardView 
 
 const FIRST_WEEKDAY_CARD_VIEWS = new Set<VelairCardView>(["schedules"]);
 const THERMOSTAT_FILTER_CARD_VIEWS = new Set<VelairCardView>([
+  "comfort",
   "overview",
   "overview-boosts",
   "overview-events",
@@ -18,6 +19,13 @@ const THERMOSTAT_FILTER_CARD_VIEWS = new Set<VelairCardView>([
   "preconditioning",
   "settings",
 ]);
+const COMFORT_VISIBILITY_CARD_VIEWS = new Set<VelairCardView>(["comfort"]);
+const COMFORT_VISIBILITY_FIELDS = [
+  ["show_comfort_configuration", "comfortCardShowConfiguration"],
+  ["show_comfort_temperature", "comfortCardShowTemperature"],
+  ["show_comfort_humidity", "comfortCardShowHumidity"],
+  ["show_comfort_co2", "comfortCardShowCo2"],
+] as const;
 const ROOM_ASSIST_VISIBILITY_CARD_VIEWS = new Set<VelairCardView>(["sensors"]);
 const ROOM_ASSIST_VISIBILITY_FIELDS = [
   ["show_room_assist_switch", "roomAssistShowSwitch"],
@@ -26,7 +34,9 @@ const ROOM_ASSIST_VISIBILITY_FIELDS = [
   ["show_room_assist_debounce", "roomAssistShowDebounce"],
   ["show_room_assist_live_status", "roomAssistShowLiveStatus"],
 ] as const;
+type ComfortVisibilityField = typeof COMFORT_VISIBILITY_FIELDS[number][0];
 type RoomAssistVisibilityField = typeof ROOM_ASSIST_VISIBILITY_FIELDS[number][0];
+type CardVisibilityField = ComfortVisibilityField | RoomAssistVisibilityField;
 
 export class VelairCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -57,6 +67,7 @@ export class VelairCardEditor extends LitElement {
     const firstWeekday = this._firstWeekday();
     const orderedEntities = this._orderedEntities();
     const showFirstWeekday = this._showsFirstWeekdayOption();
+    const showComfortVisibilityOptions = this._showsComfortVisibilityOptions();
     const showThermostatOptions = this._showsThermostatOptions();
     const showRoomAssistVisibilityOptions = this._showsRoomAssistVisibilityOptions();
 
@@ -122,6 +133,22 @@ export class VelairCardEditor extends LitElement {
             `
           : nothing}
 
+        ${showComfortVisibilityOptions
+          ? html`
+              <section class="card-visibility-options">
+                <div>
+                  <span class="section-label">${this._t("comfortCardVisibility")}</span>
+                  <p>${this._t("comfortCardVisibilityDescription")}</p>
+                </div>
+                <div class="visibility-list">
+                  ${COMFORT_VISIBILITY_FIELDS.map(([field, label]) =>
+                    this._renderVisibilityOption(field, label),
+                  )}
+                </div>
+              </section>
+            `
+          : nothing}
+
         ${showRoomAssistVisibilityOptions
           ? html`
               <section class="card-visibility-options">
@@ -142,7 +169,7 @@ export class VelairCardEditor extends LitElement {
   }
 
   private _renderVisibilityOption(
-    field: RoomAssistVisibilityField,
+    field: CardVisibilityField,
     label: TranslationKey,
   ) {
     return html`
@@ -270,7 +297,7 @@ export class VelairCardEditor extends LitElement {
     this._emitConfig(nextConfig);
   }
 
-  private _toggleBooleanConfig(field: RoomAssistVisibilityField, checked: boolean): void {
+  private _toggleBooleanConfig(field: CardVisibilityField, checked: boolean): void {
     const nextConfig: VelairCardConfig = { ...this._config };
     if (checked) {
       delete nextConfig[field];
@@ -415,6 +442,7 @@ export class VelairCardEditor extends LitElement {
       "schedules": "cardViewSchedules",
       "templates": "templates",
       "sensors": "cardViewSensors",
+      "comfort": "cardViewComfort",
       "preconditioning": "preconditioning",
       "settings": "settings",
     };
@@ -430,6 +458,10 @@ export class VelairCardEditor extends LitElement {
 
   private _showsFirstWeekdayOption(): boolean {
     return FIRST_WEEKDAY_CARD_VIEWS.has(this._selectedView());
+  }
+
+  private _showsComfortVisibilityOptions(): boolean {
+    return COMFORT_VISIBILITY_CARD_VIEWS.has(this._selectedView());
   }
 
   private _showsThermostatOptions(): boolean {

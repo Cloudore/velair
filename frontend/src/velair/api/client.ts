@@ -1,6 +1,7 @@
 import { DOMAIN } from "../constants";
 import type {
   HomeAssistant,
+  ComfortSettings,
   PanelSettings,
   PortableSection,
   PreconditioningSettings,
@@ -104,6 +105,17 @@ export class VelairApiClient {
     });
   }
 
+  public updateZoneComfort(
+    entityId: string,
+    comfort: Partial<ComfortSettings>,
+  ): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/update_zone_comfort",
+      entity_id: entityId,
+      comfort,
+    });
+  }
+
   public resetZonePreconditioningLearning(entityId: string, direction: "heat" | "cool"): Promise<ScheduleResponse> {
     return this.hass.connection.sendMessagePromise<ScheduleResponse>({
       type: "velair/reset_zone_preconditioning_learning",
@@ -138,6 +150,19 @@ export class VelairApiClient {
     return this.hass.connection.sendMessagePromise<ScheduleResponse>({
       type: "velair/reset_data",
       confirmation: "reset",
+    });
+  }
+
+  public resolveTemperatureMigration(
+    sourceUnit: "°C" | "°F",
+    migrationId: string,
+    expectedRevision: number,
+  ): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/resolve_temperature_migration",
+      source_unit: sourceUnit,
+      migration_id: migrationId,
+      expected_revision: expectedRevision,
     });
   }
 }

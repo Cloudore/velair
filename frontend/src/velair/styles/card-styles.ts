@@ -1,5 +1,6 @@
 import { css } from "lit";
 import { baseStyles } from "./base-styles";
+import { comfortStyles } from "./comfort-styles";
 import { noticeStyles } from "./notice-styles";
 import { overviewStyles } from "./overview-styles";
 import { portabilityStyles } from "./portability-styles";
@@ -10,7 +11,35 @@ import { templateStyles } from "./template-styles";
 import { timelineStyles } from "./timeline-styles";
 import { responsiveStyles } from "./responsive-styles";
 
-export const cardStyles = [baseStyles, noticeStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`
+export const cardStyles = [baseStyles, comfortStyles, noticeStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`
+    .temperature-migration-banner {
+      align-items: start;
+      background: color-mix(in srgb, var(--warning-color, #c99500) 12%, var(--card-background-color));
+      border: 1px solid var(--warning-color, #c99500);
+      border-radius: 8px;
+      color: var(--primary-text-color);
+      display: grid;
+      gap: 10px;
+      grid-template-columns: auto minmax(0, 1fr);
+      margin-bottom: 12px;
+      padding: 12px;
+    }
+
+    .temperature-migration-banner ha-icon {
+      color: var(--warning-color, #c99500);
+    }
+
+    .temperature-migration-banner strong,
+    .temperature-migration-banner span {
+      display: block;
+    }
+
+    .temperature-migration-banner span {
+      color: var(--secondary-text-color);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
     .summary {
       display: grid;
       gap: 8px;

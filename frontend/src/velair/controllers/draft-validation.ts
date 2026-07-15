@@ -6,7 +6,7 @@ type DraftValidationHost = {
   _formatTemperatureLimit(value: number): string;
   _t(key: string, replacements?: Record<string, string | number>): string;
   _temperatureLimits(source?: BlockDraftSource): [number, number];
-  _temperatureStep(source?: BlockDraftSource): number;
+  _temperatureStep(source?: BlockDraftSource): number | undefined;
 };
 
 export function asDraftValidationHost(host: unknown): DraftValidationHost {
@@ -26,6 +26,7 @@ export function temperatureError(
   source: BlockDraftSource = "schedule",
 ): string | undefined {
   const [minTemperature, maxTemperature] = host._temperatureLimits(source);
+  const temperatureStep = host._temperatureStep(source);
   return draftBlockTemperatureError(block, {
     maxTemperature,
     minTemperature,
@@ -33,7 +34,9 @@ export function temperatureError(
       min: host._formatTemperatureLimit(minTemperature),
       max: host._formatTemperatureLimit(maxTemperature),
     }),
-    stepError: host._t("invalidTemperatureStep"),
-    temperatureStep: host._temperatureStep(source),
+    stepError: host._t("invalidTemperatureStep", {
+      step: temperatureStep === undefined ? "" : host._formatTemperatureLimit(temperatureStep),
+    }),
+    temperatureStep,
   });
 }

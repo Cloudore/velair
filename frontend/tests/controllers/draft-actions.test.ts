@@ -13,6 +13,7 @@ function host() {
     _saveMessage: "saved",
     _selectedEntity: "climate.office",
     _selectedWeekday: "monday",
+    _temperatureUnit: () => "°C",
     _templateDraftBlocks: [] as DraftScheduleBlock[],
     _zoneTargets: new Set<string>(),
     _blocksForSource(source: BlockDraftSource) {
@@ -55,6 +56,16 @@ describe("draft actions controller", () => {
     setDraftBlockStart(state, 1, "07:00", { sort: true });
 
     expect(state._draftBlocks.map((block) => block.start)).toEqual(["07:00", "08:00"]);
+  });
+
+  it("uses a Fahrenheit default for an empty schedule", () => {
+    const state = host();
+    state._draftBlocks = [];
+    state._temperatureUnit = () => "°F";
+
+    addBlock(state);
+
+    expect(state._draftBlocks[0]?.temperature).toBe(70);
   });
 
   it("guards copy and zone target toggles against invalid targets", () => {

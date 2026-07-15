@@ -1,6 +1,8 @@
 import { html, nothing } from "lit";
+import { signedAssistDelta } from "../domain/room-assist";
 import { modeClassName } from "../domain/climate";
 import { preconditioningSettings, temperatureSensorOptions } from "../domain/preconditioning";
+import { temperatureDeltaMaximum, temperatureDeltaMinimum } from "../domain/temperature-units";
 import type { VelairViewHost } from "../host-types";
 import type { TranslationKey } from "../translations";
 import type { PreconditioningSettings, RoomSensorAssistStatus } from "../types";
@@ -101,6 +103,7 @@ function renderSensorZone(
   const exists = host._entityExists(entityId);
   const settings = preconditioningSettings(
     host._data?.zones[entityId]?.preconditioning,
+    host._temperatureUnit(entityId),
   );
   const status = host._data?.room_sensor_assist?.[entityId];
   const expanded = exists && host._expandedPreconditioningZones.has(entityId);
@@ -214,9 +217,9 @@ function renderSensorConfiguration(
               "roomSensorAssistMaxDelta",
               "room_sensor_assist_max_delta",
               settings.room_sensor_assist_max_delta,
-              0.1,
+              minAssistDeltaForUnit(host._temperatureUnit(entityId)),
               maxAssistDeltaForUnit(host._temperatureUnit(entityId)),
-              0.1,
+              minAssistDeltaForUnit(host._temperatureUnit(entityId)),
               host._temperatureUnit(entityId),
               {
                 inactive:
@@ -370,27 +373,46 @@ function renderTemperatureScale(
 ) {
   const orderedMarkers = [...markers].sort((first, second) => first.value - second.value);
   const modeClass = status.hvac_mode ? `mode-${modeClassName(status.hvac_mode)}` : "mode-keep";
-  const remaining = buildRemainingToTarget(host, entityId, markers);
+  const roomGap = buildRoomTargetGap(host, entityId, markers);
+  const assistOffset = buildAssistOffset(host, entityId, markers, status);
   const markerGroups = buildTemperatureMarkerGroups(markers);
   return html`
     <div class=${`sensor-temperature-scale ${modeClass}`}>
       <div
         class="sensor-scale-track"
-        role="img"
+        role="group"
         aria-label=${host._t("roomSensorTemperatureScale")}
       >
         <span class="sensor-scale-line"></span>
-        ${remaining
+        ${roomGap
           ? html`
               <span
-                class="sensor-scale-remaining"
+                class=${`sensor-scale-relation sensor-scale-room-gap room-gap-${roomGap.position}`}
                 style=${[
-                  `left: ${remaining.left.toFixed(2)}%;`,
-                  `width: ${remaining.width.toFixed(2)}%;`,
+                  `left: ${roomGap.left.toFixed(2)}%;`,
+                  `width: ${roomGap.width.toFixed(2)}%;`,
                 ].join(" ")}
-                title=${remaining.title}
+                title=${roomGap.label}
+                role="note"
+                aria-label=${roomGap.label}
               >
-                <span>${remaining.label}</span>
+                <span>${roomGap.label}</span>
+              </span>
+            `
+          : nothing}
+        ${assistOffset
+          ? html`
+              <span
+                class=${`sensor-scale-relation sensor-scale-assist-offset assist-offset-${assistOffset.state}`}
+                style=${[
+                  `left: ${assistOffset.left.toFixed(2)}%;`,
+                  `width: ${assistOffset.width.toFixed(2)}%;`,
+                ].join(" ")}
+                title=${assistOffset.title}
+                role="note"
+                aria-label=${`${assistOffset.label}. ${assistOffset.title}`}
+              >
+                <span>${assistOffset.label}</span>
               </span>
             `
           : nothing}
@@ -676,7 +698,12 @@ function renderSensorNumber(
 }
 
 function maxAssistDeltaForUnit(unit: string): number {
-  return unit.toUpperCase().includes("F") ? 18 : 10;
+  return temperatureDeltaMaximum(unit, 10);
+}
+
+function minAssistDeltaForUnit(unit: string): number {
+  void unit;
+  return 0.1;
 }
 
 function formatOptionalTemperature(
@@ -689,7 +716,7 @@ function formatOptionalTemperature(
     : host._t("roomSensorValueUnavailable");
 }
 
-function buildRemainingToTarget(
+function buildRoomTargetGap(
   host: SensorsViewHost,
   entityId: string,
   markers: TemperatureMarker[],
@@ -708,23 +735,54 @@ function buildRemainingToTarget(
   }
 
   const value = formatTemperatureDelta(host, entityId, pendingDelta);
+  const position = roomMarker.value < targetMarker.value ? "below" : "above";
   return {
-    label: host._t("roomSensorRemainingValue", { value }),
+    label: host._t(
+      position === "below" ? "roomSensorGapBelowTarget" : "roomSensorGapAboveTarget",
+      { value },
+    ),
     left: Math.min(targetMarker.position, roomMarker.position),
-    title: host._t("roomSensorRemainingToTarget"),
-    value,
+    position,
     width: Math.abs(targetMarker.position - roomMarker.position),
   };
 }
 
-function signedAssistDelta(
-  assistDelta: number,
-  direction?: RoomSensorAssistStatus["direction"],
-): number {
-  if (direction === "cool") {
-    return -Math.abs(assistDelta);
+function buildAssistOffset(
+  host: SensorsViewHost,
+  entityId: string,
+  markers: TemperatureMarker[],
+  status: RoomSensorAssistStatus,
+) {
+  const climateMarker = markers.find((marker) => marker.key === "climate");
+  const climateTargetMarker = markers.find((marker) => marker.key === "climateTarget");
+  if (!climateMarker || !climateTargetMarker || typeof status.assist_delta !== "number") {
+    return null;
   }
-  return Math.abs(assistDelta);
+
+  const unit = host._temperatureUnit(entityId);
+  const minimumVisibleDelta = unit.toUpperCase().includes("F") ? 0.1 : 0.05;
+  const signedDelta = typeof status.assist_delta === "number"
+    ? signedAssistDelta(status.assist_delta, status.direction)
+    : null;
+  const offsetIsActive = typeof signedDelta === "number"
+    && Math.abs(signedDelta) >= minimumVisibleDelta;
+  const offsetState = typeof signedDelta !== "number"
+    ? "unknown"
+    : offsetIsActive ? "active" : "holding";
+  const correction = typeof signedDelta === "number"
+    ? formatSignedTemperatureDelta(host, entityId, signedDelta)
+    : "";
+  return {
+    label: offsetState === "active"
+      ? host._t("roomSensorAssistCorrectionValue", { value: correction })
+      : host._t("roomSensorAssistNoCorrection"),
+    left: Math.min(climateMarker.position, climateTargetMarker.position),
+    state: offsetState,
+    title: offsetState === "active"
+      ? host._t("roomSensorAssistCorrectionActiveHelp")
+      : host._t("roomSensorAssistNoCorrectionHelp"),
+    width: Math.abs(climateMarker.position - climateTargetMarker.position),
+  };
 }
 
 function formatTemperatureDelta(
@@ -755,6 +813,10 @@ function buildTemperatureMarkers(
   entityId: string,
   status: RoomSensorAssistStatus,
 ): TemperatureMarker[] {
+  const effectiveClimateTarget =
+    status.status === "assisting" || status.status === "holding"
+      ? (status.applied_temperature ?? status.climate_target_temperature)
+      : (status.climate_target_temperature ?? status.applied_temperature);
   const markerInputs = [
     {
       key: "target" as const,
@@ -769,7 +831,7 @@ function buildTemperatureMarkers(
     {
       key: "climateTarget" as const,
       label: host._t("roomSensorClimateTarget"),
-      value: status.climate_target_temperature ?? status.applied_temperature,
+      value: effectiveClimateTarget,
     },
     {
       key: "climate" as const,
