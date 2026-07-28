@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 import logging
@@ -34,6 +36,7 @@ from .const import (
     EVENT_TYPE_PRECONDITIONING_OBSERVATION_RECORDED,
     EVENT_TYPE_PRECONDITIONING_PLAN_CANCELLED,
     EVENT_TYPE_PRECONDITIONING_PLAN_UPDATED,
+    EVENT_TYPE_PROFILE_CHANGED,
     EVENT_TYPE_ROOM_SENSOR_ASSIST_RESTORED,
     EVENT_TYPE_ROOM_SENSOR_ASSIST_STATE_CHANGED,
     EVENT_TYPE_ROOM_SENSOR_ASSIST_UPDATED,
@@ -43,6 +46,7 @@ from .const import (
     EVENT_VELAIR,
     MODE_AUTO,
     MODE_PAUSED,
+    MAX_PROFILE_DESCRIPTION_LENGTH,
     NAME,
     SIGNAL_SCHEDULER_UPDATED,
     ZONE_PAUSE_ACTION_NONE,
@@ -50,9 +54,12 @@ from .const import (
 )
 from .models import (
     ClimateEvent,
+    ClimateProfileData,
+    ClimateProfileZoneData,
     ComfortData,
     DEFAULT_SCHEDULE_TEMPLATES_VERSION,
     PanelSettingsData,
+    VelairModeData,
     PreconditioningData,
     PreconditioningPrediction,
     PreconditioningPredictionDiagnostics,
@@ -66,7 +73,11 @@ from .models import (
     WEEKDAYS,
     climate_options_from_block,
     empty_preconditioning_learning_data,
+    is_valid_climate_profile_color,
     normalize_panel_settings,
+    normalize_modes,
+    validate_climate_profiles,
+    validate_modes,
     normalize_comfort_data,
     normalize_preconditioning_data,
     preconditioning_observations_for_direction,
@@ -190,6 +201,7 @@ class VelairScheduler:
         self.next_events_by_zone: list[ClimateEvent] = []
         self._next_event_by_entity: dict[str, ClimateEvent] = {}
         self._temperature_migration_blocked = False
+        self._profile_mutation_lock = asyncio.Lock()
 
     @property
     def mode(self) -> str:
@@ -248,12 +260,43 @@ class VelairScheduler:
         hvac_mode: str | None = None,
         source: str = "current_schedule",
     ) -> None:
-        """Apply the last schedule block effective now."""
+        """Apply the effective profile behavior or last schedule block now."""
         if self._temperature_migration_blocked:
             return
         now = dt_util.now()
-        for event in self._iter_current_events(now, entity_id):
-            if self._is_zone_override_active(event.entity_id, now):
+        target_entities = (
+            [entity_id] if entity_id is not None else list(self._data["zones"])
+        )
+        current_events = {
+            event.entity_id: event
+            for event in self._iter_current_events(now, entity_id)
+        }
+        for target_entity_id in target_entities:
+            zone = self._data["zones"].get(target_entity_id)
+            if zone is None or not zone["enabled"]:
+                continue
+            if self._is_zone_override_active(target_entity_id, now):
+                continue
+
+            behavior = self._profile_zone_behavior(target_entity_id)
+            if behavior["behavior"] == "pause":
+                if behavior.get("action") == ZONE_PAUSE_ACTION_TURN_OFF:
+                    await self._climate_manager.async_turn_off(target_entity_id)
+                    self._async_fire_climate_target_applied_data(
+                        {
+                            "entity_id": target_entity_id,
+                            "action": ACTION_TURN_OFF,
+                            "temperature": None,
+                            "hvac_mode": None,
+                            "weekday": None,
+                            "start": None,
+                            "source": source,
+                        }
+                    )
+                continue
+
+            event = current_events.get(target_entity_id)
+            if event is None:
                 continue
 
             await self._async_apply_event(
@@ -391,6 +434,77 @@ class VelairScheduler:
 
         events = self._iter_current_events(dt_util.now(), entity_id)
         return events[0] if events else None
+
+    @property
+    def active_profile_ids(self) -> list[str]:
+        """Return the stable keys of all active profiles."""
+        return list(self._data["global_"].get("active_profile_ids", []))
+
+    @property
+    def active_mode_id(self) -> str | None:
+        """Return the selected custom mode key, if any."""
+        return self._data["global_"].get("active_mode_id")
+
+    def get_profiles(self) -> list[ClimateProfileData]:
+        """Return a detached profile list for API consumers."""
+        return deepcopy(self._data.get("profiles", []))
+
+    def get_modes(self) -> list[VelairModeData]:
+        """Return detached custom modes for API and entity consumers."""
+        return deepcopy(self._data.get("modes", []))
+
+    def _profile_by_id(self, profile_id: str | None) -> ClimateProfileData | None:
+        if profile_id is None:
+            return None
+        return next(
+            (profile for profile in self._data.get("profiles", []) if profile["key"] == profile_id),
+            None,
+        )
+
+    def _active_profiles(self) -> list[ClimateProfileData]:
+        """Return active profiles in their persisted activation order."""
+        profiles_by_id = {
+            profile["key"]: profile
+            for profile in self._data.get("profiles", [])
+        }
+        return [
+            profiles_by_id[profile_id]
+            for profile_id in self.active_profile_ids
+            if profile_id in profiles_by_id
+        ]
+
+    def _active_profile_for_zone(
+        self, entity_id: str
+    ) -> ClimateProfileData | None:
+        """Resolve the single active profile that explicitly owns a zone."""
+        return next(
+            (
+                profile
+                for profile in self._active_profiles()
+                if entity_id in profile["zones"]
+            ),
+            None,
+        )
+
+    def _profile_zone_behavior(
+        self,
+        entity_id: str,
+    ) -> ClimateProfileZoneData:
+        """Resolve sparse profile behavior; omitted zones use the default schedule."""
+        profile = self._active_profile_for_zone(entity_id)
+        if profile is None:
+            return {"behavior": "normal"}
+        return profile["zones"].get(entity_id, {"behavior": "normal"})
+
+    def _effective_schedule(
+        self, entity_id: str, zone: ZoneData
+    ) -> dict[str, list[ScheduleBlock]] | None:
+        behavior = self._profile_zone_behavior(entity_id)
+        if behavior["behavior"] == "pause":
+            return None
+        if behavior["behavior"] == "schedule":
+            return behavior.get("schedule")
+        return zone["schedule"]
 
     def get_active_target_event(self, entity_id: str) -> ClimateEvent | None:
         """Return the target Velair is actively managing for one climate."""
@@ -1186,6 +1300,450 @@ class VelairScheduler:
         await self._async_save_data()
         self._async_write_state()
 
+    async def async_set_velair_mode(self, mode: dict) -> str:
+        """Create or replace one user-named mode."""
+        async with self._profile_mutation_lock:
+            if not isinstance(mode, dict):
+                raise ValueError("Mode must be an object")
+            raw_mode = deepcopy(mode)
+            key = raw_mode.get("key", uuid4().hex)
+            if not isinstance(key, str) or not key.strip():
+                raise ValueError("Mode key must be non-empty text")
+            key = key.strip()
+            raw_mode["key"] = key
+            modes = self._data.setdefault("modes", [])
+            existing = next((item for item in modes if item["key"] == key), None)
+            candidate = [
+                raw_mode if item["key"] == key else item for item in modes
+            ]
+            if existing is None:
+                candidate.append(raw_mode)
+            validated = validate_modes(
+                candidate,
+                {
+                    profile["key"]: set(profile["zones"])
+                    for profile in self._data.get("profiles", [])
+                },
+            )
+            next_mode = next(item for item in validated if item["key"] == key)
+            if modes == validated:
+                return key
+            previous_data = deepcopy(self._data)
+            self._data["modes"] = validated
+            if (
+                existing is not None
+                and self.active_mode_id == key
+                and existing["profile_ids"] != next_mode["profile_ids"]
+            ):
+                await self._async_activate_profiles_locked(
+                    next_mode["profile_ids"],
+                    source="mode_updated",
+                    mode_id=key,
+                    rollback_data=previous_data,
+                )
+                return key
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+            return next_mode["key"]
+
+    async def async_delete_velair_mode(self, key: str) -> None:
+        """Delete one custom mode while retaining its active profile set."""
+        async with self._profile_mutation_lock:
+            modes = self._data.setdefault("modes", [])
+            next_modes = [mode for mode in modes if mode["key"] != key]
+            if len(next_modes) == len(modes):
+                raise ValueError(f"Unknown mode: {key}")
+            previous_data = deepcopy(self._data)
+            self._data["modes"] = next_modes
+            if self.active_mode_id == key:
+                self._data["global_"]["active_mode_id"] = None
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+
+    async def async_select_velair_mode(
+        self, key: str, *, source: str = "select"
+    ) -> None:
+        """Atomically select a custom mode and its mapped climate profile."""
+        async with self._profile_mutation_lock:
+            mode = next(
+                (
+                    item
+                    for item in self._data.get("modes", [])
+                    if item["key"] == key
+                ),
+                None,
+            )
+            if mode is None:
+                raise ValueError(f"Unknown mode: {key}")
+            await self._async_activate_profiles_locked(
+                mode["profile_ids"], source=source, mode_id=key
+            )
+
+    async def async_clear_velair_mode(self) -> None:
+        """Select Manual by clearing only the custom mode marker."""
+        async with self._profile_mutation_lock:
+            if self.active_mode_id is None:
+                return
+            previous_data = deepcopy(self._data)
+            self._data["global_"]["active_mode_id"] = None
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+
+    async def async_set_profile(self, profile: dict) -> str:
+        """Serialize creation and replacement of climate profiles."""
+        async with self._profile_mutation_lock:
+            return await self._async_set_profile_locked(profile)
+
+    async def _async_set_profile_locked(self, profile: dict) -> str:
+        """Create or replace a validated climate profile."""
+        raw_profile = deepcopy(profile)
+        if "key" in raw_profile:
+            key = raw_profile["key"]
+            if not isinstance(key, str) or not key.strip():
+                raise ValueError("Profile key must be non-empty text")
+        else:
+            key = uuid4().hex
+            raw_profile["key"] = key
+        key = key.strip()
+        profiles = self._data.setdefault("profiles", [])
+        existing = next((item for item in profiles if item["key"] == key), None)
+        if "color" in raw_profile and not is_valid_climate_profile_color(raw_profile["color"]):
+            raise ValueError("Profile color must use the #RRGGBB format")
+        if "color" not in raw_profile and existing is not None:
+            raw_profile["color"] = existing["color"]
+        old_active = deepcopy(self._active_profiles())
+        next_profile = validate_climate_profiles(
+            [raw_profile],
+            list(self._data["zones"]),
+        )[0]
+        next_profile["key"] = key
+        self._validate_profile(next_profile)
+        if existing == next_profile:
+            return key
+        candidate_profiles = [
+            next_profile if item["key"] == key else item
+            for item in profiles
+        ]
+        if existing is None:
+            candidate_profiles.append(next_profile)
+        validate_modes(
+            self._data.get("modes", []),
+            {
+                item["key"]: set(item["zones"])
+                for item in candidate_profiles
+            },
+        )
+        conflicting_active_zones = self._conflicting_profile_zones(
+            candidate_profiles,
+            self.active_profile_ids,
+        )
+        if conflicting_active_zones:
+            raise ValueError(
+                "Active profiles cannot configure the same zone: "
+                + ", ".join(sorted(conflicting_active_zones))
+            )
+        previous_data = deepcopy(self._data)
+        self._data["profiles"] = candidate_profiles
+        if key in self.active_profile_ids:
+            await self._async_apply_profile_transition(
+                old_active,
+                deepcopy(self._active_profiles()),
+                source="profile_updated",
+                persist_change=True,
+                rollback_data=previous_data,
+            )
+        else:
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+        return key
+
+    async def async_delete_profile(self, key: str) -> None:
+        """Serialize deletion of one climate profile."""
+        async with self._profile_mutation_lock:
+            await self._async_delete_profile_locked(key)
+
+    async def _async_delete_profile_locked(self, key: str) -> None:
+        """Delete a profile, returning to Default when it was active."""
+        profiles = self._data.setdefault("profiles", [])
+        old_profile = next((profile for profile in profiles if profile["key"] == key), None)
+        if old_profile is None:
+            raise ValueError(f"Unknown climate profile: {key}")
+        was_active = key in self.active_profile_ids
+        previous_profile_ids = self.active_profile_ids
+        previous_active_profiles = deepcopy(self._active_profiles())
+        previous_data = deepcopy(self._data)
+        self._data["profiles"] = [profile for profile in profiles if profile["key"] != key]
+        removed_mode_keys = {
+            mode["key"]
+            for mode in self._data.get("modes", [])
+            if key in mode["profile_ids"]
+        }
+        self._data["modes"] = [
+            mode
+            for mode in self._data.get("modes", [])
+            if key not in mode["profile_ids"]
+        ]
+        if self.active_mode_id in removed_mode_keys:
+            self._data["global_"]["active_mode_id"] = None
+        if was_active:
+            self._data["global_"]["active_profile_ids"] = [
+                profile_id
+                for profile_id in previous_profile_ids
+                if profile_id != key
+            ]
+        if was_active:
+            await self._async_apply_profile_transition(
+                previous_active_profiles,
+                deepcopy(self._active_profiles()),
+                source="profile_deleted",
+                persist_change=True,
+                rollback_data=previous_data,
+            )
+            self._async_fire_profile_changed(
+                self.active_profile_ids,
+                previous_profile_ids=previous_profile_ids,
+                source="profile_deleted",
+            )
+        else:
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+
+    async def async_activate_profile(
+        self, profile_id: str | None, *, source: str = "service"
+    ) -> None:
+        """Serialize profile selection and its runtime transition."""
+        async with self._profile_mutation_lock:
+            await self._async_activate_profiles_locked(
+                [profile_id] if isinstance(profile_id, str) and profile_id.strip() else [],
+                source=source,
+            )
+
+    async def async_deactivate_profile(self, *, source: str = "service") -> None:
+        """Return to default schedules through the public profile API."""
+        await self.async_activate_profile(None, source=source)
+
+    async def _async_activate_profiles_locked(
+        self,
+        profile_ids: list[str],
+        *,
+        source: str,
+        mode_id: str | None = None,
+        rollback_data: SchedulerData | None = None,
+    ) -> None:
+        """Activate a conflict-free profile set atomically; empty selects Default."""
+        normalized_ids = [
+            profile_id.strip()
+            for profile_id in profile_ids
+            if isinstance(profile_id, str) and profile_id.strip()
+        ]
+        if len(set(normalized_ids)) != len(normalized_ids):
+            raise ValueError("Active profile IDs must be unique")
+        if (
+            normalized_ids == self.active_profile_ids
+            and mode_id == self.active_mode_id
+        ):
+            return
+        next_profiles: list[ClimateProfileData] = []
+        claimed_zones: set[str] = set()
+        for profile_id in normalized_ids:
+            profile = self._profile_by_id(profile_id)
+            if profile is None:
+                raise ValueError(f"Unknown climate profile: {profile_id}")
+            self._validate_profile(profile)
+            duplicate_zones = claimed_zones.intersection(profile["zones"])
+            if duplicate_zones:
+                raise ValueError(
+                    "Active profiles cannot configure the same zone: "
+                    + ", ".join(sorted(duplicate_zones))
+                )
+            claimed_zones.update(profile["zones"])
+            next_profiles.append(profile)
+        previous_ids = self.active_profile_ids
+        previous_profiles = deepcopy(self._active_profiles())
+        previous_data = (
+            deepcopy(self._data) if rollback_data is None else rollback_data
+        )
+        self._data["global_"]["active_profile_ids"] = normalized_ids
+        self._data["global_"]["active_mode_id"] = mode_id
+        if normalized_ids == previous_ids:
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+            return
+        await self._async_apply_profile_transition(
+            previous_profiles,
+            deepcopy(next_profiles),
+            source="profile_activated" if normalized_ids else "profile_deactivated",
+            persist_change=True,
+            rollback_data=previous_data,
+        )
+        self._async_fire_profile_changed(
+            normalized_ids,
+            previous_profile_ids=previous_ids,
+            source=source,
+        )
+
+    def _validate_profile(self, profile: ClimateProfileData) -> None:
+        """Validate and snap every entity-bound schedule in a profile."""
+        if not is_valid_climate_profile_color(profile.get("color")):
+            raise ValueError("Profile color must use the #RRGGBB format")
+        if len(profile.get("description", "")) > MAX_PROFILE_DESCRIPTION_LENGTH:
+            raise ValueError(
+                "Profile description must be "
+                f"{MAX_PROFILE_DESCRIPTION_LENGTH} characters or fewer"
+            )
+        for entity_id, behavior in profile["zones"].items():
+            self.ensure_managed_entity(entity_id)
+            if behavior["behavior"] != "schedule":
+                continue
+            supported_modes = getattr(
+                self._climate_manager, "supported_hvac_modes", lambda _entity_id: []
+            )(entity_id)
+            schedule = behavior.get("schedule")
+            if not isinstance(schedule, dict) or set(schedule) != set(WEEKDAYS):
+                raise ValueError(f"Profile schedule for {entity_id} must include every weekday")
+            for weekday in WEEKDAYS:
+                blocks = self._blocks_for_entity_capabilities(entity_id, schedule[weekday])
+                self.ensure_blocks_in_temperature_limits(entity_id, blocks)
+                for block in blocks:
+                    hvac_mode = block.get("hvac_mode")
+                    if hvac_mode and supported_modes and hvac_mode not in supported_modes:
+                        raise ValueError(
+                            f"HVAC mode {hvac_mode} is not supported by {entity_id}"
+                        )
+                schedule[weekday] = self._snap_blocks_for_entity(entity_id, blocks)
+
+    @staticmethod
+    def _conflicting_profile_zones(
+        profiles: list[ClimateProfileData],
+        profile_ids: list[str],
+    ) -> set[str]:
+        """Return zones explicitly claimed by more than one selected profile."""
+        profiles_by_id = {profile["key"]: profile for profile in profiles}
+        claimed_zones: set[str] = set()
+        conflicting_zones: set[str] = set()
+        for profile_id in profile_ids:
+            profile = profiles_by_id.get(profile_id)
+            if profile is None:
+                continue
+            profile_zones = set(profile["zones"])
+            conflicting_zones.update(claimed_zones.intersection(profile_zones))
+            claimed_zones.update(profile_zones)
+        return conflicting_zones
+
+    @staticmethod
+    def _profile_effect_from_profiles(
+        profiles: list[ClimateProfileData], entity_id: str
+    ) -> tuple[str | None, ClimateProfileZoneData]:
+        profile = next(
+            (profile for profile in profiles if entity_id in profile["zones"]),
+            None,
+        )
+        return (
+            (
+                profile["key"],
+                profile["zones"][entity_id],
+            )
+            if profile is not None
+            else (None, {"behavior": "normal"})
+        )
+
+    async def _async_apply_profile_transition(
+        self,
+        previous_profiles: list[ClimateProfileData],
+        next_profiles: list[ClimateProfileData],
+        *,
+        source: str,
+        persist_change: bool = False,
+        rollback_data: SchedulerData | None = None,
+    ) -> None:
+        """Reset affected runtime state and immediately enact effective behavior."""
+        affected = {
+            entity_id
+            for entity_id in self._data["zones"]
+            if self._profile_effect_from_profiles(previous_profiles, entity_id)
+            != self._profile_effect_from_profiles(next_profiles, entity_id)
+        }
+        now = dt_util.now()
+        cancelled_boosts: list[tuple[str, ZoneOverride]] = []
+        for entity_id in affected:
+            override = self._data["zones"][entity_id].get("override")
+            if _is_boost_override(override):
+                self._data["zones"][entity_id]["override"] = None
+                cancelled_boosts.append((entity_id, override))
+        if affected or persist_change:
+            if rollback_data is None:
+                await self._async_save_data()
+            else:
+                await self._async_save_profile_mutation(rollback_data)
+
+        for entity_id in affected:
+            self._discard_preconditioning_session(entity_id)
+            self._clear_applied_preconditioning_targets_for_entity(entity_id)
+
+        for entity_id, override in cancelled_boosts:
+            self._async_fire_boost_ended(
+                entity_id,
+                override,
+                reason="profile_changed",
+                restoration={"type": "none"},
+            )
+
+        for entity_id in affected:
+            behavior = self._profile_zone_behavior(entity_id)
+            replacement_follows = (
+                behavior["behavior"] == "pause"
+                and behavior.get("action") == ZONE_PAUSE_ACTION_TURN_OFF
+            ) or bool(self._iter_current_events(now, entity_id))
+            try:
+                await self._async_clear_room_sensor_assist(
+                    entity_id,
+                    restore=not replacement_follows,
+                    reason="profile_changed",
+                )
+            except Exception:
+                _LOGGER.exception(
+                    "Failed to clear Room Assist after profile change for %s",
+                    entity_id,
+                )
+
+        if self.mode == MODE_AUTO and not self._temperature_migration_blocked:
+            for entity_id in affected:
+                if self._is_zone_override_active(entity_id, now):
+                    continue
+                try:
+                    behavior = self._profile_zone_behavior(entity_id)
+                    if behavior["behavior"] == "pause":
+                        if behavior.get("action") == ZONE_PAUSE_ACTION_TURN_OFF:
+                            await self._climate_manager.async_turn_off(entity_id)
+                            self._async_fire_climate_target_applied_data(
+                                {
+                                    "entity_id": entity_id,
+                                    "action": ACTION_TURN_OFF,
+                                    "temperature": None,
+                                    "hvac_mode": None,
+                                    "weekday": None,
+                                    "start": None,
+                                    "source": source,
+                                }
+                            )
+                        continue
+                    await self.async_apply_current_schedule(entity_id, source=source)
+                except Exception:
+                    _LOGGER.exception(
+                        "Failed to apply profile behavior for %s",
+                        entity_id,
+                    )
+        self.async_schedule_next_event()
+
+    async def _async_save_profile_mutation(self, previous_data: SchedulerData) -> None:
+        """Persist a profile mutation, restoring runtime state if storage fails."""
+        try:
+            await self._async_save_data()
+        except Exception:
+            self._data.clear()
+            self._data.update(previous_data)
+            raise
+
     async def async_replace_portable_data(
         self,
         *,
@@ -1194,8 +1752,68 @@ class VelairScheduler:
         settings: PanelSettingsData | None = None,
         preconditioning_learning: dict[str, PreconditioningLearningData]
         | None = None,
+        profiles: list[ClimateProfileData] | None = None,
+        modes: list[VelairModeData] | None = None,
+    ) -> None:
+        """Serialize portable replacement with profile mutations."""
+        async with self._profile_mutation_lock:
+            await self._async_replace_portable_data_locked(
+                zones=zones,
+                templates=templates,
+                settings=settings,
+                preconditioning_learning=preconditioning_learning,
+                profiles=profiles,
+                modes=modes,
+            )
+
+    async def _async_replace_portable_data_locked(
+        self,
+        *,
+        zones: dict[str, ZoneData] | None = None,
+        templates: list[ScheduleTemplateData] | None = None,
+        settings: PanelSettingsData | None = None,
+        preconditioning_learning: dict[str, PreconditioningLearningData]
+        | None = None,
+        profiles: list[ClimateProfileData] | None = None,
+        modes: list[VelairModeData] | None = None,
     ) -> None:
         """Replace persisted sections from a portable import."""
+        if profiles is not None:
+            # Validate the complete profile section before mutating any other
+            # imported section so a rejected import remains atomic in memory.
+            profiles = validate_climate_profiles(
+                profiles,
+                list((zones if zones is not None else self._data["zones"])),
+            )
+            for profile in profiles:
+                self._validate_profile(profile)
+        target_profiles = (
+            profiles if profiles is not None else self._data.get("profiles", [])
+        )
+        target_profile_zones = {
+            profile["key"]: set(profile["zones"])
+            for profile in target_profiles
+        }
+        if modes is not None:
+            modes = validate_modes(modes, target_profile_zones)
+        if profiles is not None:
+            retained_active_profile_ids = [
+                profile_id
+                for profile_id in self.active_profile_ids
+                if profile_id in target_profile_zones
+            ]
+            duplicate_zones = self._conflicting_profile_zones(
+                target_profiles,
+                retained_active_profile_ids,
+            )
+            if duplicate_zones:
+                raise ValueError(
+                    "Imported profiles would make the active set configure "
+                    "the same zone: " + ", ".join(sorted(duplicate_zones))
+                )
+        previous_data = deepcopy(self._data)
+        previous_profile_ids = self.active_profile_ids
+        previous_active_profiles = deepcopy(self._active_profiles())
         if zones is not None:
             self._clear_preconditioning_sessions()
             self._applied_preconditioning_targets.clear()
@@ -1221,6 +1839,61 @@ class VelairScheduler:
             for entity_id in preconditioning_learning:
                 self._preconditioning_sessions.pop(entity_id, None)
             self._refresh_preconditioning_listener()
+        if profiles is not None:
+            self._data["profiles"] = profiles
+            imported_profile_ids = {profile["key"] for profile in profiles}
+            if modes is None:
+                self._data["modes"] = normalize_modes(
+                    self._data.get("modes", []),
+                    {
+                        profile["key"]: set(profile["zones"])
+                        for profile in profiles
+                    },
+                )
+            # Portable data deliberately never selects new profiles. Retain
+            # only active definitions that still exist after replacement.
+            self._data["global_"]["active_profile_ids"] = [
+                profile_id
+                for profile_id in self.active_profile_ids
+                if profile_id in imported_profile_ids
+            ]
+        if modes is not None:
+            self._data["modes"] = modes
+        if profiles is not None or modes is not None:
+            selected_mode = next(
+                (
+                    mode
+                    for mode in self._data.get("modes", [])
+                    if mode["key"] == self.active_mode_id
+                ),
+                None,
+            )
+            if (
+                selected_mode is None
+                or selected_mode["profile_ids"] != self.active_profile_ids
+            ):
+                self._data["global_"]["active_mode_id"] = None
+        if profiles is not None:
+            next_active_profiles = deepcopy(self._active_profiles())
+            await self._async_apply_profile_transition(
+                previous_active_profiles,
+                next_active_profiles,
+                source="portable_import",
+                persist_change=True,
+                rollback_data=previous_data,
+            )
+            if previous_profile_ids != self.active_profile_ids:
+                self._async_fire_profile_changed(
+                    self.active_profile_ids,
+                    previous_profile_ids=previous_profile_ids,
+                    source="portable_import",
+                )
+            return
+
+        if modes is not None:
+            await self._async_save_profile_mutation(previous_data)
+            self._async_write_state()
+            return
 
         await self._async_save_data()
         self.async_schedule_next_event()
@@ -1558,7 +2231,11 @@ class VelairScheduler:
                 if self._is_zone_override_active(entity_id, now):
                     continue
 
-                for block in zone["schedule"][weekday]:
+                schedule = self._effective_schedule(entity_id, zone)
+                if schedule is None:
+                    continue
+
+                for block in schedule[weekday]:
                     event_time = _parse_start_time(block["start"])
                     if event_time is None:
                         continue
@@ -1619,9 +2296,13 @@ class VelairScheduler:
             if not zone["enabled"]:
                 continue
 
+            schedule = self._effective_schedule(entity_id, zone)
+            if schedule is None:
+                continue
+
             candidate: ClimateEvent | None = None
             weekday = WEEKDAYS[today.weekday()]
-            for block in zone["schedule"][weekday]:
+            for block in schedule[weekday]:
                 event_time = _parse_start_time(block["start"])
                 if event_time is None:
                     continue
@@ -2237,21 +2918,29 @@ class VelairScheduler:
                 and normalize_preconditioning_data(
                     zone.get("preconditioning")
                 )["enabled"]
-                and self._zone_has_future_preconditioning_candidate(zone, now)
+                and self._zone_has_future_preconditioning_candidate(
+                    entity_id,
+                    zone,
+                    now,
+                )
             )
         )
 
     def _zone_has_future_preconditioning_candidate(
         self,
+        entity_id: str,
         zone: ZoneData,
         now: datetime,
     ) -> bool:
         """Return whether a zone has a future block that temperature can replan."""
+        schedule = self._effective_schedule(entity_id, zone)
+        if schedule is None:
+            return False
         today = now.date()
         for day_offset in range(8):
             event_date = today + timedelta(days=day_offset)
             weekday = WEEKDAYS[event_date.weekday()]
-            for block in zone["schedule"][weekday]:
+            for block in schedule[weekday]:
                 if block.get("action", ACTION_SET_TEMPERATURE) == ACTION_TURN_OFF:
                     continue
                 if "temperature" not in block:
@@ -2772,7 +3461,10 @@ class VelairScheduler:
         zone = self._data["zones"].get(entity_id)
         if zone is None:
             return {}
-        for block in zone["schedule"].get(weekday, []):
+        schedule = self._effective_schedule(entity_id, zone)
+        if schedule is None:
+            return {}
+        for block in schedule.get(weekday, []):
             if block.get("start") == start:
                 return _event_climate_options(block)
         return {}
@@ -2806,7 +3498,10 @@ class VelairScheduler:
         if zone is None:
             return False
 
-        for block in zone["schedule"].get(weekday, []):
+        schedule = self._effective_schedule(entity_id, zone)
+        if schedule is None:
+            return False
+        for block in schedule.get(weekday, []):
             if block.get("start") != start:
                 continue
             if block.get("action", ACTION_SET_TEMPERATURE) != ACTION_SET_TEMPERATURE:
@@ -3978,6 +4673,23 @@ class VelairScheduler:
             "paused_started_at": paused_started_at,
         }
         self._async_fire_event(EVENT_TYPE_SCHEDULER_MODE_CHANGED, data)
+
+    def _async_fire_profile_changed(
+        self,
+        profile_ids: list[str],
+        *,
+        previous_profile_ids: list[str],
+        source: str = "internal",
+    ) -> None:
+        """Fire the stable automation event for profile selection changes."""
+        self._async_fire_event(
+            EVENT_TYPE_PROFILE_CHANGED,
+            {
+                "profile_ids": list(profile_ids),
+                "previous_profile_ids": list(previous_profile_ids),
+                "source": source,
+            },
+        )
 
     def _async_fire_comfort_assessment_changed(
         self,

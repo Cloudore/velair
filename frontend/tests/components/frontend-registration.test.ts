@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { VelairPanel } from "../../src/velair/views/panel";
 
 describe("frontend entrypoint", () => {
   beforeEach(() => {
@@ -32,7 +33,8 @@ describe("frontend entrypoint", () => {
 
     expect(panel.shadowRoot?.querySelector(".main-title")?.textContent).toContain("Velair");
     expect(panel.shadowRoot?.querySelector(".version")).toBeNull();
-    expect(panel.shadowRoot?.querySelectorAll("ha-tab-group-tab")).toHaveLength(7);
+    expect(panel.shadowRoot?.querySelectorAll("ha-tab-group-tab")).toHaveLength(8);
+    expect(panel.shadowRoot?.textContent).toContain("Profiles");
     expect(panel.shadowRoot?.textContent).toContain("Comfort");
     expect(panel.shadowRoot?.textContent).toContain("Room Assist");
     expect(panel.shadowRoot?.textContent).toContain("Preconditioning");
@@ -41,7 +43,38 @@ describe("frontend entrypoint", () => {
     panel.remove();
   });
 
-  it("offers preconditioning as an individual Lovelace card view", async () => {
+  it("sizes the sticky tab header from the real panel width", () => {
+    const cssText = VelairPanel.styles.cssText;
+
+    expect(cssText).toMatch(/\.header\s*\{[^}]*position:\s*sticky/);
+    expect(cssText).toMatch(/\.header\s*\{[^}]*max-width:\s*100%/);
+    expect(cssText).toMatch(/\.panel-tabs\s*\{[^}]*max-width:\s*100%/);
+    expect(cssText).not.toMatch(/\.header\s*\{[^}]*position:\s*fixed/);
+    expect(cssText).toMatch(/\.panel-content\s*\{[^}]*padding:\s*16px 24px 24px/);
+  });
+
+  it("keeps a dirty profile draft when tab navigation is cancelled", async () => {
+    await import("../../src/velair-card");
+    const panel = document.createElement("velair-sidebar-panel") as HTMLElement & { updateComplete?: Promise<boolean> };
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    document.body.append(panel);
+    await panel.updateComplete;
+
+    const tabs = panel.shadowRoot?.querySelectorAll("ha-tab-group-tab");
+    (tabs?.[1] as HTMLElement | undefined)?.click();
+    await panel.updateComplete;
+    const card = panel.shadowRoot?.querySelector("velair-panel-card");
+    card?.dispatchEvent(new CustomEvent("profile-dirty-changed", { bubbles: true, composed: true, detail: true }));
+    (tabs?.[2] as HTMLElement | undefined)?.click();
+    await panel.updateComplete;
+
+    expect(panel.shadowRoot?.querySelector("velair-panel-card")?.getAttribute("view")).toBe("profiles");
+    expect(confirm).toHaveBeenCalledOnce();
+    confirm.mockRestore();
+    panel.remove();
+  });
+
+  it("keeps Lovelace view IDs stable and orders consistently named options by panel", async () => {
     await import("../../src/velair-card");
     const editor = document.createElement("velair-card-editor") as HTMLElement & {
       setConfig(config: { view: string }): void;
@@ -53,10 +86,24 @@ describe("frontend entrypoint", () => {
     await editor.updateComplete;
 
     const viewSelect = editor.shadowRoot?.querySelector("select");
-    const views = [...(viewSelect?.querySelectorAll("option") ?? [])].map(
-      (option) => option.getAttribute("value"),
+    const options = [...(viewSelect?.querySelectorAll("option") ?? [])].map(
+      (option) => ({
+        label: option.textContent?.trim(),
+        value: option.getAttribute("value"),
+      }),
     );
-    expect(views).toContain("preconditioning");
+    expect(options).toEqual([
+      { label: "Overview: scheduler status", value: "overview-status" },
+      { label: "Overview: active boosts", value: "overview-boosts" },
+      { label: "Overview: next events", value: "overview-events" },
+      { label: "Overview: today's timeline", value: "overview-timeline" },
+      { label: "Overview: zone overview", value: "overview-zones" },
+      { label: "Profiles: active setup", value: "active-setup" },
+      { label: "Schedules: editor", value: "schedules" },
+      { label: "Room Assist: configuration and status", value: "sensors" },
+      { label: "Comfort: configuration and status", value: "comfort" },
+      { label: "Preconditioning: configuration and status", value: "preconditioning" },
+    ]);
     expect((viewSelect as HTMLSelectElement | null)?.value).toBe("preconditioning");
 
     editor.remove();
@@ -81,6 +128,70 @@ describe("frontend entrypoint", () => {
     expect(editor.shadowRoot?.querySelector(".zone-order")).toBeNull();
     expect(editor.shadowRoot?.querySelector(".first-weekday-option")).toBeNull();
     expect(sendMessagePromise).not.toHaveBeenCalled();
+
+    editor.setConfig({ view: "active-setup" });
+    await editor.updateComplete;
+    expect(editor.shadowRoot?.querySelector(".zone-order")).toBeNull();
+    expect(editor.shadowRoot?.querySelector(".first-weekday-option")).toBeNull();
+    expect(sendMessagePromise).not.toHaveBeenCalled();
+
+    editor.remove();
+  });
+
+  it("configures whether the Active setup card can change Modes, Profiles, or both", async () => {
+    await import("../../src/velair-card");
+    const editor = document.createElement("velair-card-editor") as HTMLElement & {
+      setConfig(config: { active_setup_controls?: string; view: string }): void;
+      updateComplete?: Promise<boolean>;
+    };
+
+    editor.setConfig({ view: "active-setup" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const control = editor.shadowRoot?.querySelector(
+      ".active-setup-controls-option select",
+    ) as HTMLSelectElement;
+    expect(control).not.toBeNull();
+    expect(control.value).toBe("both");
+    expect([...control.options].map((option) => option.value))
+      .toEqual(["both", "modes", "profiles"]);
+    expect(editor.shadowRoot?.textContent).toContain("Active setup controls");
+
+    const changed = new Promise<Record<string, unknown>>((resolve) => {
+      editor.addEventListener("config-changed", ((event: CustomEvent) => {
+        resolve(event.detail.config);
+      }) as EventListener, { once: true });
+    });
+    control.value = "profiles";
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(await changed).toMatchObject({
+      active_setup_controls: "profiles",
+      view: "active-setup",
+    });
+
+    await editor.updateComplete;
+    const updatedControl = editor.shadowRoot?.querySelector(
+      ".active-setup-controls-option select",
+    ) as HTMLSelectElement;
+    const reset = new Promise<Record<string, unknown>>((resolve) => {
+      editor.addEventListener("config-changed", ((event: CustomEvent) => {
+        resolve(event.detail.config);
+      }) as EventListener, { once: true });
+    });
+    updatedControl.value = "both";
+    updatedControl.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(await reset).toEqual({ view: "active-setup" });
+
+    editor.setConfig({ active_setup_controls: "invalid", view: "active-setup" });
+    await editor.updateComplete;
+    expect((editor.shadowRoot?.querySelector(
+      ".active-setup-controls-option select",
+    ) as HTMLSelectElement).value).toBe("both");
+
+    editor.setConfig({ active_setup_controls: "modes", view: "overview-status" });
+    await editor.updateComplete;
+    expect(editor.shadowRoot?.querySelector(".active-setup-controls-option")).toBeNull();
 
     editor.remove();
   });

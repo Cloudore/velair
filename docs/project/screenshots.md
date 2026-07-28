@@ -8,6 +8,25 @@ The following screenshots are captured from a real Home Assistant instance.
 | --- | --- |
 | ![Velair overview desktop](../../screenshots/overview-desktop.png) | ![Velair overview mobile](../../screenshots/overview-mobile.png) |
 
+### Profiles and modes
+* Desktop
+
+| Profiles | Modes |
+| --- | --- |
+| ![Velair profiles desktop](../../screenshots/profiles-desktop.png) | ![Velair modes dektop](../../screenshots/modes-desktop.png) |
+
+* Mobile
+
+| Profiles | Modes |
+| --- | --- |
+| ![Velair profiles mobile](../../screenshots/profiles-mobile.png) | ![Velair modes mobile](../../screenshots/modes-mobile.png) |
+
+* Change active setup: mode / profile
+
+| Desktop | Mobile |
+| --- | --- |
+| ![Velair change active setup desktop](../../screenshots/active-setup-change-desktop.png) | ![Velair change active setup mobile](../../screenshots/active-setup-change-mobile.png) |
+
 ### Schedule editor
 | Desktop | Mobile |
 | --- | --- |

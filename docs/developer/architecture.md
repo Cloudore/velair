@@ -43,7 +43,7 @@ The storage model is intentionally simple and versioned:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "zones": {
     "climate.living_room": {
       "enabled": true,
@@ -70,7 +70,9 @@ The storage model is intentionally simple and versioned:
   "global": {
     "mode": "auto",
     "paused_until": null,
-    "paused_started_at": null
+    "paused_started_at": null,
+    "active_profile_ids": ["away"],
+    "active_mode_id": "away-mode"
   },
   "settings": {
     "first_weekday": "monday",
@@ -79,6 +81,30 @@ The storage model is intentionally simple and versioned:
     "max_temperature": 35.0
   },
   "templates": [],
+  "profiles": [
+    {
+      "key": "away",
+      "name": "Away",
+      "icon": "mdi:home-export-outline",
+      "color": "#546e7a",
+      "description": "Lower demand while nobody is home",
+      "zones": {
+        "climate.living_room": {
+          "behavior": "schedule",
+          "schedule": {
+            "monday": []
+          }
+        }
+      }
+    }
+  ],
+  "modes": [
+    {
+      "key": "away-mode",
+      "name": "Away",
+      "profile_ids": ["away"]
+    }
+  ],
   "preconditioning_learning": {
     "climate.living_room": {
       "heat": {
@@ -94,6 +120,46 @@ The storage model is intentionally simple and versioned:
 ```
 
 `models.py` normalizes stored data on load. This allows Velair to tolerate old or partial storage data and gives future migrations a single place to evolve.
+
+Climate profiles are backend-owned effective schedule overlays. The persisted
+`active_profile_ids` list is empty for the built-in Default state. A Mode may
+activate several profiles together, but the backend rejects any composition in
+which two profiles explicitly configure the same zone. A zone omitted from all
+active profiles keeps using its default schedule. A profile zone can instead
+embed a complete weekly schedule or pause the zone, optionally turning it off.
+Templates only copy blocks into a profile draft; no template reference is
+persisted.
+
+The scheduler resolves each zone's effective behavior before calculating
+current or future events, Adaptive Preconditioning, or Room Assist. Global and
+manual zone pauses retain priority. Activating a profile cancels Boost only for
+zones whose effective behavior changes, persists the new selection, and then
+applies the current effective block immediately where pauses allow it. Comfort
+configuration remains independent. The active selection survives restart, while
+the existing startup option continues to decide whether climate targets are
+physically applied during startup.
+
+Backend-owned `modes` map stable mode keys and user-editable names to
+stable profile IDs. A single native `SelectEntity` projects this state as
+`select.velair_mode`. Its canonical built-ins are `Default`, which deactivates
+profiles and restores each zone's default schedule, and `Manual`, which clears
+the selected mode marker while retaining profiles chosen directly. Custom
+selection atomically activates the mapped profile set and records its mode key.
+Direct panel or service activation clears the marker to Manual, including
+same-profile activation without repeating climate actions or emitting a
+duplicate profile change event.
+
+The select entity is dispatcher-driven and does not use `RestoreEntity`, polling,
+or an external state listener. Storage remains canonical across startup.
+`apply_active_schedule_on_startup` remains the only startup gate for physical
+application; restoring a selected mode never causes separate climate calls.
+Deleting the selected mode retains the active profile set and resolves to
+Manual, while deleting an active profile cascades its Modes and removes only
+that profile from the active set.
+
+Each Mode stores one or more unique IDs in `profile_ids`. Validation rejects
+unknown profiles and any set where two profiles explicitly configure the same
+zone. This keeps effective ownership deterministic without a priority system.
 
 ## Scheduler Flow
 
@@ -226,7 +292,7 @@ Exports use a separate portable model version. This lets future imports handle o
 
 Persisted thermal values use the raw runtime unit recorded in storage metadata.
 Load, save, and Home Assistant unit-change events never convert them. Portable
-model v3 preserves those raw values and declares the stored unit. Imports convert
+model v4 preserves those raw values and declares the stored unit. Imports convert
 selected thermal sections when the source and current Home Assistant units
 differ. Model v2 and unitless v1 exports are treated as Celsius for backward
 compatibility.
@@ -252,17 +318,23 @@ The current export format is:
 ```json
 {
   "format": "velair_portable_data",
-  "model_version": 3,
+  "model_version": 5,
   "temperature_unit": "°F",
   "exported_at": "2026-05-25T00:00:00+00:00",
   "sections": {
     "zones": {},
     "templates": [],
     "settings": {},
-    "preconditioning_learning": {}
+    "preconditioning_learning": {},
+    "profiles": [],
+    "modes": []
   }
 }
 ```
+
+Portable profile data contains profile and Mode definitions but never
+the active profile or selected mode intent, so importing a backup cannot
+activate a profile implicitly. V4 payloads without `modes` remain valid.
 
 `preconditioning_learning` is an optional incremental section keyed by the exact climate entity ID. Import replaces learning only for matching managed climates contained in the section. Unknown IDs are ignored, while existing learning for local climates absent from the file is preserved.
 

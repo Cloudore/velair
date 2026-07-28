@@ -2,7 +2,9 @@ import { DOMAIN } from "../constants";
 import type {
   HomeAssistant,
   ComfortSettings,
+  ClimateProfileInput,
   PanelSettings,
+  VelairModeInput,
   PortableSection,
   PreconditioningSettings,
   ScheduleBlock,
@@ -75,6 +77,50 @@ export class VelairApiClient {
     return this.hass.connection.sendMessagePromise<ScheduleResponse>({
       type: "velair/delete_schedule_template",
       key,
+    });
+  }
+
+  public setClimateProfile(profile: ClimateProfileInput): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/set_profile",
+      profile,
+    });
+  }
+
+  public deleteClimateProfile(key: string): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/delete_profile",
+      key,
+    });
+  }
+
+  public activateProfile(key?: string | null): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/activate_profile",
+      profile_id: key ?? null,
+    });
+  }
+
+  public setVelairMode(mode: VelairModeInput): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/set_mode",
+      mode,
+    });
+  }
+
+  public deleteVelairMode(key: string): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/delete_mode",
+      key,
+    });
+  }
+
+  public selectVelairMode(
+    selection: { kind: "default" | "manual" } | { kind: "custom"; key: string },
+  ): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/select_mode",
+      selection,
     });
   }
 
