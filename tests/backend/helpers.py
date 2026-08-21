@@ -50,6 +50,11 @@ def _install_homeassistant_stubs() -> None:
     core.HomeAssistant = object
     core.ServiceCall = object
     core.callback = _callback
+    core.valid_entity_id = lambda value: (
+        isinstance(value, str)
+        and value.count(".") == 1
+        and all(part and " " not in part for part in value.split("."))
+    )
     sys.modules["homeassistant.core"] = core
 
     exceptions = ModuleType("homeassistant.exceptions")
@@ -101,6 +106,7 @@ def _install_voluptuous_stub() -> None:
     """Install the tiny voluptuous surface needed to import api.py."""
     voluptuous = ModuleType("voluptuous")
     voluptuous.Invalid = ValueError
+    voluptuous.PREVENT_EXTRA = 0
     voluptuous.All = lambda *validators, **kwargs: (
         lambda value: _apply_validators(value, validators)
     )
@@ -114,7 +120,10 @@ def _install_voluptuous_stub() -> None:
     voluptuous.Optional = lambda key, **kwargs: key
     voluptuous.Range = lambda *args, **kwargs: lambda value: value
     voluptuous.Required = lambda key, **kwargs: key
-    voluptuous.Schema = lambda schema: lambda value: value
+    voluptuous.Schema = lambda schema, **kwargs: _schema_validator(
+        schema,
+        prevent_extra=kwargs.get("extra") == voluptuous.PREVENT_EXTRA,
+    )
     sys.modules.setdefault("voluptuous", voluptuous)
 
 
@@ -126,6 +135,16 @@ def _apply_validators(value, validators):
         if callable(validator):
             result = validator(result)
     return result
+
+
+def _schema_validator(schema, *, prevent_extra=False):
+    def validate(value):
+        if prevent_extra and isinstance(schema, dict) and isinstance(value, dict):
+            unexpected = set(value) - set(schema)
+            if unexpected:
+                raise ValueError(f"extra keys not allowed: {sorted(unexpected)}")
+        return value
+    return validate
 
 
 def _apply_any_validator(value, validators):

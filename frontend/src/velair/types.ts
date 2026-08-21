@@ -66,6 +66,7 @@ export type VelairCardConfig = {
   show_comfort_humidity?: boolean;
   show_comfort_temperature?: boolean;
   show_room_assist_debounce?: boolean;
+  show_room_assist_deadband?: boolean;
   show_room_assist_live_status?: boolean;
   show_room_assist_max_delta?: boolean;
   show_room_assist_sensor?: boolean;
@@ -90,7 +91,7 @@ export type VelairPanelRoute = {
   prefix?: string;
 };
 
-export type VelairPanelView = "overview" | "modes" | "schedules" | "templates" | "sensors" | "comfort" | "preconditioning" | "settings";
+export type VelairPanelView = "overview" | "modes" | "schedules" | "templates" | "sensors" | "comfort" | "preconditioning" | "diagnostics" | "settings";
 export type VelairOverviewCardView =
   | "overview-status"
   | "active-setup"
@@ -193,6 +194,7 @@ export type PreconditioningSettings = {
   outdoor_temperature_entity_id: string | null;
   room_temperature_entity_id: string | null;
   room_sensor_assist_enabled: boolean;
+  room_sensor_assist_deadband: number;
   room_sensor_assist_max_delta: number;
   room_sensor_assist_debounce_seconds: number;
 };
@@ -329,6 +331,24 @@ export type ScheduleZone = {
   }>;
   preconditioning?: PreconditioningSettings;
   comfort?: ComfortSettings;
+  external_change_policy?: ExternalChangePolicy;
+};
+
+export type ExternalChangePolicy = {
+  action: "keep_automatic" | "until_next_block" | "for_duration" | "until_resumed";
+  duration_minutes?: number;
+};
+
+export type ManualAdjustmentPolicy = Exclude<ExternalChangePolicy["action"], "keep_automatic">;
+
+export type ManualControl = {
+  active: boolean;
+  started_at?: string;
+  until?: string;
+  policy?: ManualAdjustmentPolicy;
+  source?: "external_change" | "explicit";
+  duration_minutes?: number;
+  changed_fields?: string[];
 };
 
 export type ZoneRuntimeStatus = {
@@ -345,6 +365,17 @@ export type ZoneRuntimeStatus = {
   pause_count?: number;
   pause_ids?: string[];
   manual_pause?: boolean;
+  control_mode?: "automatic" | "manual";
+  manual_control?: ManualControl;
+  manual_adjustment_allowed?: boolean;
+  manual_adjustment_unavailable_reason?:
+    | "already_manual"
+    | "unavailable"
+    | "disabled"
+    | "temperature_migration"
+    | "scheduler_not_auto"
+    | "profile_paused"
+    | "zone_paused";
 };
 
 export type PreconditioningDiagnostics = {
@@ -414,6 +445,58 @@ export type OperationStatus = {
   finished_at?: string | null;
 };
 
+export type DiagnosticIssue = { severity: "warning" | "error"; code: string; purpose?: string };
+export type DiagnosticHistoryCategory =
+  | "control"
+  | "room_assist"
+  | "preconditioning"
+  | "comfort"
+  | "delivery"
+  | "availability";
+export type DiagnosticHistoryItem = {
+  at: string;
+  kind: string;
+  category: DiagnosticHistoryCategory;
+  severity: "info" | "warning" | "error";
+  entity_id?: string | null;
+  data: Record<string, unknown>;
+};
+export type UnitDiagnostics = {
+  status: "ok" | "warning" | "error";
+  issues: DiagnosticIssue[];
+  state: string;
+  capabilities: Record<string, unknown>;
+  configuration: Record<string, unknown>;
+  effective_setup: Record<string, unknown>;
+  intent?: Record<string, unknown> | null;
+  last_application?: Record<string, unknown> | null;
+  delivery: Record<string, unknown>;
+  override?: Record<string, unknown> | null;
+  pauses: Record<string, unknown>[];
+  room_assist?: Record<string, unknown> | null;
+  comfort?: Record<string, unknown> | null;
+  preconditioning_learning?: Record<string, unknown> | null;
+  sensors: Array<{ purpose: string; entity_id: string; state: string }>;
+};
+export type DiagnosticsSnapshot = {
+  generated_at: string;
+  history_limit: number;
+  history_policy: {
+    categories: Record<DiagnosticHistoryCategory, boolean>;
+    runtime_only: true;
+    cleared_on_restart: true;
+  };
+  overall: {
+    status: "ok" | "warning" | "error";
+    scheduler_mode: string;
+    scheduler_status: string;
+    unit_counts: Record<"ok" | "warning" | "error", number>;
+    issues: DiagnosticIssue[];
+  };
+  units: Record<string, UnitDiagnostics>;
+  history: DiagnosticHistoryItem[];
+};
+
 export type ScheduleResponse = {
   profile_id?: string;
   mode_id?: string;
@@ -456,6 +539,7 @@ export type ScheduleResponse = {
   comfort?: Record<string, ComfortAssessment>;
   zone_runtime?: Record<string, ZoneRuntimeStatus>;
   preconditioning_learning?: Record<string, PreconditioningLearningSummary>;
+  diagnostics?: DiagnosticsSnapshot;
   templates?: StoredScheduleTemplate[];
   profiles?: ClimateProfile[];
   modes?: VelairMode[];

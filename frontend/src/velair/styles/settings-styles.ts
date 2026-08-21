@@ -210,7 +210,7 @@ export const settingsStyles = css`
   align-items: start;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(150px, 0.75fr) minmax(220px, 1.25fr) minmax(240px, 1fr);
+  grid-template-columns: minmax(150px, 0.65fr) minmax(260px, 1.35fr);
   min-width: 0;
 }
 
@@ -223,9 +223,91 @@ export const settingsStyles = css`
 .settings-zone-title {
   align-items: center;
   display: grid;
-  gap: 7px;
-  grid-template-columns: 10px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
+}
+
+.settings-external-policy {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+  position: relative;
+}
+
+.settings-policy-heading {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.settings-policy-heading .label { font-size: 12px; }
+
+.settings-policy-controls {
+  align-items: center;
+  display: flex;
+  flex: 0 1 auto;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-policy-controls > .select-wrap {
+  box-sizing: border-box;
+  flex: 0 1 170px;
+  height: 34px;
+  margin: 0;
+  min-width: 0;
+  width: 170px;
+}
+
+.settings-external-policy .select-wrap select {
+  box-sizing: border-box;
+  font-size: 12px;
+  height: 100%;
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.settings-policy-duration {
+  align-items: center;
+  border: 1px solid var(--divider-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 1 105px;
+  height: 34px;
+  min-width: 82px;
+  overflow: hidden;
+}
+
+.settings-policy-duration input {
+  background: var(--card-background-color);
+  border: 0;
+  border-radius: 0;
+  box-sizing: border-box;
+  box-shadow: none;
+  flex: 1 1 auto;
+  font-size: 12px;
+  height: 100%;
+  margin: 0;
+  min-width: 0;
+  outline: 0;
+  padding-inline: 8px 2px;
+  width: 100%;
+}
+
+.settings-policy-duration:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.settings-policy-duration span {
+  color: var(--secondary-text-color);
+  font-size: 11px;
+  padding-inline-end: 7px;
 }
 
 .settings-zone-identity strong,
@@ -238,60 +320,6 @@ export const settingsStyles = css`
 .settings-zone-identity span {
   color: var(--secondary-text-color);
   font-size: 12px;
-}
-
-.settings-diagnostic-dot {
-  border-radius: 50%;
-  display: inline-block;
-  height: 8px;
-  width: 8px;
-}
-
-.settings-diagnostic-dot.ok {
-  background: var(--success-color, #2e7d32);
-}
-
-.settings-diagnostic-dot.warning {
-  background: var(--warning-color, #c99500);
-}
-
-.settings-diagnostic-dot.error {
-  background: var(--error-color, #c62828);
-}
-
-.settings-zone-identity .settings-diagnostic-text {
-  white-space: normal;
-}
-
-.settings-zone-identity .settings-feature-badge {
-  align-items: center;
-  background: color-mix(in srgb, var(--primary-color) 12%, var(--card-background-color));
-  border: 1px solid color-mix(in srgb, var(--primary-color) 34%, var(--divider-color));
-  border-radius: 999px;
-  color: var(--primary-text-color);
-  display: inline-flex;
-  font-size: 11px;
-  gap: 4px;
-  justify-self: start;
-  line-height: 1;
-  margin-top: 4px;
-  max-width: 100%;
-  padding: 4px 7px;
-  white-space: nowrap;
-}
-
-.settings-feature-badge ha-icon {
-  --mdc-icon-size: 14px;
-  color: var(--primary-color);
-  flex: 0 0 auto;
-}
-
-.settings-diagnostic-text.warning {
-  color: var(--warning-color, #c99500);
-}
-
-.settings-diagnostic-text.error {
-  color: var(--error-color, #c62828);
 }
 
 .settings-entity-status.ok {
@@ -411,5 +439,23 @@ export const settingsStyles = css`
 .settings-row-actions .icon-button {
   height: 34px;
   width: 34px;
+}
+
+@media (max-width: 720px) {
+  .settings-zone-main { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (pointer: coarse) {
+  .settings-policy-controls > .select-wrap,
+  .settings-policy-duration { height: 40px; }
+}
+
+@media (max-width: 480px) {
+  .settings-zone-row { grid-template-columns: 24px minmax(0, 1fr); }
+  .settings-row-actions { grid-column: 2; justify-self: end; }
+  .settings-external-policy { align-items: stretch; flex-direction: column; gap: 4px; }
+  .settings-policy-controls { width: 100%; }
+  .settings-policy-controls > .select-wrap { flex: 1 1 160px; height: 40px; max-width: 170px; width: auto; }
+  .settings-policy-duration { flex: 0 1 105px; height: 40px; }
 }
 `;

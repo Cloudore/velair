@@ -37,6 +37,7 @@ const ROOM_ASSIST_VISIBILITY_CARD_VIEWS = new Set<VelairCardView>(["sensors"]);
 const ROOM_ASSIST_VISIBILITY_FIELDS = [
   ["show_room_assist_switch", "roomAssistShowSwitch"],
   ["show_room_assist_sensor", "roomAssistShowSensor"],
+  ["show_room_assist_deadband", "roomAssistShowDeadband"],
   ["show_room_assist_max_delta", "roomAssistShowMaxDelta"],
   ["show_room_assist_debounce", "roomAssistShowDebounce"],
   ["show_room_assist_live_status", "roomAssistShowLiveStatus"],
@@ -487,6 +488,7 @@ export class VelairCardEditor extends LitElement {
       "sensors": "cardViewSensors",
       "comfort": "cardViewComfort",
       "preconditioning": "cardViewPreconditioning",
+      "diagnostics": "diagnostics",
       "settings": "settings",
     };
     return this._t(labels[view]);

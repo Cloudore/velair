@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import UTC, datetime
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -38,9 +39,12 @@ from .const import (
     ATTR_TEMPERATURE,
     ATTR_WEEKDAY,
     CONF_APPLY_ACTIVE_SCHEDULE_ON_STARTUP,
+    DIAGNOSTIC_HISTORY_CATEGORIES,
     DOMAIN,
     HVAC_MODE_OPTIONS,
     SIGNAL_SCHEDULER_UPDATED,
+    SIGNAL_DIAGNOSTICS_UPDATED,
+    EXTERNAL_CHANGE_POLICY_OPTIONS,
 )
 from .config_helpers import (
     get_configured_climate_entities,
@@ -53,10 +57,12 @@ from .models import (
     DEFAULT_MIN_TEMPERATURE,
     DEFAULT_PRECONDITIONING_FALLBACK_MINUTES_PER_DEGREE,
     DEFAULT_PRECONDITIONING_MINIMUM_DELTA,
+    DEFAULT_ROOM_SENSOR_ASSIST_DEADBAND,
     DEFAULT_ROOM_SENSOR_ASSIST_MAX_DELTA,
     WEEKDAYS,
     ClimateEvent,
     MIN_PRECONDITIONING_COMPLETE_SAMPLES,
+    is_room_sensor_assist_deadband_step_aligned,
     normalize_comfort_data,
     normalize_panel_settings,
     normalize_preconditioning_data,
@@ -84,7 +90,7 @@ from .temperature_migration import (
 
 API_REGISTERED = f"{DOMAIN}_websocket_api_registered"
 EXPORT_FORMAT = "velair_portable_data"
-EXPORT_MODEL_VERSION = 6
+EXPORT_MODEL_VERSION = 8
 EXPORT_SECTIONS = (
     "zones",
     "templates",
@@ -105,6 +111,25 @@ try:
     )
 except (OSError, KeyError, TypeError, json.JSONDecodeError):
     pass
+
+
+def _finite_float(value: Any) -> float:
+    """Coerce a finite numeric API value."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as err:
+        raise vol.Invalid("expected a finite number") from err
+    if not math.isfinite(number):
+        raise vol.Invalid("expected a finite number")
+    return number
+
+
+def _room_sensor_assist_deadband(value: Any) -> float:
+    """Validate the public deadband precision."""
+    number = _finite_float(value)
+    if not is_room_sensor_assist_deadband_step_aligned(number):
+        raise vol.Invalid("expected 0.1 degree increments")
+    return number
 
 SCHEDULE_BLOCK_SCHEMA = vol.Schema(
     {
@@ -166,6 +191,10 @@ PRECONDITIONING_SCHEMA = vol.Schema(
         vol.Optional("outdoor_temperature_entity_id"): vol.Any(None, cv.entity_id),
         vol.Optional("room_temperature_entity_id"): vol.Any(None, cv.entity_id),
         vol.Optional("room_sensor_assist_enabled"): bool,
+        vol.Optional("room_sensor_assist_deadband"): vol.All(
+            _room_sensor_assist_deadband,
+            vol.Range(min=0, max=9.0),
+        ),
         vol.Optional("room_sensor_assist_max_delta"): vol.All(
             vol.Coerce(float),
             vol.Range(min=0.1, max=18.0),
@@ -222,6 +251,11 @@ def async_setup_api(hass: HomeAssistant) -> None:
         return
 
     websocket_api.async_register_command(hass, ws_get_schedule)
+    websocket_api.async_register_command(hass, ws_get_diagnostics)
+    websocket_api.async_register_command(hass, ws_export_diagnostics)
+    websocket_api.async_register_command(hass, ws_subscribe_diagnostics)
+    websocket_api.async_register_command(hass, ws_update_diagnostics_history)
+    websocket_api.async_register_command(hass, ws_clear_diagnostics_history)
     websocket_api.async_register_command(hass, ws_resolve_temperature_migration)
     websocket_api.async_register_command(hass, ws_set_daily_schedule)
     websocket_api.async_register_command(hass, ws_copy_day_schedule)
@@ -235,6 +269,9 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_delete_mode)
     websocket_api.async_register_command(hass, ws_select_mode)
     websocket_api.async_register_command(hass, ws_update_settings)
+    websocket_api.async_register_command(hass, ws_update_external_change_policy)
+    websocket_api.async_register_command(hass, ws_enter_manual_adjustment)
+    websocket_api.async_register_command(hass, ws_resume_automatic_control)
     websocket_api.async_register_command(hass, ws_update_zone_preconditioning)
     websocket_api.async_register_command(hass, ws_update_zone_comfort)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
@@ -264,6 +301,136 @@ def ws_get_schedule(
         return
 
     connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/get_diagnostics",
+    }
+)
+@callback
+def ws_get_diagnostics(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Return the runtime-only, read-only diagnostics snapshot."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    connection.send_result(msg["id"], runtime["diagnostics"].snapshot(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/export_diagnostics",
+        vol.Optional("redact_entity_ids", default=True): bool,
+    }
+)
+@callback
+def ws_export_diagnostics(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Return an entity-redacted report suitable for issue attachments."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    connection.send_result(
+        msg["id"],
+        runtime["diagnostics"].export_snapshot(
+            runtime,
+            redact_entity_ids=msg.get("redact_entity_ids", True),
+        ),
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/update_diagnostics_history",
+        vol.Required("enabled_categories"): vol.All(
+            cv.ensure_list,
+            [vol.In(DIAGNOSTIC_HISTORY_CATEGORIES)],
+        ),
+    }
+)
+@websocket_api.async_response
+async def ws_update_diagnostics_history(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Persist which runtime event categories Diagnostics retains."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    await runtime["diagnostics"].async_update_history_categories(
+        msg["enabled_categories"]
+    )
+    connection.send_result(msg["id"], runtime["diagnostics"].snapshot(runtime))
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/clear_diagnostics_history"}
+)
+@callback
+def ws_clear_diagnostics_history(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Clear retained runtime history while keeping current health evidence."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    runtime["diagnostics"].async_clear_history()
+    connection.send_result(msg["id"], runtime["diagnostics"].snapshot(runtime))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/subscribe_diagnostics"})
+@callback
+def ws_subscribe_diagnostics(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Subscribe only to lightweight diagnostics updates."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+
+    @callback
+    def _send_update(*, cached: bool = True) -> None:
+        current_runtime = _get_runtime(hass)
+        if current_runtime is None:
+            connection.send_message(websocket_api.event_message(msg["id"], {"loaded": False}))
+            return
+        diagnostics = (
+            current_runtime["diagnostics"].cached_snapshot(current_runtime)
+            if cached
+            else current_runtime["diagnostics"].snapshot(current_runtime)
+        )
+        connection.send_message(
+            websocket_api.event_message(
+                msg["id"],
+                {
+                    "loaded": True,
+                    "diagnostics": diagnostics,
+                },
+            )
+        )
+
+    connection.subscriptions[msg["id"]] = async_dispatcher_connect(
+        hass, SIGNAL_DIAGNOSTICS_UPDATED, _send_update
+    )
+    connection.send_result(msg["id"])
+    _send_update(cached=False)
 
 
 @websocket_api.websocket_command(
@@ -704,6 +871,97 @@ async def ws_update_settings(
         connection.send_error(msg["id"], "invalid_settings", str(err))
         return
 
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/update_external_change_policy",
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required("policy"): vol.In(EXTERNAL_CHANGE_POLICY_OPTIONS),
+        vol.Optional("duration_minutes"): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=10080)
+        ),
+    }
+)
+@websocket_api.async_response
+async def ws_update_external_change_policy(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Persist one zone's response to external climate changes."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
+        policy = {"action": msg["policy"]}
+        if "duration_minutes" in msg:
+            policy["duration_minutes"] = msg["duration_minutes"]
+        await runtime["scheduler"].async_update_external_change_policy(
+            msg[ATTR_ENTITY_ID], policy
+        )
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_external_change_policy", str(err))
+        return
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+ENTER_MANUAL_ADJUSTMENT_WS_SCHEMA = {
+    vol.Required("type"): f"{DOMAIN}/enter_manual_adjustment",
+    vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+}
+
+
+@websocket_api.websocket_command(ENTER_MANUAL_ADJUSTMENT_WS_SCHEMA)
+@websocket_api.async_response
+async def ws_enter_manual_adjustment(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Hold the live state of one managed climate."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
+        await runtime["scheduler"].async_enter_manual_adjustment(msg[ATTR_ENTITY_ID])
+    except ValueError as err:
+        connection.send_error(msg["id"], "manual_adjustment_not_allowed", str(err))
+        return
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/resume_automatic_control",
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+    }
+)
+@websocket_api.async_response
+async def ws_resume_automatic_control(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Resume automatic control for one managed zone."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
+        await runtime["scheduler"].async_resume_automatic_control(msg[ATTR_ENTITY_ID])
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_entity", str(err))
+        return
     connection.send_result(msg["id"], _build_schedule_response(runtime))
 
 
@@ -1217,6 +1475,9 @@ def _mark_operation_recovery(
     blocker = getattr(runtime["scheduler"], "set_temperature_migration_blocked", None)
     if blocker is not None:
         blocker(True)
+    diagnostics = runtime.get("diagnostics")
+    if diagnostics is not None:
+        diagnostics.async_runtime_changed()
 
 
 def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
@@ -1379,7 +1640,9 @@ def _build_import_data(
             },
         )
     if "zones" in sections:
-        _validate_portable_zone_schedules(selected_payload["zones"], current_zones)
+        _validate_portable_zone_schedules(
+            selected_payload["zones"], current_zones, payload_unit
+        )
     if "templates" in sections:
         _validate_portable_templates(selected_payload["templates"])
     _hydrate_portable_temperature_defaults(selected_payload, payload_unit)
@@ -1479,6 +1742,26 @@ def _hydrate_portable_temperature_defaults(
             )
         preconditioning = zone.setdefault("preconditioning", {})
         if isinstance(preconditioning, dict):
+            if "room_sensor_assist_deadband" not in preconditioning:
+                legacy_deadband = preconditioning.get(
+                    "minimum_delta_temperature"
+                )
+                try:
+                    legacy_deadband = float(legacy_deadband)
+                except (TypeError, ValueError):
+                    legacy_deadband = None
+                maximum = 9.0 if source_unit == FAHRENHEIT else 5.0
+                if (
+                    legacy_deadband is None
+                    or not math.isfinite(legacy_deadband)
+                    or not 0 <= legacy_deadband <= maximum
+                ):
+                    legacy_deadband = (
+                        1.0
+                        if source_unit == FAHRENHEIT
+                        else DEFAULT_ROOM_SENSOR_ASSIST_DEADBAND
+                    )
+                preconditioning["room_sensor_assist_deadband"] = legacy_deadband
             preconditioning.setdefault(
                 "minimum_delta_temperature",
                 temperature_delta(
@@ -1531,6 +1814,9 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
             "schedule": deepcopy(zone.get("schedule", {})),
             "preconditioning": deepcopy(zone.get("preconditioning", {})),
             "comfort": deepcopy(zone.get("comfort", {})),
+            "external_change_policy": deepcopy(
+                zone.get("external_change_policy", {})
+            ),
         }
         for entity_id, zone in zones.items()
     }
@@ -1803,6 +2089,7 @@ def _normalize_import_zones(
 def _validate_portable_zone_schedules(
     raw_zones: Any,
     current_zones: dict[str, Any],
+    temperature_unit: str,
 ) -> None:
     """Reject malformed imported schedules instead of silently dropping blocks."""
     if not isinstance(raw_zones, dict):
@@ -1811,6 +2098,27 @@ def _validate_portable_zone_schedules(
         zone = raw_zones[entity_id]
         if not isinstance(zone, dict):
             raise ValueError(f"Schedule for {entity_id} is not valid")
+        preconditioning = zone.get("preconditioning")
+        if preconditioning is not None and not isinstance(preconditioning, dict):
+            raise ValueError(f"Preconditioning for {entity_id} is not valid")
+        if (
+            isinstance(preconditioning, dict)
+            and "room_sensor_assist_deadband" in preconditioning
+        ):
+            try:
+                deadband = float(preconditioning["room_sensor_assist_deadband"])
+            except (TypeError, ValueError) as err:
+                raise ValueError(
+                    f"Room Assist deadband for {entity_id} is not valid"
+                ) from err
+            maximum = 9.0 if temperature_unit == FAHRENHEIT else 5.0
+            if (
+                not math.isfinite(deadband)
+                or not 0 <= deadband <= maximum
+            ):
+                raise ValueError(
+                    f"Room Assist deadband for {entity_id} must be between 0 and {maximum:g}"
+                )
         raw_schedule = zone.get("schedule", {})
         if not isinstance(raw_schedule, dict):
             raise ValueError(f"Schedule for {entity_id} is not valid")

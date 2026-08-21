@@ -4,7 +4,7 @@ import type { ScheduleResponse, ScheduleZone, VelairCardView } from "../types";
 import type { ActiveSetupControls } from "../types";
 import { VELAIR_LOADING_ICON_URL } from "../constants";
 import { incompatibleScheduleTargetCount } from "../domain/schedule-compatibility";
-import { renderNotice } from "./notice-view";
+import { renderNoticeStack } from "./notice-view";
 import { operationStatusIsVisible, renderOperationStatus } from "./operation-status-view";
 import { renderComfortView, type ComfortViewOptions } from "./comfort-view";
 import {
@@ -18,6 +18,7 @@ import { renderPreconditioningView } from "./preconditioning-view";
 import { renderSchedulesView } from "./schedule-view";
 import { renderSensorsView, type RoomSensorViewOptions } from "./sensors-view";
 import { renderSettingsView } from "./settings-view";
+import { renderDiagnosticsView } from "./diagnostics-view";
 import { renderTemplatesView } from "./templates-view";
 import "../components/profiles-view-element";
 
@@ -58,8 +59,10 @@ export function renderCardContent(host: CardContentHost) {
           )
           ? renderOperationStatus(host, host._data.operation_status)
           : nothing}
-        ${host._error ? renderNotice(host, "error", host._error) : nothing}
-        ${host._saveMessage ? renderNotice(host, "success", host._saveMessage) : nothing}
+        ${renderNoticeStack(host, host._noticeStackEntries?.() ?? [
+          ...(host._saveMessage ? [{ id: "success", type: "success" as const, message: host._saveMessage }] : []),
+          ...(host._error ? [{ id: "error", type: "error" as const, message: host._error }] : []),
+        ])}
         ${host._showInitialLoading && host._loading && !host._data
           ? html`
               <div class="initial-loading" role="status" aria-live="polite">
@@ -129,7 +132,7 @@ function renderViewContent(
   selectedEntity?: string,
   selectedZone?: ScheduleZone,
 ) {
-  if (host._data?.temperature_migration?.required && view !== "settings") {
+  if (host._data?.temperature_migration?.required && view !== "settings" && view !== "diagnostics") {
     return html`<div class="notice">${host._t(
       host._data.temperature_migration.reason === "legacy_celsius_upgrade_reset_required"
         ? "temperatureLegacyResetStopped"
@@ -153,6 +156,7 @@ function renderViewContent(
       .hass=${host.hass}
       .data=${host._data}
       @profile-data-changed=${(event: CustomEvent<ScheduleResponse>) => host._applyScheduleData(event.detail, { forceDraft: false })}
+      @profile-error=${(event: CustomEvent<string | null>) => host._showError(event.detail ?? undefined)}
       @profile-success=${(event: CustomEvent<string>) => host._showSuccess(event.detail)}
     ></velair-profiles-view>`;
   }
@@ -201,6 +205,10 @@ function renderViewContent(
     return renderPreconditioningView(host, visibleZoneIds);
   }
 
+  if (view === "diagnostics") {
+    return renderDiagnosticsView(host);
+  }
+
   if (view === "settings") {
     return renderSettingsView(host, visibleZoneIds);
   }
@@ -215,6 +223,7 @@ function renderCompactActiveSetup(host: CardContentHost) {
     .hass=${host.hass}
     .data=${host._data}
     @profile-data-changed=${(event: CustomEvent<ScheduleResponse>) => host._applyScheduleData(event.detail, { forceDraft: false })}
+    @profile-error=${(event: CustomEvent<string | null>) => host._showError(event.detail ?? undefined)}
     @profile-success=${(event: CustomEvent<string>) => host._showSuccess(event.detail)}
   ></velair-profiles-view>`;
 }
@@ -235,6 +244,7 @@ function comfortViewOptions(host: CardContentHost): ComfortViewOptions {
 function roomSensorViewOptions(host: CardContentHost): RoomSensorViewOptions {
   return {
     showAssistSwitch: host._config.show_room_assist_switch !== false,
+    showDeadband: host._config.show_room_assist_deadband !== false,
     showDebounce: host._config.show_room_assist_debounce !== false,
     showLiveStatus: host._config.show_room_assist_live_status !== false,
     showMaxDelta: host._config.show_room_assist_max_delta !== false,

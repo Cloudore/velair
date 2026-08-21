@@ -5,6 +5,7 @@ import type { SupportedLanguage, TranslationKey } from "./translations";
 import type {
   BlockDraftSource,
   ComfortSettings,
+  DiagnosticsSnapshot,
   DraftScheduleBlock,
   EntityDiagnostic,
   HomeAssistant,
@@ -12,6 +13,7 @@ import type {
   PanelSettings,
   PortableSection,
   PreconditioningSettings,
+  ExternalChangePolicy,
   ScheduleBlock,
   ScheduleEvent,
   ScheduleResponse,
@@ -20,6 +22,8 @@ import type {
   VelairCardView,
   VelairPortablePayload,
 } from "./types";
+import type { DiagnosticHistoryFilters } from "./domain/diagnostics-history";
+import type { DiagnosticsLogColumns } from "./domain/diagnostics-log-layout";
 
 export type PortableSummaryViewItem = {
   label: string;
@@ -38,6 +42,7 @@ export type VelairViewHost = {
   _changedNextEventIds: Set<string>;
   _config: VelairCardConfig;
   _controlAction?: "pause" | "resume";
+  _manualControlActions: Record<string, "enter" | "resume">;
   _copying: boolean;
   _copyTargets: Set<string>;
   _data?: ScheduleResponse;
@@ -72,6 +77,16 @@ export type VelairViewHost = {
   _selectedTemplateKey: string;
   _selectedWeekday: string;
   _settingsSaving: boolean;
+  _selectedDiagnosticEntity?: string;
+  _diagnosticsHistorySaving: boolean;
+  _diagnosticsHistoryFilters: DiagnosticHistoryFilters;
+  _diagnosticsSourceFilterOpen: boolean;
+  _diagnosticsSourcePlacement: "up" | "down";
+  _diagnosticsSourceMaxHeight?: number;
+  _diagnosticsLogColumns: DiagnosticsLogColumns;
+  _diagnosticsLogAvailableWidth: number;
+  _diagnosticsExportOpen: boolean;
+  _diagnosticsRedactEntityIds: boolean;
   _temperatureMigrationAction?: "°C" | "°F";
   _templateAction?: "save" | "delete";
   _templateApplyOpen: boolean;
@@ -89,6 +104,8 @@ export type VelairViewHost = {
   _api(): VelairApiClient | undefined;
   _applySelectedDayToZones(): Promise<void>;
   _applyScheduleData(data: ScheduleResponse, options?: { forceDraft?: boolean }): void;
+  _applyDiagnosticsSnapshot(diagnostics?: DiagnosticsSnapshot): void;
+  _setDiagnosticsSourceFilterOpen(open: boolean, returnFocus?: boolean): void;
   _applyTemplateToTargets(template: ScheduleTemplate): Promise<void>;
   _canResumeScheduler(): boolean;
   _clearOverviewTimelineDetail(): void;
@@ -101,6 +118,7 @@ export type VelairViewHost = {
   _deleteSelectedTemplate(): Promise<void>;
   _dismissNotice(type: "error" | "success"): void;
   _dismissOperationStatus(): void;
+  _showError(message?: string | null): void;
   _showSuccess(message: string): void;
   _effectiveView(): VelairCardView;
   _entityDiagnostic(entityId: string): EntityDiagnostic;
@@ -144,6 +162,12 @@ export type VelairViewHost = {
   _initialScheduleWeekday(firstWeekday: string): string;
   _language(): SupportedLanguage;
   _modeLabel(mode: string): string;
+  _noticeStackEntries?(): readonly {
+    id: string;
+    type: "error" | "success";
+    message: string;
+    phase?: "entering" | "active" | "leaving";
+  }[];
   _moveSettingsZone(entityId: string, direction: -1 | 1): void;
   _orderedWeekdays(): string[];
   _orderedZoneIds(entityIds: string[]): string[];
@@ -165,6 +189,9 @@ export type VelairViewHost = {
   _saveSelectedDay(): Promise<void>;
   _saveSelectedTemplateFromLibrary(template: ScheduleTemplate): Promise<void>;
   _saveSettings(settings: Partial<PanelSettings>): Promise<void>;
+  _saveExternalChangePolicy(entityId: string, policy: ExternalChangePolicy): Promise<void>;
+  _resumeAutomaticControl(entityId: string): Promise<void>;
+  _enterManualAdjustment(entityId: string): Promise<void>;
   _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;
   _saveZonePreconditioning(entityId: string, preconditioning: Partial<PreconditioningSettings>): Promise<void>;
   _saveTemplate(saveAsNew: boolean): Promise<void>;

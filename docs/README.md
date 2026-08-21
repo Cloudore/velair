@@ -6,6 +6,7 @@ Velair documentation is grouped by audience and topic.
 
 - [Installation](user/installation.md): install Velair through HACS or manually.
 - [Usage](user/usage.md): configure climates, schedules, templates, profiles, boosts, pauses, import/export, and services.
+- [External changes and Manual adjustment](user/manual-control.md): choose whether Velair keeps automatic authority or yields to HA-card, remote, device, and automation changes.
 - [Climate Profiles](user/climate-profiles.md): coordinate alternate schedules and expose configurable Modes to Home Assistant automations.
 - [Automation Events](user/automation-events.md): use complete runtime event payloads in Home Assistant automations.
 - [Automation Blueprints](user/blueprints.md): import optional occupancy and open-window helpers without polling.
@@ -15,6 +16,7 @@ Velair documentation is grouped by audience and topic.
 - [Environmental Comfort](user/comfort.md): understand temperature, humidity, CO2 air quality, and reading freshness through local room assessments.
 - [Temperature Units and Migration](user/temperature-units.md): understand Celsius/Fahrenheit defaults, upgrades, migration, import/export, and recovery.
 - [Troubleshooting](user/troubleshooting.md): common setup, frontend resource, and runtime issues.
+- [Diagnostics](user/diagnostics.md): local runtime health, bounded history, and redacted issue reports.
 
 ## Developer Documentation
 

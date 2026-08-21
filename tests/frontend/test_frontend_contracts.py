@@ -207,6 +207,7 @@ def _loaded_velair_integration(frontend_module):
         "custom_components.velair.climate_manager",
         "custom_components.velair.config_helpers",
         "custom_components.velair.entity_registry",
+        "custom_components.velair.runtime_diagnostics",
         "custom_components.velair.scheduler",
         "custom_components.velair.services",
         "custom_components.velair.storage",
@@ -272,6 +273,10 @@ def _loaded_velair_integration(frontend_module):
     install_module(
         "custom_components.velair.entity_registry",
         cleanup_entity_registry=lambda *_args: None,
+    )
+    install_module(
+        "custom_components.velair.runtime_diagnostics",
+        RuntimeDiagnosticsManager=RuntimePlaceholder,
     )
     install_module(
         "custom_components.velair.scheduler",
@@ -529,7 +534,7 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn('from "./velair/views/panel"', source)
         self.assertIn("export type ScheduleResponse", types_source)
         self.assertIn(
-            "export const cardStyles = [baseStyles, comfortStyles, loadingStyles, noticeStyles, operationStatusStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`",
+            "export const cardStyles = [baseStyles, comfortStyles, diagnosticsStyles, inlineHelpStyles, loadingStyles, noticeStyles, operationStatusStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`",
             styles_source,
         )
         self.assertIn("`, responsiveStyles];", styles_source)
@@ -543,8 +548,11 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn("export const noticeStyles = css`", notice_styles_source)
         self.assertIn("export const NOTICE_AUTO_DISMISS_MS = 5_000", constants_source)
         self.assertIn("position: fixed", notice_styles_source)
-        self.assertIn("bottom: 16px", notice_styles_source)
-        self.assertIn("@keyframes velair-notice-in", notice_styles_source)
+        self.assertIn("bottom: max(16px, env(safe-area-inset-bottom))", notice_styles_source)
+        self.assertIn(".notice-row.entering", notice_styles_source)
+        self.assertIn(".notice-row.leaving", notice_styles_source)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", notice_styles_source)
+        self.assertNotIn("@keyframes velair-notice-in", notice_styles_source)
         self.assertIn("transition: width 500ms linear", notice_styles_source)
         self.assertIn("export const overviewStyles = css`", overview_styles_source)
         self.assertIn("export const portabilityStyles = css`", portability_styles_source)
@@ -641,7 +649,9 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn('view === "sensors"', content_source)
         self.assertIn("renderSensorsView(host, visibleZoneIds, roomSensorViewOptions(host))", content_source)
         self.assertIn("show_room_assist_live_status", content_source)
+        self.assertIn("show_room_assist_deadband", content_source)
         self.assertIn("room_sensor_assist_enabled", sensors_source)
+        self.assertIn("room_sensor_assist_deadband", sensors_source)
         self.assertIn("room_temperature_entity_id", sensors_source)
         self.assertNotIn("room_sensor_assist_enabled", preconditioning_source)
         self.assertNotIn("room_temperature_entity_id", preconditioning_source)
@@ -850,6 +860,8 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertNotIn("timeFromBoostEnd(pauseBlock.startMinute)", source)
         self.assertNotIn("timeFromBoostEnd(pauseBlock.endMinute)", source)
         self.assertIn("mdi:lightning-bolt", source)
+        self.assertIn('icon="mdi:calendar-clock" aria-hidden="true"', source)
+        self.assertIn('icon="mdi:hand-back-right-outline" aria-hidden="true"', source)
         self.assertIn('icon="mdi:pause-circle"', source)
         self.assertIn('icon="mdi:pause"', source)
         self.assertIn("overview-timeline-tap-detail", source)
@@ -953,8 +965,17 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn("z-index: 4", overview_styles_source)
         self.assertIn("linear-gradient(\n      110deg", overview_styles_source)
         self.assertIn("animation-delay: -2.4s", overview_styles_source)
-        self.assertIn("transform: translateX(-130%)", overview_styles_source)
-        self.assertIn("transform: translateX(260%)", overview_styles_source)
+        boost_keyframes = overview_styles_source.split(
+            "@keyframes velair-overview-boost-bars", 1
+        )[1].split("@media (prefers-reduced-motion: reduce)", 1)[0]
+        self.assertIn("background-position: -72% 0", boost_keyframes)
+        self.assertIn("background-position: 172% 0", boost_keyframes)
+        self.assertNotIn("transform:", boost_keyframes)
+        self.assertIn("background-size: 42% 100%", overview_styles_source)
+        self.assertIn("background-repeat: no-repeat", overview_styles_source)
+        self.assertIn("border-radius: inherit", overview_styles_source)
+        self.assertIn("inset: 0", overview_styles_source)
+        self.assertIn("width: auto", overview_styles_source)
         self.assertIn("opacity: 0", overview_styles_source)
         self.assertIn("opacity: 1", overview_styles_source)
         self.assertIn("isolation: isolate", overview_styles_source)
@@ -1287,17 +1308,13 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn('type: "velair/reset_data"', api_source)
         self.assertIn("confirmReset", source)
         self.assertIn("resetVelairDescription", source)
-        self.assertIn("settings-capability-section", source)
-        self.assertIn("settings-capability-row", source)
-        self.assertIn(".settings-capability-row {\n      align-items: start;", responsive_styles_source)
-        self.assertIn("grid-template-columns: minmax(104px, 0.8fr) minmax(0, 1fr)", responsive_styles_source)
+        self.assertNotIn("settings-capability-section", source)
         self.assertIn(".settings-zone-row > .settings-drag-handle", responsive_styles_source)
         self.assertIn('class="settings-drag-handle"', source)
         self.assertNotIn('class="settings-zone-row"\n      draggable="true"', source)
         self.assertIn("flex-direction: column", responsive_styles_source)
         self.assertNotIn('class="settings-entity-status warning"', source)
-        self.assertIn("settings-mode-tags", source)
-        self.assertIn("mode-chip", source)
+        self.assertNotIn("settings-mode-tags", source)
         self.assertIn("export function renderSettingsZoneOrderRow", source)
         self.assertIn("private async _updateSettingsFirstWeekday", source)
         self.assertIn('class="select-wrap"', source)

@@ -1,9 +1,14 @@
 import { html, nothing } from "lit";
 import { VELAIR_FRONTEND_BUILD, VELAIR_RELEASE_VERSION } from "../build-info";
-import { PORTABLE_MODEL_VERSION, PORTABLE_SECTIONS, WEEKDAYS } from "../constants";
-import { modeClassName } from "../domain/climate";
+import {
+  DEFAULT_EXTERNAL_CHANGE_DURATION_MINUTES,
+  PORTABLE_MODEL_VERSION,
+  PORTABLE_SECTIONS,
+  WEEKDAYS,
+} from "../constants";
 import { unmatchedPreconditioningLearningEntities } from "../domain/portable";
 import type { VelairViewHost } from "../host-types";
+import { renderInlineHelp } from "./inline-help";
 import type { PortableSection } from "../types";
 
 type SettingsViewHost = VelairViewHost;
@@ -350,19 +355,6 @@ export function renderSettingsZoneOrderRow(
   index: number,
   total: number,
 ) {
-  const exists = host._entityExists(entityId);
-  const [minTemperature, maxTemperature] = host._entityTemperatureLimits(entityId);
-  const temperatureStep = host._entityTemperatureStep(entityId);
-  const modes = host._climateSupportedModes(entityId);
-  const providedData = host._climateProvidedData(entityId);
-  const diagnostic = host._entityDiagnostic(entityId);
-  const preconditioning = host._data?.zones[entityId]?.preconditioning;
-  const preconditioningEnabled = Boolean(preconditioning?.enabled);
-  const roomSensorAssistEnabled = Boolean(
-    preconditioning?.room_sensor_assist_enabled
-      && preconditioning?.room_temperature_entity_id,
-  );
-
   return html`
     <div
       class="settings-zone-row"
@@ -384,96 +376,11 @@ export function renderSettingsZoneOrderRow(
       <div class="settings-zone-main">
         <div class="settings-zone-identity">
           <div class="settings-zone-title">
-            <span
-              class=${`settings-diagnostic-dot ${diagnostic.status}`}
-              title=${diagnostic.tooltip}
-              aria-label=${diagnostic.tooltip}
-            ></span>
             <strong title=${host._friendlyEntityName(entityId)}>${host._friendlyEntityName(entityId)}</strong>
           </div>
           <span>${entityId}</span>
-          ${preconditioningEnabled
-            ? html`
-                <span
-                  class="settings-feature-badge preconditioning"
-                  title=${host._t("preconditioningEnabled")}
-                  aria-label=${host._t("preconditioningEnabled")}
-                >
-                  <ha-icon icon="mdi:clock-fast"></ha-icon>
-                  ${host._t("preconditioning")}
-                </span>
-              `
-            : nothing}
-          ${roomSensorAssistEnabled
-            ? html`
-                <span
-                  class="settings-feature-badge room-assist"
-                  title=${host._t("roomSensorAssistEnabled")}
-                  aria-label=${host._t("roomSensorAssistEnabled")}
-                >
-                  <ha-icon icon="mdi:home-thermometer-outline"></ha-icon>
-                  ${host._t("roomSensorAssistBadge")}
-                </span>
-              `
-            : nothing}
-          ${diagnostic.status === "ok"
-            ? nothing
-            : html`<span class=${`settings-diagnostic-text ${diagnostic.status}`}>${diagnostic.messages.join(" \u00b7 ")}</span>`}
         </div>
-        ${exists
-          ? html`
-              <div class="settings-capability-section settings-capability-row">
-                <span class="label">${host._t("availableModes")}</span>
-                <div class="settings-mode-tags">
-                  ${modes.length
-                    ? modes.map(
-                        (mode: string) => html`
-                          <span class=${`mode-chip mode-${modeClassName(mode)}`}>
-                            ${host._modeLabel(mode)}
-                          </span>
-                        `,
-                      )
-                    : html`<span class="empty">${host._t("keep")}</span>`}
-                </div>
-              </div>
-              <div class="settings-capability-composite">
-                <div class="settings-capability-section settings-capability-row">
-                  <span class="label">${host._t("temperatureRange")}</span>
-                  <div class="settings-facts">
-                    <span title=${host._t("temperatureRange")}>
-                      <ha-icon icon="mdi:thermometer-lines"></ha-icon>
-                      ${host._formatTemperatureLimit(minTemperature)}-${host._formatTemperatureLimit(maxTemperature)}
-                      ${host._temperatureUnit(entityId)}
-                    </span>
-                    <span
-                      class=${temperatureStep === undefined ? "capability-not-reported" : ""}
-                      title=${temperatureStep === undefined
-                        ? host._t("temperatureStepNotReportedDescription")
-                        : host._t("temperatureStep")}
-                    >
-                      <ha-icon icon="mdi:delta"></ha-icon>
-                      ${host._t("temperatureStep")}: ${temperatureStep === undefined
-                        ? host._t("temperatureStepNotReported")
-                        : host._formatTemperatureLimit(temperatureStep)}
-                    </span>
-                  </div>
-                </div>
-                <div class="settings-capability-section settings-capability-row">
-                  <span class="label">${host._t("providedData")}</span>
-                  <div class="settings-data-icons">
-                    ${providedData.map(
-                      (item: { icon: string; label: string }) => html`
-                        <span title=${item.label} aria-label=${item.label}>
-                          <ha-icon icon=${item.icon}></ha-icon>
-                        </span>
-                      `,
-                    )}
-                  </div>
-                  ${providedData.length ? nothing : html`<span class="empty">${host._t("noUpcomingEvent")}</span>`}
-                </div>
-              </div>
-            `
-          : nothing}
+        ${renderSettingsExternalChangePolicy(host, entityId)}
       </div>
       <div class="settings-row-actions">
         <button
@@ -494,6 +401,70 @@ export function renderSettingsZoneOrderRow(
         >
           <ha-icon icon="mdi:chevron-down"></ha-icon>
         </button>
+      </div>
+    </div>
+  `;
+}
+
+export function renderSettingsExternalChangePolicy(host: SettingsViewHost, entityId: string) {
+  const policy = host._data?.zones[entityId]?.external_change_policy ?? {
+    action: "keep_automatic" as const,
+    duration_minutes: DEFAULT_EXTERNAL_CHANGE_DURATION_MINUTES,
+  };
+  const key = entityId.replace(/[^a-z0-9_-]/gi, "-");
+  const labelId = `external-adjustment-label-${key}`;
+  const helpId = `external-adjustment-info-${key}`;
+  return html`
+    <div class="settings-external-policy">
+      <div class="settings-policy-heading">
+        <span class="label" id=${labelId}>${host._t("externalChangePolicy")}</span>
+        ${renderInlineHelp(
+          helpId,
+          host._t("externalAdjustmentInfoAction"),
+          host._t("externalChangePolicyDescription"),
+        )}
+      </div>
+      <div class="settings-policy-controls">
+        <span class="select-wrap">
+          <select
+            aria-labelledby=${labelId}
+            .value=${policy.action}
+            ?disabled=${host._settingsSaving}
+            @change=${(event: Event) => host._saveExternalChangePolicy(entityId, {
+              ...policy,
+              action: (event.target as HTMLSelectElement).value as typeof policy.action,
+            })}
+          >
+            <option value="keep_automatic">${host._t("externalChangeKeepAutomatic")}</option>
+            <option value="until_next_block">${host._t("externalChangeUntilNextBlock")}</option>
+            <option value="for_duration">${host._t("externalChangeForDuration")}</option>
+            <option value="until_resumed">${host._t("externalChangeUntilResumed")}</option>
+          </select>
+        </span>
+        ${policy.action === "for_duration" ? html`
+          <label class="settings-policy-duration">
+            <input
+              type="number"
+              min="1"
+              max="10080"
+              aria-label=${host._t("durationMinutes")}
+              .value=${String(policy.duration_minutes ?? DEFAULT_EXTERNAL_CHANGE_DURATION_MINUTES)}
+              ?disabled=${host._settingsSaving}
+              @change=${(event: Event) => host._saveExternalChangePolicy(entityId, {
+                ...policy,
+                duration_minutes: Math.max(
+                  1,
+                  Math.min(
+                    10080,
+                    Number((event.target as HTMLInputElement).value)
+                      || DEFAULT_EXTERNAL_CHANGE_DURATION_MINUTES,
+                  ),
+                ),
+              })}
+            />
+            <span>${host._t("minutesShort")}</span>
+          </label>
+        ` : nothing}
       </div>
     </div>
   `;

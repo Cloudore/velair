@@ -250,18 +250,6 @@ export const responsiveStyles = css`
       grid-column: 1 / -1;
     }
 
-    .preconditioning-help {
-      position: static;
-    }
-
-    .preconditioning-help-tooltip {
-      left: 0;
-      max-width: none;
-      right: 0;
-      top: calc(100% - 2px);
-      transform: none;
-      width: auto;
-    }
   }
 
   @media (max-width: 600px) {
@@ -278,6 +266,7 @@ export const responsiveStyles = css`
       padding: 0;
     }
 
+    .diagnostics-export-section,
     .portability-export-card {
       display: none;
     }
@@ -335,18 +324,6 @@ export const responsiveStyles = css`
       grid-column: 1 / -1;
     }
 
-    .preconditioning-help {
-      position: static;
-    }
-
-    .preconditioning-help-tooltip {
-      left: 0;
-      max-width: none;
-      right: 0;
-      top: calc(100% - 2px);
-      transform: none;
-      width: auto;
-    }
 
     .settings-reset-icon {
       display: none;
@@ -564,6 +541,11 @@ export const responsiveStyles = css`
 
     .command-button {
       width: 100%;
+    }
+
+    .diagnostics-clear-filters {
+      flex: 0 0 auto;
+      width: auto;
     }
 
     .editable-block .icon-button {
