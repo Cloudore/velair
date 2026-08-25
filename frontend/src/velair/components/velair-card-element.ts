@@ -1329,6 +1329,21 @@ export class VelairCard extends LitElement {
     }
   }
 
+  private async _setZoneExecution(entityId: string, provider?: string): Promise<void> {
+    const api = this._api();
+    if (!api || this._settingsSaving) return;
+    this._settingsSaving = true;
+    this._error = undefined;
+    try {
+      this._applyScheduleData(await api.setZoneExecution(entityId, provider));
+      this._showSuccess(this._t(provider ? "externalExecutionEnabled" : "externalExecutionDisabled"));
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : this._t("unableSaveSettings");
+    } finally {
+      this._settingsSaving = false;
+    }
+  }
+
   private async _resumeAutomaticControl(entityId: string): Promise<void> {
     const api = this._api();
     if (!api || this._manualControlActions[entityId]) return;

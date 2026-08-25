@@ -256,7 +256,11 @@ class ProfileSchedulerTest(unittest.IsolatedAsyncioTestCase):
         )
         await profile_save_started.wait()
 
-        await scheduler.async_pause_zone("climate.salon", pause_id="window_guard")
+        pause_task = asyncio.create_task(
+            scheduler.async_pause_zone("climate.salon", pause_id="window_guard")
+        )
+        await asyncio.sleep(0)
+        await pause_task
         release_profile_save.set()
         with self.assertRaisesRegex(RuntimeError, "profile save failed"):
             await profile_task

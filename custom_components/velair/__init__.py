@@ -21,6 +21,9 @@ from .config_helpers import (
 )
 from .const import DOMAIN, PLATFORMS
 from .entity_registry import cleanup_entity_registry
+from .execution import ExecutionAuthority
+from .external_execution import ExternalExecutionManager
+from .external_execution.registry import build_provider_registry
 from .frontend import (
     async_setup_frontend,
     async_setup_frontend_route,
@@ -47,6 +50,7 @@ class VelairData:
     scheduler: VelairScheduler
     storage: VelairStorage
     climate_change_monitor: ClimateChangeMonitor
+    external_execution: ExternalExecutionManager
 
 
 type VelairConfigEntry = ConfigEntry[VelairData]
@@ -66,7 +70,15 @@ async def async_setup_entry(
     climate_entities = get_configured_climate_entities(entry)
     storage = VelairStorage(hass, entry.entry_id)
     data = await storage.async_load(climate_entities)
-    climate_manager = ClimateManager(hass)
+    execution_authority = ExecutionAuthority(data)
+    climate_manager = ClimateManager(hass, execution_authority)
+    external_execution = ExternalExecutionManager(
+        data,
+        build_provider_registry(hass),
+        storage.async_save,
+        climate_manager.temperature_unit,
+        authority=execution_authority,
+    )
     diagnostics = RuntimeDiagnosticsManager(hass, climate_entities, entry.entry_id)
     await diagnostics.async_load_policy()
     climate_delivery = ClimateDeliveryCoordinator(hass, diagnostics.observe_delivery)
@@ -76,12 +88,13 @@ async def async_setup_entry(
         climate_manager,
         storage.async_save,
         climate_delivery,
+        external_execution=external_execution,
     )
     scheduler.set_temperature_migration_blocked(
         storage.temperature_migration_required
     )
     climate_change_monitor = ClimateChangeMonitor(
-        hass, climate_entities, climate_manager, scheduler
+        hass, climate_entities, climate_manager, scheduler, execution_authority
     )
 
     entry.runtime_data = VelairData(
@@ -91,6 +104,7 @@ async def async_setup_entry(
         scheduler=scheduler,
         storage=storage,
         climate_change_monitor=climate_change_monitor,
+        external_execution=external_execution,
     )
 
     hass.data.setdefault(DOMAIN, {})
@@ -104,6 +118,7 @@ async def async_setup_entry(
         "scheduler": scheduler,
         "storage": storage,
         "climate_change_monitor": climate_change_monitor,
+        "external_execution": external_execution,
     }
     hass.data[DOMAIN][entry.entry_id] = runtime
 

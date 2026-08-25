@@ -60,6 +60,16 @@ also be cloned to one or more other weekdays in the same zone. The copied
 blocks keep their complete climate configuration, including supported HVAC,
 fan, preset, swing, and humidity options.
 
+For a zone delegated to an external controller, Profiles and Modes select the
+effective full week that Velair publishes instead of causing direct
+`climate.*` actions. **Default schedule** publishes the regular week and
+**Profile schedule** publishes the Profile week. **Pause** behavior is not
+available for an externally managed zone. The Profile editor applies the
+controller capabilities as additional validation, and a publication failure
+does not undo the saved Profile or Mode selection or affect locally executed
+zones. See [External schedule execution](external-systems.md) for the current
+controller limits and publication semantics.
+
 From an edited Profile schedule day, **Save as template** stores only a
 reusable template through the backend and leaves the unsaved Profile draft
 unchanged. To reuse the day in other managed climates, select them in the

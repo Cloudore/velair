@@ -152,6 +152,23 @@ embed a complete weekly schedule or pause the zone, optionally turning it off.
 Templates only copy blocks into a profile draft; no template reference is
 persisted.
 
+Externally executed zones participate in Profiles and Modes only through their
+effective weekly schedule. The scheduler resolves Default versus Profile data
+and passes an explicit week to the provider-neutral external execution manager.
+Providers do not know about Profile or Mode models. Pause behavior and all
+direct climate actions remain unavailable for external zones, while publication
+failure never rolls back the persisted global Profile or Mode selection.
+Profile/Mode mutations take the global Profile lock before the minimal union of
+zone locks whose Profile effect or complete effective week changes, regardless
+of current execution ownership. Authority is revalidated after acquiring those
+locks, so an in-flight handoff cannot publish a stale Default week after a
+Profile selection. Unaffected local zones remain unlocked. Validation and
+persistence remain cancelable and roll back without publication; once persistence succeeds,
+publication, runtime cleanup, replanning, and change notification finish before
+task cancellation is propagated. An explicit Default/Profile/Mode selection
+also republishes an unchanged week when the current runtime has no successful
+publication evidence; this is a user-requested attempt, not automatic retry.
+
 The scheduler resolves each zone's effective behavior before calculating
 current or future events, Adaptive Preconditioning, or Room Assist. Global and
 manual zone pauses retain priority. Activating a profile cancels Boost only for

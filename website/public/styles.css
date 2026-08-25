@@ -150,6 +150,8 @@ p { line-height: 1.65; }
 .feature-grid .feature { display: grid; grid-template-rows: auto 1fr; }
 .compact-shot { border-top: 1px solid var(--line); max-height: 540px; }
 .compact-shot img { object-position: top; }
+.external-publication-shot { background: var(--page-soft); padding: 18px; }
+.external-publication-shot img { object-fit: contain; object-position: center; }
 .phone-wrap { align-items: flex-start; background: var(--page-soft); border-top: 1px solid var(--line); display: flex; justify-content: center; min-height: 540px; overflow: hidden; padding: 34px 28px 0; }
 .phone-shot {
   background: linear-gradient(145deg, #30363b, #0c0f11 24%, #171b1e 76%, #343a3f);

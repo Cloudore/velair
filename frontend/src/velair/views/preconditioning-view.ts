@@ -53,6 +53,19 @@ function renderPreconditioningZone(
   host: PreconditioningViewHost,
   entityId: string,
 ) {
+  if (host._data?.zones[entityId]?.execution?.type === "external") {
+    return html`
+      <section class="preconditioning-zone disabled collapsed">
+        <header class="preconditioning-zone-heading">
+          <ha-icon icon="mdi:calendar-export"></ha-icon>
+          <span class="preconditioning-zone-identity">
+            <strong>${host._friendlyEntityName(entityId)}</strong>
+            <span>${host._t("externalActionsInactive")}</span>
+          </span>
+        </header>
+      </section>
+    `;
+  }
   const exists = host._entityExists(entityId);
   const temperatureUnit = host._temperatureUnit?.(entityId) ?? "°C";
   const preconditioning = preconditioningSettings(

@@ -427,6 +427,28 @@ Home Assistant automations can activate one Profile through
 
 See [Climate Profiles](climate-profiles.md) for setup, automation, restart, interaction, and portability details.
 
+## External Schedule Execution
+
+Velair normally stores a zone's weekly plan and executes it through its Home
+Assistant `climate.*` entity. When **Settings → External systems** detects a
+compatible controller, an eligible zone can instead delegate execution to that
+system. Velair then publishes the complete effective week selected by Default,
+a Profile, or a Mode.
+
+An externally managed zone remains schedule-only. Velair does not send direct
+climate actions for Boost, pause or resume, Manual adjustment, Room Assist, or
+Adaptive Preconditioning. Profile **Pause** behavior is unavailable, while
+**Default schedule** and **Profile schedule** select the week that is published.
+Controller-specific limits are shown once per in-use system in Settings and are
+also enforced while editing compatible Profile schedules.
+
+Overview reports only **Publishing**, **Published**, or **Failed** after an
+attempt in the current Home Assistant runtime. **Published** means that the
+external integration accepted the service call; it is not confirmation that
+the physical controller applied the schedule. Velair does not poll, read back,
+or retry automatically. See [External schedule execution](external-systems.md)
+for supported systems, limits, handoff behavior, and current validation status.
+
 ## Clone Schedules
 
 Below the editor, Velair can clone the current day:

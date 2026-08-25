@@ -172,6 +172,32 @@ export const settingsStyles = css`
   min-width: 0;
 }
 
+.external-controllers-in-use {
+  border-top: 1px solid var(--divider-color);
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.external-controller-conditions {
+  background: var(--card-background-color);
+  border: 1px solid var(--divider-color);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+
+.external-controller-conditions ul {
+  color: var(--secondary-text-color);
+  display: grid;
+  font-size: 12px;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+}
+
 .settings-zone-row {
   align-items: start;
   background: var(--card-background-color);

@@ -133,6 +133,21 @@ function renderSensorZone(
   entityId: string,
   options: RoomSensorViewOptions,
 ) {
+  if (host._data?.zones[entityId]?.execution?.type === "external") {
+    return html`
+      <section class="sensor-zone disabled">
+        <header class="sensor-zone-heading">
+          <span class="sensor-zone-identity">
+            <strong title=${host._friendlyEntityName(entityId)}>${host._friendlyEntityName(entityId)}</strong>
+            <span>${entityId}</span>
+          </span>
+        </header>
+        <div class="sensor-zone-content">
+          <div class="notice">${host._t("externalActionsInactive")}</div>
+        </div>
+      </section>
+    `;
+  }
   const exists = host._entityExists(entityId);
   const settings = preconditioningSettings(
     host._data?.zones[entityId]?.preconditioning,

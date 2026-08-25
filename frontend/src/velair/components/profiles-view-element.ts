@@ -141,6 +141,25 @@ export class VelairProfilesView extends LitElement {
     super.disconnectedCallback();
   }
 
+  private _localEntityIds(): string[] {
+    return orderedZoneIds(
+      this.data?.configured_entities ?? [],
+      this.data?.settings?.zone_order ?? [],
+    );
+  }
+
+  private _externalCapabilities(entityId: string) {
+    const execution = this.data?.zones?.[entityId]?.execution;
+    if (execution?.type !== "external") return undefined;
+    return this.data?.external_execution?.systems?.find(
+      (system) => system.provider === execution.provider,
+    )?.capabilities;
+  }
+
+  private _isExternalEntity(entityId: string): boolean {
+    return this.data?.zones?.[entityId]?.execution?.type === "external";
+  }
+
   protected willUpdate(changed: Map<string, unknown>): void {
     if (changed.has("data")) {
       if (this._modeEditorOpen && this._selectedModeKey) {
@@ -152,10 +171,7 @@ export class VelairProfilesView extends LitElement {
         }
       }
       const profiles = this.data?.profiles ?? [];
-      const entityIds = orderedZoneIds(
-        this.data?.configured_entities ?? [],
-        this.data?.settings?.zone_order ?? [],
-      );
+      const entityIds = this._localEntityIds();
       if (!this._selectedEntity || !entityIds.includes(this._selectedEntity)) {
         this._selectedEntity = entityIds[0] ?? "";
       }
@@ -974,11 +990,8 @@ export class VelairProfilesView extends LitElement {
         <div class="profile-zones">
           ${this.scheduleWorkspace
             ? this._renderWorkspaceZone()
-            : (this.data?.configured_entities ?? []).length
-            ? orderedZoneIds(
-                this.data?.configured_entities ?? [],
-                this.data?.settings?.zone_order ?? [],
-              ).map((entityId) => this._renderZone(entityId))
+            : this._localEntityIds().length
+            ? this._localEntityIds().map((entityId) => this._renderZone(entityId))
             : html`<span class="empty">${this._t("noManagedEntities")}</span>`}
         </div>
         ${this.scheduleWorkspace ? html`
@@ -999,10 +1012,7 @@ export class VelairProfilesView extends LitElement {
   }
 
   private _renderWorkspaceZone() {
-    const entityIds = orderedZoneIds(
-      this.data?.configured_entities ?? [],
-      this.data?.settings?.zone_order ?? [],
-    );
+    const entityIds = this._localEntityIds();
     if (!entityIds.length) return html`<span class="empty">${this._t("noManagedEntities")}</span>`;
     const entityId = entityIds.includes(this._selectedEntity) ? this._selectedEntity : entityIds[0];
     const zone = this._draft.zones[entityId];
@@ -1050,13 +1060,17 @@ export class VelairProfilesView extends LitElement {
               <select .value=${behavior} @change=${(event: Event) => this._setZoneBehavior(entityId, (event.currentTarget as HTMLSelectElement).value as ClimateProfileDraftZone["behavior"])}>
                 <option value="normal">${this._t("profileBehaviorDefault")}</option>
                 <option value="schedule">${this._t("profileBehaviorSchedule")}</option>
-                <option value="pause">${this._t("profileBehaviorPause")}</option>
+                ${this._isExternalEntity(entityId) ? nothing : html`
+                  <option value="pause">${this._t("profileBehaviorPause")}</option>
+                `}
               </select>
             </span>
           </label>
         </div>
         <div class="profile-zone-content">
-          ${zone?.behavior === "pause" ? html`
+          ${this._isExternalEntity(entityId) ? html`
+            <div class="library-concept-note compact"><ha-icon icon="mdi:cloud-upload-outline"></ha-icon><span><small>${this._t("profileExternalScheduleOnly")}</small></span></div>
+          ` : zone?.behavior === "pause" ? html`
             <label class="profile-pause-action"><span>${this._t("profilePauseAction")}</span>
               <span class="select-wrap">
                 <select .value=${zone.action} @change=${(event: Event) => this._setPauseAction(entityId, (event.currentTarget as HTMLSelectElement).value as "none" | "turn_off")}>
@@ -1118,14 +1132,18 @@ export class VelairProfilesView extends LitElement {
               <select .value=${behavior} @change=${(event: Event) => this._setZoneBehavior(entityId, (event.currentTarget as HTMLSelectElement).value as ClimateProfileDraftZone["behavior"])}>
                 <option value="normal">${this._t("profileBehaviorDefault")}</option>
                 <option value="schedule">${this._t("profileBehaviorSchedule")}</option>
-                <option value="pause">${this._t("profileBehaviorPause")}</option>
+                ${this._isExternalEntity(entityId) ? nothing : html`
+                  <option value="pause">${this._t("profileBehaviorPause")}</option>
+                `}
               </select>
             </span>
           </label>
         </div>
         ${expanded ? html`
           <div class="profile-zone-content" id=${contentId}>
-            ${zone?.behavior === "pause" ? html`
+            ${this._isExternalEntity(entityId) ? html`
+              <div class="library-concept-note compact"><ha-icon icon="mdi:cloud-upload-outline"></ha-icon><span><small>${this._t("profileExternalScheduleOnly")}</small></span></div>
+            ` : zone?.behavior === "pause" ? html`
               <label class="profile-pause-action"><span>${this._t("profilePauseAction")}</span>
                 <span class="select-wrap">
                   <select .value=${zone.action} @change=${(event: Event) => this._setPauseAction(entityId, (event.currentTarget as HTMLSelectElement).value as "none" | "turn_off")}>
@@ -1150,10 +1168,9 @@ export class VelairProfilesView extends LitElement {
     const cloneWeekdayTargets = new Set(
       [...(this._cloneWeekdayTargets[entityId] ?? [])].filter((day) => day !== weekday),
     );
-    const otherClimates = orderedZoneIds(
-      this.data?.configured_entities ?? [],
-      this.data?.settings?.zone_order ?? [],
-    ).filter((targetEntityId) => targetEntityId !== entityId);
+    const otherClimates = this._localEntityIds().filter(
+      (targetEntityId) => targetEntityId !== entityId,
+    );
     const cloneClimateTargets = new Set(
       [...(this._cloneClimateTargets[entityId] ?? [])].filter((targetEntityId) =>
         otherClimates.includes(targetEntityId)),
@@ -1381,6 +1398,7 @@ export class VelairProfilesView extends LitElement {
   }
 
   private _setZoneBehavior(entityId: string, behavior: ClimateProfileDraftZone["behavior"]): void {
+    if (this._isExternalEntity(entityId) && behavior === "pause") return;
     this._draft = withProfileZoneBehavior(this._draft, entityId, behavior);
     this._cloneWeekdayTargets = { ...this._cloneWeekdayTargets, [entityId]: new Set() };
     this._cloneClimateTargets = { ...this._cloneClimateTargets, [entityId]: new Set() };
@@ -1672,6 +1690,7 @@ export class VelairProfilesView extends LitElement {
 
   private _blockEditorHost(entityId: string, weekday: string): VelairViewHost {
     const state = this.hass?.states?.[entityId];
+    const external = this._externalCapabilities(entityId);
     const temperatureLimits = entityTemperatureLimits(state, this.data?.temperature_unit);
     const temperatureStep = entityTemperatureStep(state);
     const host: Record<string, unknown> = {
@@ -1685,12 +1704,12 @@ export class VelairProfilesView extends LitElement {
       _temperatureLimits: () => temperatureLimits,
       _temperatureStep: () => temperatureStep,
       _temperatureUnit: () => this.data?.temperature_unit ?? "°C",
-      _hvacModeOptions: () => climateSupportedModes(state),
-      _fanModeOptions: () => climateFanModeOptions(state),
-      _presetModeOptions: () => climatePresetModeOptions(state),
-      _swingModeOptions: () => climateSwingModeOptions(state),
-      _swingHorizontalModeOptions: () => climateSwingHorizontalModeOptions(state),
-      _humidityLimits: () => climateHumidityLimits(state),
+      _hvacModeOptions: () => external?.supported_hvac_modes ?? climateSupportedModes(state),
+      _fanModeOptions: () => external && !external.supported_option_fields.includes("fan_mode") ? [] : climateFanModeOptions(state),
+      _presetModeOptions: () => external && !external.supported_option_fields.includes("preset_mode") ? [] : climatePresetModeOptions(state),
+      _swingModeOptions: () => external && !external.supported_option_fields.includes("swing_mode") ? [] : climateSwingModeOptions(state),
+      _swingHorizontalModeOptions: () => external && !external.supported_option_fields.includes("swing_horizontal_mode") ? [] : climateSwingHorizontalModeOptions(state),
+      _humidityLimits: () => external && !external.supported_option_fields.includes("humidity") ? undefined : climateHumidityLimits(state),
       _modeLabel: (mode: string) => dictionaryLabel(languageFromHass(this.hass), "hvacModes", mode),
       _shortWeekdayName: (day: string) => shortWeekdayName(languageFromHass(this.hass), day),
       _weekdayName: (day: string) => weekdayName(languageFromHass(this.hass), day),
@@ -1787,10 +1806,9 @@ export class VelairProfilesView extends LitElement {
     if (unsupportedModeError) {
       return [{ id: "unsupported-mode", message: unsupportedModeError }];
     }
-    const climateScheduleErrors = orderedZoneIds(
-      this.data?.configured_entities ?? [],
-      this.data?.settings?.zone_order ?? [],
-    ).filter((entityId) => Boolean(this._zoneScheduleError(entityId)));
+    const climateScheduleErrors = this._localEntityIds().filter(
+      (entityId) => Boolean(this._zoneScheduleError(entityId)),
+    );
     if (!climateScheduleErrors.length) return [];
 
     const desired: DesiredNotice[] = [];
@@ -1887,9 +1905,19 @@ export class VelairProfilesView extends LitElement {
     const zone = this._draft.zones[entityId];
     if (zone?.behavior !== "schedule") return undefined;
     const climate = this.hass?.states?.[entityId]?.attributes?.friendly_name ?? entityId;
+    const external = this._externalCapabilities(entityId);
     for (const weekday of WEEKDAYS) {
       const starts = new Set<string>();
-      for (const block of zone.schedule[weekday] ?? []) {
+      const blocks = zone.schedule[weekday] ?? [];
+      const externalChanges = blocks.length + (external?.implicit_midnight_change_counts_toward_limit && blocks[0]?.start !== "00:00" ? 1 : 0);
+      if (external && externalChanges > external.max_switchpoints_per_day) {
+        return this._t("profileExternalMaxChanges", {
+          climate,
+          day: weekdayName(languageFromHass(this.hass), weekday),
+          count: external.max_switchpoints_per_day,
+        });
+      }
+      for (const block of blocks) {
         const validStart = /^([01]\d|2[0-3]):[0-5]\d$/.test(block.start);
         const duplicateStart = starts.has(block.start);
         if (!validStart || duplicateStart) {
@@ -1901,6 +1929,30 @@ export class VelairProfilesView extends LitElement {
           });
         }
         starts.add(block.start);
+        if (external) {
+          const [hour, minute] = block.start.split(":").map(Number);
+          if (!Number.isFinite(hour) || !Number.isFinite(minute) || minute % external.time_step_minutes !== 0) {
+            return this._t("profileExternalTimeGrid", {
+              climate,
+              day: weekdayName(languageFromHass(this.hass), weekday),
+              minutes: external.time_step_minutes,
+            });
+          }
+          if (!external.supported_actions.includes(block.action ?? "set_temperature")) {
+            return this._t("profileExternalUnsupportedBlock", { climate });
+          }
+          if (block.hvac_mode && !external.supported_hvac_modes.includes(block.hvac_mode)) {
+            return this._t("profileExternalUnsupportedBlock", { climate });
+          }
+          if (("target_temp_low" in block || "target_temp_high" in block)
+            && !external.supported_target_types.includes("range")) {
+            return this._t("profileExternalUnsupportedBlock", { climate });
+          }
+          const optionFields = ["fan_mode", "preset_mode", "swing_mode", "swing_horizontal_mode", "humidity"] as const;
+          if (optionFields.some((field) => block[field] !== undefined && !external.supported_option_fields.includes(field))) {
+            return this._t("profileExternalUnsupportedBlock", { climate });
+          }
+        }
         const error = this._temperatureError(entityId, block);
         if (error) {
           return this._t("profileScheduleClimateBlockError", {

@@ -3,7 +3,7 @@ Climate automation that adapts to your life.
 
 [Explore Velair on the project website](https://cgonfer.github.io/velair/)
 
-[![Version](https://img.shields.io/badge/version-1.7.0--beta.2-blue?style=for-the-badge)](https://github.com/cgonfer/velair/releases)
+[![Version](https://img.shields.io/badge/version-1.7.0--beta.3-blue?style=for-the-badge)](https://github.com/cgonfer/velair/releases)
 [![Last commit](https://img.shields.io/github/last-commit/cgonfer/velair?style=for-the-badge)](https://github.com/cgonfer/velair/commits/main/)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Community%20Forum-blue?logo=home-assistant&style=for-the-badge)](https://community.home-assistant.io/t/velair-local-first-climate-scheduling-for-home-assistant-climates/1015394)
 [![HACS](https://img.shields.io/badge/HACS-default-41BDF5?style=for-the-badge)](https://www.hacs.xyz/docs/use/repositories/dashboard/)
@@ -41,6 +41,7 @@ Contributions, testing, bug reports, and constructive feedback are always welcom
 - Day cloning to other weekdays or other managed climates.
 - Editable schedule templates with import/export support.
 - One schedule workspace for Default and Profile schedules, with coordinated per-zone behavior, in-editor day cloning, pauses, configurable Modes, and a native Home Assistant select entity for automations.
+- Optional external schedule execution for compatible controllers. Velair publishes the effective Default, Profile, or Mode week while keeping direct climate actions disabled for externally managed zones.
 - Overview tab with scheduler status, active boosts, next events, and responsive zone cards that separate Velair intent from live device activity.
 - Per-climate handling for external setpoint or HVAC-mode changes: keep Velair automatic by default or yield through a configurable Manual adjustment, plus an Overview action that can hold the live climate state and explicitly return to the currently authoritative Default, Profile, Mode, pause, or Off intent.
 - Dedicated Adaptive preconditioning tab with per-climate controls and local learning status.
@@ -248,6 +249,7 @@ If Home Assistant shows a custom element error, confirm that Velair is installed
 - [Documentation index](docs/README.md)
 - [Usage guide](docs/user/usage.md)
 - [External changes and Manual adjustment](docs/user/manual-control.md)
+- [External schedule execution](docs/user/external-systems.md)
 - [Diagnostics](docs/user/diagnostics.md)
 - [Climate Profiles](docs/user/climate-profiles.md)
 - [Automation Events](docs/user/automation-events.md)

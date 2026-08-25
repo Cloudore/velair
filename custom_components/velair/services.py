@@ -332,7 +332,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         scheduler = _get_scheduler(hass)
         entity_id = call.data[ATTR_ENTITY_ID]
         _ensure_managed_entity(scheduler, entity_id)
-        await scheduler.async_cancel_zone_boost(entity_id)
+        try:
+            await scheduler.async_cancel_zone_boost(entity_id)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
 
     async def async_pause(call: ServiceCall) -> None:
         scheduler = _get_scheduler(hass)
@@ -458,7 +461,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         scheduler = _get_scheduler(hass)
         entity_id = call.data[ATTR_ENTITY_ID]
         _ensure_managed_entity(scheduler, entity_id)
-        await scheduler.async_resume_automatic_control(entity_id)
+        try:
+            await scheduler.async_resume_automatic_control(entity_id)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
 
     async def async_enter_manual_adjustment(call: ServiceCall) -> None:
         scheduler = _get_scheduler(hass)

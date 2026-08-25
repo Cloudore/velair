@@ -190,6 +190,7 @@ export type VelairViewHost = {
   _saveSelectedTemplateFromLibrary(template: ScheduleTemplate): Promise<void>;
   _saveSettings(settings: Partial<PanelSettings>): Promise<void>;
   _saveExternalChangePolicy(entityId: string, policy: ExternalChangePolicy): Promise<void>;
+  _setZoneExecution(entityId: string, provider?: string): Promise<void>;
   _resumeAutomaticControl(entityId: string): Promise<void>;
   _enterManualAdjustment(entityId: string): Promise<void>;
   _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;

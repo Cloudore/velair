@@ -43,6 +43,141 @@ function host() {
 }
 
 describe("overview next events", () => {
+  it.each(["publishing", "published", "failed"] as const)(
+    "shows only the factual external publication state %s",
+    (state) => {
+      const container = document.createElement("div");
+      const overviewHost = {
+        ...host(),
+        _data: {
+          zones: {
+            "climate.office": {
+              enabled: true,
+              schedule: {},
+              execution: { type: "external", provider: "ramses_cc" },
+            },
+          },
+          zone_runtime: {
+            "climate.office": {
+              state: "externally_managed",
+              manual_adjustment_allowed: false,
+              manual_adjustment_unavailable_reason: "external_execution",
+            },
+          },
+          external_execution: {
+            systems: [{
+              provider: "ramses_cc",
+              name: "Evohome via ramses_cc",
+              entities: ["climate.office"],
+              capabilities: {
+                can_publish: true,
+                can_import: false,
+                supports_profile_schedules: true,
+                supported_actions: ["set_temperature"],
+                supported_hvac_modes: ["heat"],
+                supported_target_types: ["scalar"],
+                supported_option_fields: [],
+                max_switchpoints_per_day: 6,
+                time_step_minutes: 5,
+                implicit_midnight_change_counts_toward_limit: true,
+              },
+            }],
+            zones: {
+              "climate.office": {
+                type: "external",
+                provider: "ramses_cc",
+                available: true,
+                publication: { state },
+              },
+            },
+          },
+        },
+      } as unknown as VelairViewHost;
+
+      render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+      expect(container.textContent).toContain("overviewExternalExecutionProviderEvohome via ramses_cc");
+      expect(container.textContent).toContain(`externalPublication_${state}`);
+      expect(container.textContent).not.toContain("not synced");
+      expect(container.querySelector('[role="group"]')).toBeNull();
+    },
+  );
+
+  it("shows the effective Profile and timeline for an externally executed zone", () => {
+    const container = document.createElement("div");
+    const week = (temperature: number) => Object.fromEntries([
+      "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    ].map((day) => [day, [{
+      start: "00:00", action: "set_temperature", temperature, hvac_mode: "heat",
+    }]]));
+    const overviewHost = {
+      ...host(),
+      _currentTimelineNow: () => new Date("2026-07-21T12:00:00+02:00"),
+      _formatTemperature: (value: number) => `${value} C`,
+      _showOverviewTimelineDetail: () => undefined,
+      _data: {
+        global: { mode: "auto", active_profile_ids: ["away"] },
+        configured_entities: ["climate.office"],
+        zones: {
+          "climate.office": {
+            enabled: true,
+            schedule: week(21),
+            execution: { type: "external", provider: "ramses_cc" },
+          },
+        },
+        profiles: [{
+          key: "away", name: "Away", icon: "mdi:briefcase-outline", color: "#123456",
+          zones: {
+            "climate.office": { behavior: "schedule", schedule: week(18) },
+          },
+        }],
+        zone_runtime: {
+          "climate.office": {
+            state: "externally_managed", target_temperature: 18,
+            manual_adjustment_allowed: false,
+            manual_adjustment_unavailable_reason: "external_execution",
+          },
+        },
+      },
+    } as unknown as VelairViewHost;
+
+    render(html`
+      ${renderOverviewZones(overviewHost, ["climate.office"])}
+      ${renderOverviewTimelines(overviewHost, ["climate.office"])}
+    `, container);
+
+    expect(container.querySelector(".overview-zone-profile")?.textContent).toContain("Away");
+    expect(container.querySelector(".overview-timeline-name.profiled ha-icon")?.getAttribute("icon"))
+      .toBe("mdi:briefcase-outline");
+    expect(container.querySelector(".overview-timeline-block")?.getAttribute("title"))
+      .toContain("18 °C");
+    expect(container.querySelector(".overview-timeline-block")?.getAttribute("title"))
+      .not.toContain("21 °C");
+    expect(container.querySelector('[role="group"]')).toBeNull();
+  });
+
+  it("does not invent a publication state after restart", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _data: {
+        zones: { "climate.office": { enabled: true, schedule: {}, execution: { type: "external", provider: "unknown" } } },
+        external_execution: {
+          systems: [],
+          zones: { "climate.office": { type: "external", provider: "unknown", available: false, publication: null } },
+        },
+      },
+    } as unknown as VelairViewHost;
+
+    render(renderOverviewZones(overviewHost, ["climate.office"]), container);
+
+    expect(container.textContent).toContain("overviewExternalExecutionProviderunknown");
+    expect(container.textContent).toContain("overviewExternalProviderUnavailable");
+    expect(container.textContent).not.toContain("externalPublication_");
+    expect(container.querySelector(".overview-zone-card")?.classList).toContain("state-externally_managed");
+    expect(container.querySelector('[role="group"]')).toBeNull();
+  });
+
   it("renders a permanent accessible segmented control and ignores the active option", () => {
     const container = document.createElement("div");
     const enter = vi.fn();

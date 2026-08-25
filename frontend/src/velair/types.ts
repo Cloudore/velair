@@ -338,6 +338,37 @@ export type ScheduleZone = {
   preconditioning?: PreconditioningSettings;
   comfort?: ComfortSettings;
   external_change_policy?: ExternalChangePolicy;
+  execution?: { type: "external"; provider: string };
+};
+
+export type ExternalExecutionInfo = {
+  systems: Array<{
+    provider: string;
+    name: string;
+    entities: string[];
+    capabilities: {
+      can_publish: boolean;
+      can_import: boolean;
+      supports_profile_schedules: boolean;
+      supported_actions: string[];
+      supported_hvac_modes: string[];
+      supported_target_types: string[];
+      supported_option_fields: string[];
+      max_switchpoints_per_day: number;
+      time_step_minutes: number;
+      implicit_midnight_change_counts_toward_limit: boolean;
+    };
+  }>;
+  zones: Record<string, {
+    type: "external";
+    provider: string;
+    available: boolean;
+    publication: {
+      state: "publishing" | "published" | "failed";
+      error?: string | null;
+      published_at?: string | null;
+    } | null;
+  }>;
 };
 
 export type ExternalChangePolicy = {
@@ -358,7 +389,7 @@ export type ManualControl = {
 };
 
 export type ZoneRuntimeStatus = {
-  state: "stopped" | "paused" | "boost" | "preconditioning" | "scheduled" | "idle";
+  state: "stopped" | "paused" | "boost" | "preconditioning" | "scheduled" | "idle" | "externally_managed";
   room_temperature?: number | null;
   target_temperature?: number | null;
   target_temp_low?: number | null;
@@ -379,6 +410,7 @@ export type ZoneRuntimeStatus = {
     | "unavailable"
     | "disabled"
     | "temperature_migration"
+    | "external_execution"
     | "scheduler_not_auto"
     | "profile_paused"
     | "zone_paused";
@@ -537,6 +569,7 @@ export type ScheduleResponse = {
   };
   settings: PanelSettings;
   zones: Record<string, ScheduleZone>;
+  external_execution?: ExternalExecutionInfo;
   operational_status: string;
   next_event: ScheduleEvent | null;
   next_events: ScheduleEvent[];

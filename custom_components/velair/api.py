@@ -269,6 +269,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_delete_mode)
     websocket_api.async_register_command(hass, ws_select_mode)
     websocket_api.async_register_command(hass, ws_update_settings)
+    websocket_api.async_register_command(hass, ws_set_zone_execution)
     websocket_api.async_register_command(hass, ws_update_external_change_policy)
     websocket_api.async_register_command(hass, ws_enter_manual_adjustment)
     websocket_api.async_register_command(hass, ws_resume_automatic_control)
@@ -300,6 +301,36 @@ def ws_get_schedule(
         connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
         return
 
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_zone_execution",
+        vol.Required(ATTR_ENTITY_ID): str,
+        vol.Required("provider"): vol.Any(None, str),
+    }
+)
+@websocket_api.async_response
+async def ws_set_zone_execution(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Persist per-zone execution ownership and publish when external."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+    if _reject_temperature_migration_mutation(runtime, connection, msg):
+        return
+    try:
+        await runtime["scheduler"].async_set_zone_execution(
+            msg[ATTR_ENTITY_ID], msg["provider"]
+        )
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_external_execution", str(err))
+        return
     connection.send_result(msg["id"], _build_schedule_response(runtime))
 
 
@@ -1515,6 +1546,11 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
         ),
         "settings": settings,
         "zones": stored_data["zones"],
+        "external_execution": (
+            runtime["external_execution"].describe()
+            if runtime.get("external_execution") is not None
+            else {"systems": [], "zones": {}}
+        ),
         "operational_status": scheduler.get_operational_status(),
         "next_event": _serialize_event(scheduler.next_event),
         "next_events": [
@@ -2076,14 +2112,21 @@ def _normalize_import_zones(
         list(current_zones),
     )["zones"]
 
-    return {
-        entity_id: (
-            normalized_zones[entity_id]
+    merged_zones: dict[str, Any] = {}
+    for entity_id, zone in current_zones.items():
+        merged = (
+            deepcopy(normalized_zones[entity_id])
             if entity_id in matched_entities
             else deepcopy(zone)
         )
-        for entity_id, zone in current_zones.items()
-    }
+        # Execution ownership is installation-local and intentionally absent
+        # from portable exports. Importing a schedule must not silently hand an
+        # externally owned climate back to Velair.
+        execution = zone.get("execution") if isinstance(zone, dict) else None
+        if isinstance(execution, dict):
+            merged["execution"] = deepcopy(execution)
+        merged_zones[entity_id] = merged
+    return merged_zones
 
 
 def _validate_portable_zone_schedules(

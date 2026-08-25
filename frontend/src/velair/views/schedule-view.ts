@@ -120,6 +120,7 @@ export function renderScheduleZonePicker(host: ScheduleViewHost, zoneIds: string
 
 export function renderScheduleEditor(host: ScheduleViewHost, entityId: string, zone: ScheduleZone) {
   const hasValidationError = host._hasDraftValidationError("schedule");
+  const externallyManaged = zone.execution?.type === "external";
 
   return html`
     <section class="schedule">
@@ -128,12 +129,17 @@ export function renderScheduleEditor(host: ScheduleViewHost, entityId: string, z
           <strong>${host._t("scheduleStepDay")}</strong>
         </div>
         <div class="schedule-editor-badges">
+          ${externallyManaged
+            ? html`<span class="pill">${host._t("overviewZoneExternal")}</span>`
+            : nothing}
           ${host._dirty && host._dirtyEntityId === entityId
             ? html`<span class="pill warning">${host._t("unsaved")}</span>`
             : nothing}
         </div>
       </div>
-      ${renderBoostStatus(host, entityId, zone)}
+      ${externallyManaged
+        ? html`<div class="notice">${host._t("externalActionsInactive")}</div>`
+        : renderBoostStatus(host, entityId, zone)}
       ${renderWeeklyScheduleEditor({
         dayTabs: html`<div class="day-tabs">
           ${host._orderedWeekdays().map((weekday: string) => renderDayTab(host, weekday, zone.schedule[weekday] ?? []))}

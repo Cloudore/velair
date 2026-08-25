@@ -14,7 +14,7 @@ await hass.connection.sendMessagePromise({
 
 Most write commands return the full schedule response:
 
-The response includes a runtime-only `zone_runtime` mapping. It is derived by the backend and never persisted. Each managed climate reports an authoritative `state` (`stopped`, `paused`, `boost`, `preconditioning`, `scheduled`, or `idle`) plus the minimal available room, target, applied setpoint, HVAC mode, and relevant timing fields used by Overview.
+The response includes a runtime-only `zone_runtime` mapping. It is derived by the backend and never persisted. Each managed climate reports an authoritative `state` (`stopped`, `paused`, `boost`, `preconditioning`, `scheduled`, `idle`, or `externally_managed`) plus the minimal available room, target, applied setpoint, HVAC mode, and relevant timing fields used by Overview.
 
 ```json
 {
@@ -228,7 +228,7 @@ The response includes a runtime-only `zone_runtime` mapping. It is derived by th
     "portable_model": 8,
     "storage": 1,
     "model": 7,
-    "integration": "1.7.0-beta.2"
+    "integration": "1.7.0-beta.3"
   }
 }
 ```
@@ -305,6 +305,48 @@ await hass.connection.sendMessagePromise({
   type: "velair/get_schedule",
 });
 ```
+
+When a compatible provider is detected, the response also includes
+`external_execution.systems` with provider capabilities and eligible entity IDs,
+plus `external_execution.zones` with the configured provider, availability, and
+nullable runtime `publication`. Publication is `null` until Velair attempts one
+in the current runtime; an attempt can be `publishing`, `published`, or `failed`.
+`published` means the provider service accepted the call. It is not a hardware
+verification claim. Availability is reported separately. Selected registered
+providers retain their name and capabilities if they later become unavailable;
+unknown persisted provider keys remain safe and unavailable. Publication state
+is not persisted, read back, retried, or polled.
+
+Schedule capabilities are provider-neutral: `supports_profile_schedules`,
+`supported_actions`, `supported_hvac_modes`, `supported_target_types`,
+`supported_option_fields`, `max_switchpoints_per_day`, and
+`time_step_minutes`. Providers can also declare
+`implicit_midnight_change_counts_toward_limit` when the continuity switchpoint
+Velair adds at `00:00` consumes one of the daily changes. Clients must derive controller conditions from these
+fields rather than branching on a provider key. The ramses_cc provider declares
+`set_temperature`, `heat`, `scalar`, and no supported climate option fields.
+
+## Set Zone Execution Ownership
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/set_zone_execution",
+  entity_id: "climate.living_room",
+  provider: "ramses_cc",
+});
+```
+
+Both `entity_id` and `provider` are required. Set `provider` explicitly to
+`null` to return the zone to local Velair execution. External ownership is
+persisted before publication and remains external if publication fails. While
+external, all Velair climate actions are rejected. The scheduler resolves and
+publishes the effective full week: Default for normal Profile behavior, or the
+Profile schedule for schedule behavior. Profile pause behavior is rejected for
+external zones. Profile and Mode selection is persisted before publication; a
+provider failure does not roll the selection back. Re-selecting Default, a
+Profile, or a Mode explicitly republishes the effective week when runtime
+publication evidence is `failed` or absent; no background retry is implied.
+The result is the full schedule response.
 
 ## Diagnostics
 

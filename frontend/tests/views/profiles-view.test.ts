@@ -95,6 +95,66 @@ describe("profiles view", () => {
     element.remove();
   });
 
+  it("offers external zones only representable Profile schedule behavior", async () => {
+    const element = new VelairProfilesView();
+    element.workspace = "profiles";
+    element.scheduleWorkspace = true;
+    element.hass = {
+      language: "en",
+      states: {
+        "climate.office": {
+          state: "heat",
+          attributes: { friendly_name: "Office", hvac_modes: ["off", "heat", "cool"] },
+        },
+      },
+    } as never;
+    element.data = {
+      ...data,
+      zones: {
+        "climate.office": {
+          enabled: true,
+          schedule: {},
+          execution: { type: "external", provider: "ramses_cc" },
+        },
+      },
+      external_execution: {
+        systems: [{
+          provider: "ramses_cc",
+          name: "RAMSES",
+          entities: ["climate.office"],
+          capabilities: {
+            can_publish: true,
+            can_import: false,
+            supports_profile_schedules: true,
+            supported_actions: ["set_temperature"],
+            supported_hvac_modes: ["heat"],
+            supported_target_types: ["scalar"],
+            supported_option_fields: [],
+            max_switchpoints_per_day: 6,
+            time_step_minutes: 5,
+            implicit_midnight_change_counts_toward_limit: true,
+          },
+        }],
+        zones: {},
+      },
+      profiles: [{
+        ...(data.profiles ?? [])[0],
+        zones: { "climate.office": { behavior: "normal" } },
+      }],
+    } as unknown as ScheduleResponse;
+    document.body.append(element);
+    await element.updateComplete;
+    await selectFirstProfile(element);
+
+    const behaviorOptions = [...element.shadowRoot?.querySelectorAll(".profile-zone-actions option") ?? []]
+      .map((option) => (option as HTMLOptionElement).value);
+    expect(behaviorOptions).toEqual(["normal", "schedule"]);
+    expect(element.shadowRoot?.textContent).toContain(
+      "External zones support Default, Profile or Mode schedules only",
+    );
+    element.remove();
+  });
+
   it("marks the thermostat and weekday whose atomic Profile draft changed", async () => {
     const profile = {
       key: "workday",

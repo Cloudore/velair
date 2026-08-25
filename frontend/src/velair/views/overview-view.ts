@@ -114,12 +114,15 @@ export function renderSchedulerSummary(host: OverviewViewHost) {
   `;
 }
 
-export function renderOverviewSummary(host: OverviewViewHost, _zoneIds: string[]) {
+export function renderOverviewSummary(host: OverviewViewHost, zoneIds: string[]) {
   if (!host._data) {
     return nothing;
   }
 
   const schedulerState = overviewSchedulerState(host);
+  const externalCount = zoneIds.filter(
+    (entityId) => host._data?.zones[entityId]?.execution?.type === "external",
+  ).length;
   return html`
     <section class="overview-summary">
       <div class=${`overview-status-card status-${schedulerState.state}`}>
@@ -135,6 +138,7 @@ export function renderOverviewSummary(host: OverviewViewHost, _zoneIds: string[]
           <span class="overview-scheduler-detail">${schedulerState.detail}</span>
         </div>
         ${renderPauseProgress(host)}
+        ${externalCount ? html`<small class="overview-scheduler-detail">${host._t("overviewExternalZonesUnaffected", { count: externalCount })}</small>` : nothing}
       </div>
     </section>
   `;
@@ -148,7 +152,8 @@ export function renderOverviewActiveBoosts(host: OverviewViewHost, zoneIds?: str
   const overviewHost = asOverviewDataHost(host);
   const visibleEntities = zoneIds ? new Set(zoneIds) : undefined;
   const activeBoosts = activeOverrideEntityIds(overviewHost).filter(
-    (entityId: string) => !visibleEntities || visibleEntities.has(entityId),
+    (entityId: string) => (!visibleEntities || visibleEntities.has(entityId))
+      && host._data?.zones[entityId]?.execution?.type !== "external",
   );
   return html`
     <section class="overview-boost-panel">
@@ -221,6 +226,7 @@ export function renderOverviewZones(host: OverviewViewHost, zoneIds: string[]) {
 }
 
 const zoneStatePresentation: Record<ZoneRuntimeStatus["state"], { icon: string; key: string }> = {
+  externally_managed: { icon: "mdi:calendar-export", key: "overviewZoneExternal" },
   stopped: { icon: "mdi:stop-circle-outline", key: "overviewZoneAutomationOff" },
   paused: { icon: "mdi:pause-circle", key: "overviewZonePaused" },
   boost: { icon: "mdi:lightning-bolt", key: "overviewZoneBoost" },
@@ -238,6 +244,11 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
     target_when: string;
     until: string;
   };
+  const externallyManaged = host._data?.zones[entityId]?.execution?.type === "external";
+  const displayStatus: ZoneRuntimeStatus & typeof status = externallyManaged
+    && status.state !== "externally_managed"
+    ? { ...status, state: "externally_managed" }
+    : status;
   const climateState = host.hass?.states?.[entityId];
   const climateAvailable = climateState
     && climateState.state !== "off"
@@ -255,16 +266,21 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
     ? formatOverviewRange(host, targetLow, targetHigh, entityId)
     : undefined;
   const appliedTemperature = numericTemperature(status.applied_temperature);
-  const presentation = zoneStatePresentation[status.state];
-  const manualDetail = status.control_mode === "manual"
-    ? manualControlSessionDetail(host, status)
+  const presentation = zoneStatePresentation[displayStatus.state];
+  const manualDetail = displayStatus.control_mode === "manual"
+    ? manualControlSessionDetail(host, displayStatus)
     : undefined;
-  const manualAllowed = status.manual_adjustment_allowed !== false;
+  const manualAllowed = displayStatus.manual_adjustment_allowed !== false;
   const manualUnavailable = manualAllowed
     ? ""
-    : manualAdjustmentUnavailableDetail(host, status.manual_adjustment_unavailable_reason);
+    : manualAdjustmentUnavailableDetail(host, displayStatus.manual_adjustment_unavailable_reason);
   const assist = host._data?.room_sensor_assist?.[entityId];
   const comfort = host._data?.comfort?.[entityId];
+  const externalExecution = host._data?.external_execution?.zones[entityId];
+  const externalProvider = host._data?.external_execution?.systems.find(
+    (system) => system.provider === externalExecution?.provider,
+  );
+  const externalPublication = externalExecution?.publication;
   const assistIsActive = Boolean(assist && (assist.status === "assisting" || assist.status === "holding")
     && hasRoomAssistThermalData(assist));
   const hasStandardDetails = roomTemperature !== undefined
@@ -273,26 +289,45 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
     || (appliedTemperature !== undefined && targetTemperature !== undefined
       && Math.abs(appliedTemperature - targetTemperature) >= 0.05);
   return html`
-    <article class=${`overview-zone-card state-${status.state}`}>
+    <article class=${`overview-zone-card state-${displayStatus.state}`}>
       <div class="overview-zone-card-heading">
         <div class="overview-zone-card-name">
           <strong>${host._friendlyEntityName(entityId)}</strong><span>${entityId}</span>
         </div>
-        ${renderManualControlSelector(
+        ${externallyManaged ? nothing : renderManualControlSelector(
           host,
           entityId,
-          status,
+          displayStatus,
           manualDetail,
           manualAllowed,
           manualUnavailable,
         )}
-        ${renderOverviewStateBadge(host, entityId, status, presentation)}
+        ${renderOverviewStateBadge(host, entityId, displayStatus, presentation)}
         <div class="overview-zone-signals">
           ${renderOverviewZoneProfile(host, entityId)}
-          ${renderRoomAssistSignal(host, assist)}
-          ${renderOverviewComfortSignals(host, comfort)}
+          ${externallyManaged ? nothing : renderRoomAssistSignal(host, assist)}
+          ${externallyManaged ? nothing : renderOverviewComfortSignals(host, comfort)}
         </div>
       </div>
+      ${externallyManaged ? html`
+        <p class="manual-control-reason">${host._t("overviewExternalExecutionDescription")}</p>
+        <p class="manual-control-reason">
+          ${host._t("overviewExternalExecutionProvider", {
+            provider: externalProvider?.name ?? externalExecution?.provider ?? host._t("externalProviderUnavailable"),
+          })}
+        </p>
+        ${externalExecution && !externalExecution.available
+          ? html`<p class="manual-control-reason" role="status">${host._t("overviewExternalProviderUnavailable")}</p>`
+          : nothing}
+        ${externalPublication ? html`
+          <p class="manual-control-reason" aria-live="polite">
+            ${host._t(`externalPublication_${externalPublication.state}` as never)}
+          </p>
+        ` : nothing}
+        ${externalPublication?.error
+          ? html`<p class="manual-control-reason" role="alert">${externalPublication.error}</p>`
+          : nothing}
+      ` : nothing}
       ${assistIsActive || hasStandardDetails ? html`<div class="overview-zone-details">
         ${assistIsActive ? renderRoomAssistThermalFlow(host, entityId, assist!) : html`<div class="overview-zone-metrics">
           ${roomTemperature !== undefined
@@ -404,6 +439,7 @@ function manualAdjustmentUnavailableDetail(
     profile_paused: "manualUnavailableProfilePause",
     zone_paused: "manualUnavailableZonePause",
     already_manual: "manualAdjustmentActive",
+    external_execution: "externalActionsInactive",
   } as const;
   return host._t(keys[reason ?? "unavailable"]);
 }
@@ -440,7 +476,9 @@ function renderOverviewStateBadge(host: OverviewViewHost, entityId: string, stat
     detail = next?.when ? host._t("overviewZoneNextAt", { time: host._formatDateTime(next.when) }) : "";
   }
   const stateLabel = host._t(presentation.key as never);
-  const action = climateHvacAction(asOverviewDataHost(host), entityId);
+  const action = status.state === "externally_managed"
+    ? undefined
+    : climateHvacAction(asOverviewDataHost(host), entityId);
   const actionPresentation = action ? hvacActionPresentation[action] : undefined;
   const activityIcon = action === "idle"
     ? presentation.icon
@@ -855,6 +893,7 @@ export function renderOverviewTimelines(host: OverviewViewHost, zoneIds: string[
             </div>
             <div class="overview-timeline-now-line" aria-label=${host._t("currentTime", { time: marker.label })}></div>
             ${zoneIds.map((entityId: string) => {
+              const zone = host._data?.zones[entityId];
               const schedule = effectiveClimateSchedule(host._data, entityId);
               return renderOverviewTimelineTrack(
                 host,
@@ -884,9 +923,10 @@ export function renderOverviewTimelineTrack(
     : undefined;
   const overviewHost = asOverviewDataHost(host);
   const zone = host._data?.zones[entityId];
-  const override = activeOverrideForEntity(overviewHost, entityId, host._data?.zones[entityId]);
-  const zonePauseOverride = activePauseOverrideForEntity(overviewHost, entityId, zone);
-  const pauseOverride = zonePauseOverride ?? globalTimelinePause(host);
+  const external = zone?.execution?.type === "external";
+  const override = external ? undefined : activeOverrideForEntity(overviewHost, entityId, zone);
+  const zonePauseOverride = external ? undefined : activePauseOverrideForEntity(overviewHost, entityId, zone);
+  const pauseOverride = external ? undefined : zonePauseOverride ?? globalTimelinePause(host);
   const manualZonePause = Boolean(
     zonePauseOverride && host._data?.zone_runtime?.[entityId]?.control_mode === "manual",
   );
@@ -934,9 +974,10 @@ export function renderOverviewTimelineTrack(
 export function renderOverviewTimelineName(host: OverviewViewHost, entityId: string) {
   const overviewHost = asOverviewDataHost(host);
   const zone = host._data?.zones[entityId];
-  const boostOverride = activeOverrideForEntity(overviewHost, entityId, zone);
-  const zonePauseOverride = activePauseOverrideForEntity(overviewHost, entityId, zone);
-  const pauseOverride = zonePauseOverride ?? globalTimelinePause(host);
+  const external = zone?.execution?.type === "external";
+  const boostOverride = external ? undefined : activeOverrideForEntity(overviewHost, entityId, zone);
+  const zonePauseOverride = external ? undefined : activePauseOverrideForEntity(overviewHost, entityId, zone);
+  const pauseOverride = external ? undefined : zonePauseOverride ?? globalTimelinePause(host);
   const manualZonePause = Boolean(
     zonePauseOverride && host._data?.zone_runtime?.[entityId]?.control_mode === "manual",
   );
