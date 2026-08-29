@@ -215,6 +215,13 @@ class ExternalChangePolicyData(TypedDict):
     duration_minutes: int
 
 
+class ZoneExecutionData(TypedDict):
+    """Persisted non-default execution ownership for one zone."""
+
+    type: Literal["external"]
+    provider: str
+
+
 class PreconditioningObservation(TypedDict, total=False):
     """One local adaptive preconditioning learning sample."""
 
@@ -306,6 +313,7 @@ class ZoneData(TypedDict):
     preconditioning: PreconditioningData
     comfort: ComfortData
     external_change_policy: ExternalChangePolicyData
+    execution: NotRequired[ZoneExecutionData]
 
 
 class ScheduleTemplateData(TypedDict):
@@ -708,6 +716,9 @@ def normalize_schedule_data(
                 zone_data.get("external_change_policy")
             ),
         }
+        execution = normalize_zone_execution(zone_data.get("execution"))
+        if execution is not None:
+            zones[entity_id]["execution"] = execution
 
     for entity_id in climate_entities:
         zones.setdefault(
@@ -825,6 +836,19 @@ def normalize_schedule_data(
         "profiles": profiles,
         "modes": modes,
     }
+
+
+def normalize_zone_execution(raw_execution: Any) -> ZoneExecutionData | None:
+    """Normalize optional external ownership; local remains the implicit default."""
+    if not isinstance(raw_execution, dict):
+        return None
+    provider = raw_execution.get("provider")
+    if raw_execution.get("type") != "external" or not isinstance(provider, str):
+        return None
+    provider = provider.strip()
+    if not provider or len(provider) > 64 or not re.fullmatch(r"[a-z0-9_]+", provider):
+        return None
+    return {"type": "external", "provider": provider}
 
 
 def serialize_schedule_data(data: SchedulerData) -> dict[str, Any]:

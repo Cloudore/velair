@@ -6,7 +6,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { VelairViewHost } from "../../src/velair/host-types";
 import { VelairCard } from "../../src/velair/components/velair-card-element";
 import { timelineBlocksFromDrafts } from "../../src/velair/domain/timeline";
-import { renderSchedulesView, renderTemplatePanel, renderTimeline } from "../../src/velair/views/schedule-view";
+import { cardStyles } from "../../src/velair/styles/card-styles";
+import {
+  renderScheduleEditor,
+  renderSchedulesView,
+  renderTemplatePanel,
+  renderTimeline,
+} from "../../src/velair/views/schedule-view";
 
 const TEST_SCHEDULE_CARD_TAG = "test-velair-schedule-workspace-card";
 if (!customElements.get(TEST_SCHEDULE_CARD_TAG)) {
@@ -28,6 +34,118 @@ function host() {
 }
 
 describe("schedule view", () => {
+  it("applies Default clone presets without cloning and excludes the source day", () => {
+    const element = document.createElement(TEST_SCHEDULE_CARD_TAG) as VelairCard;
+    const clone = vi.fn();
+    const internal = element as unknown as {
+      _copySelectedDay: typeof clone;
+      _copyTargets: Set<string>;
+      _selectedWeekday: string;
+      _setCopyTargetPreset: (preset: "weekdays" | "weekend" | "all" | "clear") => void;
+    };
+    internal._copySelectedDay = clone;
+    internal._selectedWeekday = "saturday";
+
+    internal._setCopyTargetPreset("weekend");
+    expect([...internal._copyTargets]).toEqual(["sunday"]);
+    internal._setCopyTargetPreset("all");
+    expect(internal._copyTargets.has("saturday")).toBe(false);
+    expect(internal._copyTargets.size).toBe(6);
+    internal._setCopyTargetPreset("clear");
+    expect(internal._copyTargets.size).toBe(0);
+    expect(clone).not.toHaveBeenCalled();
+  });
+
+  it("shows controller switchpoint usage only in an externally executed Default schedule", () => {
+    const container = document.createElement("div");
+    const viewHost = {
+      _addBlock: vi.fn(),
+      _copySelectedDay: vi.fn(),
+      _copyTargets: new Set<string>(),
+      _copying: false,
+      _currentTimelineNow: () => new Date(2026, 7, 12, 12, 0),
+      _data: {
+        configured_entities: ["climate.office"],
+        external_execution: {
+          systems: [{
+            provider: "ramses_cc",
+            capabilities: {
+              max_switchpoints_per_day: 6,
+              implicit_midnight_change_counts_toward_limit: true,
+            },
+          }],
+        },
+      },
+      _dirty: false,
+      _draftBlocks: [],
+      _formatScheduleTime: (value: string) => value,
+      _handleTimelineDragEnd: vi.fn(),
+      _handleTimelineDragOver: vi.fn(),
+      _handleTimelineDrop: vi.fn(),
+      _handleTimelineResizeStart: vi.fn(),
+      _hasDraftValidationError: () => false,
+      _inputValue: () => "",
+      _orderedWeekdays: () => ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+      _saveSelectedDay: vi.fn(),
+      _saveTemplate: vi.fn(),
+      _scheduleTemplates: () => [],
+      _selectedEntity: "climate.office",
+      _selectedTemplateKey: "",
+      _selectedWeekday: "monday",
+      _selectScheduleTemplate: vi.fn(),
+      _selectWeekday: vi.fn(),
+      _setCopyTargetPreset: vi.fn(),
+      _shortWeekdayName: (weekday: string) => weekday.slice(0, 3),
+      _t: (key: string, values?: Record<string, string | number>) => {
+        if (key === "externalSwitchpointUsage") return `${values?.used} of ${values?.max} controller switchpoints`;
+        if (key === "externalSwitchpointBreakdown") return `${values?.count} scheduled blocks`;
+        return key;
+      },
+      _templateLabel: () => "",
+      _timelineBlocks: () => [],
+      _toggleCopyTarget: vi.fn(),
+      _visibleZoneIds: () => ["climate.office"],
+      _weekdayName: (weekday: string) => weekday,
+      _zoneTargets: new Set<string>(),
+    } as unknown as VelairViewHost;
+    const externalZone = {
+      enabled: true,
+      schedule: {},
+      execution: { type: "external", provider: "ramses_cc" },
+    } as const;
+
+    render(renderScheduleEditor(viewHost, "climate.office", externalZone), container);
+    const externalNotice = container.querySelector(".external-execution-notice");
+    expect(externalNotice).not.toBeNull();
+    expect(externalNotice?.getAttribute("role")).toBe("status");
+    expect(externalNotice?.querySelector("ha-icon")?.getAttribute("icon")).toBe("mdi:information-outline");
+    expect(container.querySelector(".external-switchpoint-usage")?.textContent)
+      .toContain("1 of 6 controller switchpoints");
+    const presets = container.querySelector(".copy-presets")!;
+    const dayTargets = container.querySelector(".copy-targets")!;
+    expect(presets.compareDocumentPosition(dayTargets) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+
+    render(renderScheduleEditor(viewHost, "climate.office", {
+      enabled: true,
+      schedule: {},
+    }), container);
+    expect(container.querySelector(".external-switchpoint-usage")).toBeNull();
+  });
+
+  it("balances external editor typography and scales additive clone presets toward day targets", () => {
+    const cssText = cardStyles.map((style) => style.cssText).join("\n");
+
+    expect(cssText).toMatch(/\.schedule-editor-badges \.pill\s*\{[^}]*font-size:\s*12px[^}]*line-height:\s*1\.2/);
+    expect(cssText).toMatch(/\.external-execution-notice\s*\{[^}]*background:[^}]*var\(--info-color[^}]*border-color:[^}]*var\(--info-color[^}]*font-size:\s*12px[^}]*line-height:\s*1\.4/);
+    expect(cssText).toMatch(/\.external-execution-notice ha-icon\s*\{[^}]*color:\s*var\(--info-color/);
+    expect(cssText).toMatch(/\.copy-preset-button\s*\{[^}]*font-size:\s*13px[^}]*min-height:\s*34px/);
+    expect(cssText).toMatch(/\.copy-preset-button ha-icon\s*\{[^}]*--mdc-icon-size:\s*17px/);
+    expect(cssText).toMatch(/\.copy-preset-clear\.actionable\s*\{[^}]*background:[^}]*var\(--primary-color\)[^}]*border-color/);
+    expect(cssText).toMatch(/\.copy-targets:not\(\.wide\) \.check-target\s*\{[^}]*padding:\s*8px 6px/);
+    expect(cssText).toMatch(/\.copy-targets:not\(\.wide\) \.check-target input\s*\{[^}]*height:\s*16px/);
+  });
+
   it("derives the initial Schedules day from the local date", () => {
     const element = document.createElement(TEST_SCHEDULE_CARD_TAG) as VelairCard;
     element.setConfig({ view: "schedules" });

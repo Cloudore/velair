@@ -235,6 +235,42 @@ Services with `entity_id` must reject climates that were not selected during set
     and orphan profile mappings are rejected. Confirm portable V4 data without
     Modes remains importable.
 
+## External Schedule Execution Smoke Test
+
+Use a test Home Assistant instance with simulated provider services unless real
+hardware testing was intentionally arranged. Do not use private production
+entity names or data in screenshots.
+
+1. Start without a supported provider. Confirm Settings offers no external
+   execution choice and local zones retain the normal Velair controls.
+2. Register the simulated `ramses_cc.set_zone_schedule` service and a compatible
+   scalar heating climate. Confirm the provider appears only for eligible zones
+   and its conditions are listed once below all zone selectors.
+3. Select external execution and capture the service call. Confirm ownership is
+   saved before one complete seven-day schedule is published, with no direct
+   `climate.*` service call.
+4. Select Default, activate a Profile schedule, and activate a Mode containing
+   that Profile. Confirm each explicit selection publishes the corresponding
+   effective full week. A Profile using Default behavior must publish the
+   zone's Default week; Pause behavior must be rejected for the external zone.
+5. Edit the active Profile and confirm the updated effective week is published.
+   Confirm unrelated local zones continue normally and are not blocked by the
+   external provider call.
+6. Verify the 5-minute grid, scalar heating target, six-switchpoint daily limit,
+   and implicit midnight switchpoint validation. Confirm turn-off, ranges,
+   cooling, and climate option fields are rejected before publication.
+7. Exercise Publishing, Published, and Failed. Confirm Published appears only
+   after the provider service returns without error, Failed does not restore
+   local ownership, and no polling, readback, delay, or automatic retry occurs.
+8. While external ownership is active, attempt Boost, pause/resume, Manual
+   adjustment, Room Assist, and Adaptive Preconditioning. Confirm every path is
+   unavailable and no `climate.*` action is issued.
+9. Return the zone to local execution. Confirm external publication state is
+   cleared and normal local scheduling resumes only after the ownership change.
+10. Repeat Settings and Overview checks at desktop, tablet, and mobile widths in
+    English and Spanish. Confirm one controller used by several zones is still
+    rendered once and that publication wording never claims hardware delivery.
+
 ## Scheduler Smoke Test
 
 1. Create one block for today a few minutes in the future.

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 from zoneinfo import ZoneInfo
 
 from .helpers import (
@@ -43,6 +43,70 @@ from .helpers import (
     normalize_preconditioning_data,
     scheduler_module,
 )
+from custom_components.velair.execution import ExecutionAuthority, ExternalExecutionError
+from custom_components.velair.climate_delivery import ClimateDeliveryCoordinator
+
+
+class _FakeExternalExecution:
+    """Minimal provider-neutral ownership boundary for scheduler races."""
+
+    def __init__(self, data, async_save, sequence=None, publish_release=None):
+        self.data = data
+        self.async_save = async_save
+        self.authority = ExecutionAuthority(data)
+        self.sequence = sequence if sequence is not None else []
+        self.publish_release = publish_release
+        self.publish_started = asyncio.Event()
+        self.published_schedules = []
+        self.publication_states = {}
+        self.update_callback = None
+
+    def set_update_callback(self, callback):
+        self.update_callback = callback
+
+    def ensure_provider_available(self, entity_id, provider):
+        return None
+
+    async def async_set_execution(
+        self, entity_id, provider, *, schedule=None, async_after_persist=None
+    ):
+        zone = self.data["zones"][entity_id]
+        if provider is None:
+            zone.pop("execution", None)
+            await self.async_save()
+            return
+        previous_execution = deepcopy(zone.get("execution"))
+        zone["execution"] = {"type": "external", "provider": provider}
+        try:
+            await self.async_save()
+        except (asyncio.CancelledError, Exception):
+            if previous_execution is None:
+                zone.pop("execution", None)
+            else:
+                zone["execution"] = previous_execution
+            raise
+        self.sequence.append("ownership_persisted")
+        if async_after_persist is not None:
+            await async_after_persist()
+        self.publish_started.set()
+        if self.publish_release is not None:
+            await self.publish_release.wait()
+        self.published_schedules.append(deepcopy(schedule))
+        self.sequence.append("schedule_published")
+
+    def ensure_schedule_supported(self, entity_id, schedule, provider=None):
+        return None
+
+    def publication_state(self, entity_id):
+        return self.publication_states.get(entity_id)
+
+    def needs_publication(self, entity_id):
+        return self.publication_state(entity_id) in (None, "failed")
+
+    async def async_schedule_saved(self, entity_id, schedule):
+        if self.authority.is_external(entity_id):
+            self.published_schedules.append(deepcopy(schedule))
+            self.publication_states[entity_id] = "published"
 
 
 def _preconditioning_sample(
@@ -2773,6 +2837,1068 @@ class VelairSchedulerSavedScheduleTest(unittest.IsolatedAsyncioTestCase):
         await self.scheduler.async_start()
 
         self.assertEqual(self.climate.calls, [])
+
+
+class VelairSchedulerExternalOwnershipRaceTest(unittest.IsolatedAsyncioTestCase):
+    """Verify Default mutations and ownership handoff cannot overlap."""
+
+    def setUp(self) -> None:
+        self.entity_id = "climate.salon"
+        self.hass = FakeHass()
+        self.hass.states[self.entity_id] = SimpleNamespace(
+            state="heat", attributes={"current_temperature": 20}
+        )
+        self.climate = FakeClimateManager()
+        self.data = normalize_schedule_data(None, [self.entity_id])
+        self.data["zones"][self.entity_id]["schedule"]["tuesday"] = [
+            {
+                "start": "17:00",
+                "action": ACTION_SET_TEMPERATURE,
+                "temperature": 20,
+                "hvac_mode": "heat",
+            }
+        ]
+
+    def _active_room_assist_state(self):
+        return scheduler_module._RoomSensorAssistState(
+            entity_id=self.entity_id,
+            target_temperature=20,
+            applied_temperature=21,
+            applied_offset=1,
+            direction="heat",
+            hvac_mode="heat",
+            room_temperature_entity_id="sensor.salon_temperature",
+            weekday="tuesday",
+            start="17:00",
+        )
+
+    async def test_handoff_waits_for_inflight_local_delivery(self) -> None:
+        sequence = []
+        local_started = asyncio.Event()
+        local_release = asyncio.Event()
+
+        async def save():
+            return None
+
+        async def blocked_local(*args, **kwargs):
+            sequence.append("local_started")
+            local_started.set()
+            await local_release.wait()
+            sequence.append("local_finished")
+
+        self.climate.async_set_temperature = blocked_local
+        external = _FakeExternalExecution(self.data, save, sequence)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        local_task = asyncio.create_task(
+            scheduler.async_apply_current_schedule(self.entity_id)
+        )
+        await local_started.wait()
+        handoff_task = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, "provider")
+        )
+        await asyncio.sleep(0)
+
+        self.assertNotIn("execution", self.data["zones"][self.entity_id])
+        self.assertEqual([], external.published_schedules)
+        local_release.set()
+        await local_task
+        await handoff_task
+
+        self.assertEqual(
+            ["local_started", "local_finished", "ownership_persisted", "schedule_published"],
+            sequence,
+        )
+        self.assertTrue(external.authority.is_external(self.entity_id))
+        with self.assertRaises(ExternalExecutionError):
+            await scheduler.async_apply_current_schedule(self.entity_id)
+        self.assertEqual(1, sequence.count("local_started"))
+
+    async def test_profile_activation_queued_behind_local_to_external_handoff_publishes_profile_last(self) -> None:
+        local_started = asyncio.Event()
+        local_release = asyncio.Event()
+        local_calls = []
+
+        async def save():
+            return None
+
+        async def blocked_local(*args, **kwargs):
+            local_calls.append((args, kwargs))
+            local_started.set()
+            await local_release.wait()
+
+        self.climate.async_set_temperature = blocked_local
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        profile_schedule = deepcopy(
+            self.data["zones"][self.entity_id]["schedule"]
+        )
+        profile_schedule["tuesday"][0]["temperature"] = 18
+        await scheduler.async_set_profile({
+            "key": "away",
+            "name": "Away",
+            "color": "#336699",
+            "zones": {
+                self.entity_id: {
+                    "behavior": "schedule",
+                    "schedule": profile_schedule,
+                }
+            },
+        })
+
+        delivery = asyncio.create_task(
+            scheduler.async_apply_current_schedule(self.entity_id)
+        )
+        await local_started.wait()
+        handoff = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, "provider")
+        )
+        await asyncio.sleep(0)
+        activation = asyncio.create_task(scheduler.async_activate_profile("away"))
+        await asyncio.sleep(0)
+
+        self.assertEqual([], scheduler.active_profile_ids)
+        self.assertFalse(handoff.done())
+        self.assertFalse(activation.done())
+        local_release.set()
+        await delivery
+        await handoff
+        await activation
+
+        self.assertEqual(2, len(external.published_schedules))
+        self.assertEqual(
+            20,
+            external.published_schedules[0]["tuesday"][0]["temperature"],
+        )
+        self.assertEqual(
+            18,
+            external.published_schedules[-1]["tuesday"][0]["temperature"],
+        )
+        self.assertEqual(["away"], scheduler.active_profile_ids)
+        self.assertEqual(1, len(local_calls))
+        self.assertEqual("completed", scheduler.operation_status["state"])
+        self.assertEqual(0, scheduler.operation_status["completed"])
+        self.assertEqual(0, scheduler.operation_status["total"])
+
+    async def test_cancelled_waiting_handoff_does_not_invalidate_local_delivery(self) -> None:
+        local_started = asyncio.Event()
+        local_release = asyncio.Event()
+        outcomes = []
+
+        async def save():
+            return None
+
+        async def blocked_local(*args, **kwargs):
+            local_started.set()
+            await local_release.wait()
+
+        self.climate.async_set_temperature = blocked_local
+        delivery = ClimateDeliveryCoordinator(
+            self.hass,
+            observer=lambda entity_id, outcome, details: outcomes.append(outcome),
+        )
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            climate_delivery=delivery,
+            external_execution=external,
+        )
+        local_task = asyncio.create_task(
+            scheduler.async_apply_current_schedule(self.entity_id)
+        )
+        await local_started.wait()
+        handoff_task = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, "provider")
+        )
+        await asyncio.sleep(0)
+
+        handoff_task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await handoff_task
+        local_release.set()
+
+        self.assertTrue(await local_task)
+        self.assertEqual(["success"], outcomes)
+        self.assertNotIn("execution", self.data["zones"][self.entity_id])
+        self.assertFalse(external.authority.is_external(self.entity_id))
+        self.assertEqual([], external.published_schedules)
+
+    async def test_failed_save_rolls_back_before_queued_handoff_publishes(self) -> None:
+        first_save_started = asyncio.Event()
+        release_first_save = asyncio.Event()
+        save_count = 0
+
+        async def save():
+            nonlocal save_count
+            save_count += 1
+            if save_count == 1:
+                first_save_started.set()
+                await release_first_save.wait()
+                raise RuntimeError("storage failed")
+
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        mutation = asyncio.create_task(
+            scheduler.async_set_daily_schedule(
+                self.entity_id,
+                "tuesday",
+                [{
+                    "start": "17:00",
+                    "action": ACTION_SET_TEMPERATURE,
+                    "temperature": 25,
+                    "hvac_mode": "heat",
+                }],
+            )
+        )
+        await first_save_started.wait()
+        handoff = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, "provider")
+        )
+        await asyncio.sleep(0)
+        self.assertEqual([], external.published_schedules)
+        release_first_save.set()
+        with self.assertRaisesRegex(RuntimeError, "storage failed"):
+            await mutation
+        await handoff
+
+        published = external.published_schedules[-1]["tuesday"][0]
+        self.assertEqual(20, published["temperature"])
+        self.assertEqual(20, self.data["zones"][self.entity_id]["schedule"]["tuesday"][0]["temperature"])
+
+    async def test_cancelled_publication_does_not_revive_local_runtime(self) -> None:
+        publish_release = asyncio.Event()
+
+        async def save():
+            return None
+
+        zone = self.data["zones"][self.entity_id]
+        zone["override"] = {"type": "boost", "temperature": 23}
+        zone["pauses"] = [{"action": "turn_off"}]
+        external = _FakeExternalExecution(
+            self.data, save, publish_release=publish_release
+        )
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        task = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, "provider")
+        )
+        await external.publish_started.wait()
+        task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+
+        self.assertTrue(external.authority.is_external(self.entity_id))
+        self.assertIsNone(zone["override"])
+        self.assertEqual([], zone["pauses"])
+        self.assertIn(self.entity_id, scheduler._room_sensor_assist_suppressed)
+
+    async def test_failed_ownership_save_preserves_room_assist_runtime_and_listener(self) -> None:
+        assist_state = self._active_room_assist_state()
+        assist_unsub = Mock()
+
+        async def fail_save():
+            raise RuntimeError("storage failed")
+
+        zone = self.data["zones"][self.entity_id]
+        zone["override"] = {"type": "boost", "temperature": 23}
+        zone["pauses"] = [{"action": "turn_off"}]
+        external = _FakeExternalExecution(self.data, fail_save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            fail_save,
+            external_execution=external,
+        )
+        scheduler._room_sensor_assist_states[self.entity_id] = assist_state
+        scheduler._room_sensor_assist_entities = (
+            self.entity_id,
+            "sensor.salon_temperature",
+        )
+        scheduler._unsub_room_sensor_assist_listener = assist_unsub
+        scheduler.async_schedule_next_event = Mock()
+
+        with patch.object(scheduler_module, "async_dispatcher_send") as dispatch:
+            with self.assertRaisesRegex(RuntimeError, "storage failed"):
+                await scheduler.async_set_zone_execution(self.entity_id, "provider")
+
+        self.assertIs(
+            assist_state, scheduler._room_sensor_assist_states[self.entity_id]
+        )
+        assist_unsub.assert_not_called()
+        self.assertIs(scheduler._unsub_room_sensor_assist_listener, assist_unsub)
+        self.assertFalse(external.authority.is_external(self.entity_id))
+        self.assertEqual({"type": "boost", "temperature": 23}, zone["override"])
+        self.assertEqual([{"action": "turn_off"}], zone["pauses"])
+        self.assertNotIn(self.entity_id, scheduler._room_sensor_assist_suppressed)
+        scheduler.async_schedule_next_event.assert_not_called()
+        dispatch.assert_not_called()
+
+    async def test_cancel_after_commit_finishes_room_assist_cleanup(self) -> None:
+        cleanup_started = asyncio.Event()
+        never_release = asyncio.Event()
+        assist_unsub = Mock()
+
+        async def save():
+            return None
+
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        scheduler._room_sensor_assist_states[
+            self.entity_id
+        ] = self._active_room_assist_state()
+        scheduler._room_sensor_assist_entities = (
+            self.entity_id,
+            "sensor.salon_temperature",
+        )
+        scheduler._unsub_room_sensor_assist_listener = assist_unsub
+        scheduler.async_schedule_next_event = Mock()
+        original_clear = scheduler._async_clear_room_sensor_assist
+        attempts = 0
+
+        async def blocked_first_clear(*args, **kwargs):
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                cleanup_started.set()
+                await never_release.wait()
+            await original_clear(*args, **kwargs)
+
+        scheduler._async_clear_room_sensor_assist = blocked_first_clear
+        with patch.object(scheduler_module, "async_dispatcher_send") as dispatch:
+            task = asyncio.create_task(
+                scheduler.async_set_zone_execution(self.entity_id, "provider")
+            )
+            await cleanup_started.wait()
+
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+
+        self.assertEqual(2, attempts)
+        self.assertTrue(external.authority.is_external(self.entity_id))
+        self.assertNotIn(self.entity_id, scheduler._room_sensor_assist_states)
+        self.assertIsNone(scheduler._unsub_room_sensor_assist_listener)
+        assist_unsub.assert_called_once_with()
+        self.assertEqual([], external.published_schedules)
+        scheduler.async_schedule_next_event.assert_called_once_with()
+        dispatch.assert_called_once()
+
+    async def test_external_finalize_skips_all_local_reconciliation(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        scheduler._async_clear_room_sensor_assist = AsyncMock()
+        scheduler.async_apply_current_schedule = AsyncMock()
+
+        await scheduler._async_finalize_schedule_mutation(
+            self.entity_id, None, NOW, reason="schedule_changed"
+        )
+
+        scheduler._async_clear_room_sensor_assist.assert_not_awaited()
+        scheduler.async_apply_current_schedule.assert_not_awaited()
+        self.assertEqual([], self.climate.calls)
+
+    async def test_portable_zone_import_waits_for_default_save_lock(self) -> None:
+        first_save_started = asyncio.Event()
+        release_first_save = asyncio.Event()
+        save_count = 0
+
+        async def save():
+            nonlocal save_count
+            save_count += 1
+            if save_count == 1:
+                first_save_started.set()
+                await release_first_save.wait()
+
+        scheduler = VelairScheduler(self.hass, self.data, self.climate, save)
+        mutation = asyncio.create_task(
+            scheduler.async_set_daily_schedule(
+                self.entity_id,
+                "tuesday",
+                [{"start": "17:00", "action": ACTION_SET_TEMPERATURE, "temperature": 21, "hvac_mode": "heat"}],
+            )
+        )
+        await first_save_started.wait()
+        imported = deepcopy(self.data["zones"])
+        imported[self.entity_id]["schedule"]["tuesday"][0]["temperature"] = 24
+        import_task = asyncio.create_task(
+            scheduler.async_replace_portable_data(zones=imported)
+        )
+        await asyncio.sleep(0)
+        self.assertFalse(import_task.done())
+        release_first_save.set()
+        await mutation
+        await import_task
+        self.assertEqual(
+            24,
+            self.data["zones"][self.entity_id]["schedule"]["tuesday"][0]["temperature"],
+        )
+
+    async def test_profile_progress_excludes_external_zones(self) -> None:
+        external_entity = "climate.external"
+        self.data["zones"][external_entity] = normalize_schedule_data(
+            None, [external_entity]
+        )["zones"][external_entity]
+        self.data["zones"][external_entity]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        self.hass.states[external_entity] = SimpleNamespace(
+            state="heat", attributes={"current_temperature": 20}
+        )
+
+        async def save():
+            return None
+
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        await scheduler.async_set_profile({
+            "key": "mixed",
+            "name": "Mixed",
+            "color": "#336699",
+            "zones": {
+                self.entity_id: {"behavior": "normal"},
+                external_entity: {"behavior": "normal"},
+            },
+        })
+        await scheduler.async_activate_profile("mixed")
+
+        self.assertEqual(1, scheduler.operation_status["total"])
+        self.assertEqual(1, scheduler.operation_status["completed"])
+
+    async def test_external_profile_and_mode_publish_effective_week_without_climate_calls(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        default_schedule = deepcopy(self.data["zones"][self.entity_id]["schedule"])
+        profile_schedule = empty_week_schedule()
+        profile_schedule["tuesday"] = [
+            {
+                "start": "17:00",
+                "action": ACTION_SET_TEMPERATURE,
+                "temperature": 23,
+                "hvac_mode": "heat",
+            }
+        ]
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        await scheduler.async_set_profile({
+            "key": "away",
+            "name": "Away",
+            "color": "#336699",
+            "zones": {
+                self.entity_id: {
+                    "behavior": "schedule",
+                    "schedule": profile_schedule,
+                }
+            },
+        })
+        await scheduler.async_set_velair_mode({
+            "key": "away-mode", "name": "Away", "profile_ids": ["away"]
+        })
+
+        await scheduler.async_select_velair_mode("away-mode")
+
+        self.assertEqual(23, external.published_schedules[-1]["tuesday"][0]["temperature"])
+        self.assertEqual([], self.climate.calls)
+
+        await scheduler.async_deactivate_profile()
+
+        self.assertEqual(default_schedule, external.published_schedules[-1])
+        self.assertEqual([], self.climate.calls)
+
+    async def test_editing_active_external_profile_republishes_new_week(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+
+        def profile(temperature):
+            schedule = empty_week_schedule()
+            schedule["tuesday"] = [{
+                "start": "17:00",
+                "action": ACTION_SET_TEMPERATURE,
+                "temperature": temperature,
+                "hvac_mode": "heat",
+            }]
+            return {
+                "key": "away", "name": "Away", "color": "#336699",
+                "zones": {self.entity_id: {"behavior": "schedule", "schedule": schedule}},
+            }
+
+        await scheduler.async_set_profile(profile(20))
+        await scheduler.async_activate_profile("away")
+        external.published_schedules.clear()
+
+        await scheduler.async_set_profile(profile(21))
+
+        self.assertEqual(21, external.published_schedules[-1]["tuesday"][0]["temperature"])
+        self.assertEqual([], self.climate.calls)
+
+    async def test_editing_only_future_external_profile_block_republishes_full_week(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+
+        def profile(wednesday_temperature):
+            schedule = empty_week_schedule()
+            schedule["tuesday"] = [{
+                "start": "17:00", "action": ACTION_SET_TEMPERATURE,
+                "temperature": 20, "hvac_mode": "heat",
+            }]
+            schedule["wednesday"] = [{
+                "start": "08:00", "action": ACTION_SET_TEMPERATURE,
+                "temperature": wednesday_temperature, "hvac_mode": "heat",
+            }]
+            return {
+                "key": "away", "name": "Away", "color": "#336699",
+                "zones": {self.entity_id: {"behavior": "schedule", "schedule": schedule}},
+            }
+
+        await scheduler.async_set_profile(profile(18))
+        await scheduler.async_activate_profile("away")
+        external.published_schedules.clear()
+
+        await scheduler.async_set_profile(profile(19))
+
+        self.assertEqual(1, len(external.published_schedules))
+        self.assertEqual(19, external.published_schedules[0]["wednesday"][0]["temperature"])
+
+    async def test_profile_activation_does_not_expose_selection_before_zone_lock(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        schedule = empty_week_schedule()
+        schedule["tuesday"] = [{
+            "start": "00:00", "action": ACTION_SET_TEMPERATURE,
+            "temperature": 19, "hvac_mode": "heat",
+        }]
+        await scheduler.async_set_profile({
+            "key": "away", "name": "Away", "color": "#336699",
+            "zones": {self.entity_id: {"behavior": "schedule", "schedule": schedule}},
+        })
+        lock = scheduler._zone_override_lock(self.entity_id)
+        await lock.acquire()
+        try:
+            activation = asyncio.create_task(scheduler.async_activate_profile("away"))
+            await asyncio.sleep(0)
+            self.assertEqual([], scheduler.active_profile_ids)
+            self.assertFalse(activation.done())
+        finally:
+            lock.release()
+        await activation
+        self.assertEqual(["away"], scheduler.active_profile_ids)
+
+    async def test_failed_profile_save_rolls_back_before_external_to_local_handoff(self) -> None:
+        save_started = asyncio.Event()
+        release_save = asyncio.Event()
+        save_count = 0
+
+        async def save():
+            nonlocal save_count
+            save_count += 1
+            if save_count == 2:
+                save_started.set()
+                await release_save.wait()
+                raise RuntimeError("storage failed")
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        schedule = empty_week_schedule()
+        schedule["tuesday"] = [{
+            "start": "00:00", "action": ACTION_SET_TEMPERATURE,
+            "temperature": 19, "hvac_mode": "heat",
+        }]
+        await scheduler.async_set_profile({
+            "key": "away", "name": "Away", "color": "#336699",
+            "zones": {self.entity_id: {"behavior": "schedule", "schedule": schedule}},
+        })
+
+        activation = asyncio.create_task(scheduler.async_activate_profile("away"))
+        await save_started.wait()
+        handoff = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, None)
+        )
+        await asyncio.sleep(0)
+        self.assertFalse(handoff.done())
+        release_save.set()
+        with self.assertRaisesRegex(RuntimeError, "storage failed"):
+            await activation
+        await handoff
+
+        self.assertEqual([], scheduler.active_profile_ids)
+        self.assertFalse(external.authority.is_external(self.entity_id))
+        self.assertEqual([], external.published_schedules)
+
+    async def test_cancelled_profile_save_rolls_back_without_publication(self) -> None:
+        save_started = asyncio.Event()
+        never_release = asyncio.Event()
+        save_count = 0
+
+        async def save():
+            nonlocal save_count
+            save_count += 1
+            if save_count == 2:
+                save_started.set()
+                await never_release.wait()
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        scheduler._async_fire_profile_changed = Mock()
+        schedule = deepcopy(self.data["zones"][self.entity_id]["schedule"])
+        schedule["tuesday"][0]["temperature"] = 19
+        await scheduler.async_set_profile({
+            "key": "away", "name": "Away", "color": "#336699",
+            "zones": {
+                self.entity_id: {"behavior": "schedule", "schedule": schedule}
+            },
+        })
+        expected_data = deepcopy(self.data)
+
+        activation = asyncio.create_task(scheduler.async_activate_profile("away"))
+        await save_started.wait()
+        activation.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await activation
+
+        self.assertEqual([], scheduler.active_profile_ids)
+        self.assertIsNone(scheduler.active_mode_id)
+        self.assertEqual(expected_data, self.data)
+        self.assertEqual([], external.published_schedules)
+        scheduler._async_fire_profile_changed.assert_not_called()
+
+    async def test_slow_external_publication_does_not_block_unrelated_local_boost(self) -> None:
+        local_entity = "climate.local"
+        self.data["zones"][local_entity] = normalize_schedule_data(
+            None, [local_entity]
+        )["zones"][local_entity]
+        self.hass.states[local_entity] = SimpleNamespace(
+            state="heat", attributes={"current_temperature": 20}
+        )
+        self.climate.snapshots[local_entity] = {
+            "state": "heat", "temperature": 20
+        }
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        publish_release = asyncio.Event()
+
+        class BlockedExternal(_FakeExternalExecution):
+            async def async_schedule_saved(inner_self, entity_id, schedule):
+                inner_self.publish_started.set()
+                await publish_release.wait()
+                await super().async_schedule_saved(entity_id, schedule)
+
+        async def save():
+            return None
+
+        external = BlockedExternal(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        schedule = deepcopy(self.data["zones"][self.entity_id]["schedule"])
+        schedule["tuesday"][0]["temperature"] = 19
+        await scheduler.async_set_profile({
+            "key": "away", "name": "Away", "color": "#336699",
+            "zones": {
+                self.entity_id: {"behavior": "schedule", "schedule": schedule}
+            },
+        })
+
+        activation = asyncio.create_task(scheduler.async_activate_profile("away"))
+        await external.publish_started.wait()
+        boost = asyncio.create_task(scheduler.async_set_zone_boost(
+            local_entity, 22, "2027-05-19T20:00:00+00:00", "heat"
+        ))
+        await asyncio.wait_for(boost, timeout=0.5)
+        self.assertFalse(activation.done())
+        publish_release.set()
+        await activation
+
+    async def test_explicit_identical_selection_republishes_failed_external_week(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        identical_schedule = deepcopy(
+            self.data["zones"][self.entity_id]["schedule"]
+        )
+        await scheduler.async_set_profile({
+            "key": "same", "name": "Same", "color": "#336699",
+            "zones": {
+                self.entity_id: {
+                    "behavior": "schedule", "schedule": identical_schedule
+                }
+            },
+        })
+        await scheduler.async_activate_profile("same")
+        external.published_schedules.clear()
+        external.publication_states[self.entity_id] = "failed"
+
+        await scheduler.async_activate_profile("same")
+
+        self.assertEqual([identical_schedule], external.published_schedules)
+        external.published_schedules.clear()
+        external.publication_states[self.entity_id] = "failed"
+
+        await scheduler.async_deactivate_profile()
+
+        self.assertEqual([identical_schedule], external.published_schedules)
+
+    async def test_restarted_explicit_identical_selection_publishes_null_state(self) -> None:
+        async def save():
+            return None
+
+        identical_schedule = deepcopy(
+            self.data["zones"][self.entity_id]["schedule"]
+        )
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        self.data["profiles"] = [{
+            "key": "same", "name": "Same", "color": "#336699",
+            "description": "", "icon": "mdi:calendar-star",
+            "zones": {
+                self.entity_id: {
+                    "behavior": "schedule", "schedule": identical_schedule
+                }
+            },
+        }]
+        self.data["global_"]["active_profile_ids"] = ["same"]
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+
+        self.assertIsNone(external.publication_state(self.entity_id))
+        await scheduler.async_activate_profile("same")
+
+        self.assertEqual([identical_schedule], external.published_schedules)
+
+    async def test_cancelled_multizone_profile_publication_finishes_and_emits_change(self) -> None:
+        second_entity = "climate.external"
+        self.data["zones"][second_entity] = normalize_schedule_data(
+            None, [second_entity]
+        )["zones"][second_entity]
+        for entity_id in (self.entity_id, second_entity):
+            self.data["zones"][entity_id]["execution"] = {
+                "type": "external", "provider": "provider"
+            }
+
+        class StagedExternal(_FakeExternalExecution):
+            def __init__(self, data, async_save):
+                super().__init__(data, async_save)
+                self.starts = [asyncio.Event(), asyncio.Event()]
+                self.releases = [asyncio.Event(), asyncio.Event()]
+
+            async def async_schedule_saved(self, entity_id, schedule):
+                index = len(self.published_schedules)
+                self.starts[index].set()
+                await self.releases[index].wait()
+                self.published_schedules.append(deepcopy(schedule))
+
+        async def save():
+            return None
+
+        external = StagedExternal(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+        scheduler.async_schedule_next_event = Mock()
+        scheduler._async_fire_profile_changed = Mock()
+        schedule = empty_week_schedule()
+        schedule["tuesday"] = [{
+            "start": "00:00", "action": ACTION_SET_TEMPERATURE,
+            "temperature": 18, "hvac_mode": "heat",
+        }]
+        await scheduler.async_set_profile({
+            "key": "away", "name": "Away", "color": "#336699",
+            "zones": {
+                self.entity_id: {"behavior": "schedule", "schedule": schedule},
+                second_entity: {"behavior": "schedule", "schedule": schedule},
+            },
+        })
+
+        activation = asyncio.create_task(scheduler.async_activate_profile("away"))
+        await external.starts[0].wait()
+        activation.cancel()
+        external.releases[0].set()
+        await external.starts[1].wait()
+        self.assertFalse(activation.done())
+        external.releases[1].set()
+        with self.assertRaises(asyncio.CancelledError):
+            await activation
+
+        self.assertEqual(2, len(external.published_schedules))
+        self.assertEqual(["away"], scheduler.active_profile_ids)
+        scheduler.async_schedule_next_event.assert_called()
+        scheduler._async_fire_profile_changed.assert_called_once()
+
+    async def test_active_profile_import_publishes_external_week_exactly_once(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+
+        def profile(temperature):
+            schedule = empty_week_schedule()
+            schedule["tuesday"] = [{
+                "start": "00:00", "action": ACTION_SET_TEMPERATURE,
+                "temperature": temperature, "hvac_mode": "heat",
+            }]
+            return {
+                "key": "away", "name": "Away", "color": "#336699",
+                "description": "", "icon": "mdi:briefcase-outline",
+                "zones": {self.entity_id: {"behavior": "schedule", "schedule": schedule}},
+            }
+
+        await scheduler.async_set_profile(profile(18))
+        await scheduler.async_activate_profile("away")
+        external.published_schedules.clear()
+
+        await scheduler.async_replace_portable_data(profiles=[profile(19)])
+
+        self.assertEqual(1, len(external.published_schedules))
+        self.assertEqual(19, external.published_schedules[0]["tuesday"][0]["temperature"])
+
+    async def test_profile_import_queued_behind_handoff_publishes_imported_week_last(self) -> None:
+        unaffected_entity = "climate.local"
+        self.data["zones"][unaffected_entity] = normalize_schedule_data(
+            None, [unaffected_entity]
+        )["zones"][unaffected_entity]
+        self.hass.states[unaffected_entity] = SimpleNamespace(
+            state="heat", attributes={"current_temperature": 20}
+        )
+        self.climate.snapshots[unaffected_entity] = {
+            "state": "heat", "temperature": 20
+        }
+
+        async def save():
+            return None
+
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass, self.data, self.climate, save, external_execution=external
+        )
+
+        def profile(temperature):
+            schedule = deepcopy(self.data["zones"][self.entity_id]["schedule"])
+            schedule["tuesday"][0]["temperature"] = temperature
+            return {
+                "key": "away",
+                "name": "Away",
+                "color": "#336699",
+                "description": "",
+                "icon": "mdi:briefcase-outline",
+                "zones": {
+                    self.entity_id: {
+                        "behavior": "schedule", "schedule": schedule
+                    }
+                },
+            }
+
+        await scheduler.async_set_profile(profile(19))
+        await scheduler.async_activate_profile("away")
+        self.climate.calls.clear()
+        local_started = asyncio.Event()
+        local_release = asyncio.Event()
+        local_calls = []
+        original_set_temperature = self.climate.async_set_temperature
+
+        async def blocked_local(*args, **kwargs):
+            if args[0] != self.entity_id:
+                await original_set_temperature(*args, **kwargs)
+                return
+            local_calls.append((args, kwargs))
+            local_started.set()
+            await local_release.wait()
+
+        self.climate.async_set_temperature = blocked_local
+        delivery = asyncio.create_task(
+            scheduler.async_apply_current_schedule(self.entity_id)
+        )
+        await local_started.wait()
+        handoff = asyncio.create_task(
+            scheduler.async_set_zone_execution(self.entity_id, "provider")
+        )
+        await asyncio.sleep(0)
+        imported = asyncio.create_task(
+            scheduler.async_replace_portable_data(profiles=[profile(18)])
+        )
+        await asyncio.sleep(0)
+
+        unrelated_boost = asyncio.create_task(scheduler.async_set_zone_boost(
+            unaffected_entity,
+            22,
+            "2027-05-19T20:00:00+00:00",
+            "heat",
+        ))
+        await asyncio.wait_for(unrelated_boost, timeout=0.5)
+        self.assertFalse(imported.done())
+        local_release.set()
+        await delivery
+        await handoff
+        await imported
+
+        self.assertEqual(2, len(external.published_schedules))
+        self.assertEqual(
+            19,
+            external.published_schedules[0]["tuesday"][0]["temperature"],
+        )
+        self.assertEqual(
+            18,
+            external.published_schedules[-1]["tuesday"][0]["temperature"],
+        )
+        self.assertEqual(1, len(local_calls))
+
+    async def test_external_profile_pause_is_rejected(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=_FakeExternalExecution(self.data, save),
+        )
+
+        with self.assertRaisesRegex(ValueError, "Pause profile behavior"):
+            await scheduler.async_set_profile({
+                "key": "paused",
+                "name": "Paused",
+                "color": "#336699",
+                "zones": {self.entity_id: {"behavior": "pause", "action": "none"}},
+            })
+
+    async def test_external_zone_public_mutations_make_no_climate_calls(self) -> None:
+        async def save():
+            return None
+
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        external = _FakeExternalExecution(self.data, save)
+        scheduler = VelairScheduler(
+            self.hass,
+            self.data,
+            self.climate,
+            save,
+            external_execution=external,
+        )
+        operations = [
+            scheduler.async_set_zone_boost(
+                self.entity_id, 22, "2026-05-19T20:00:00+00:00", "heat"
+            ),
+            scheduler.async_pause_zone(self.entity_id),
+            scheduler.async_enter_manual_adjustment(self.entity_id),
+            scheduler.async_update_zone_preconditioning(
+                self.entity_id, {"enabled": True, "room_sensor_assist_enabled": True}
+            ),
+        ]
+        for operation in operations:
+            with self.assertRaises(ExternalExecutionError):
+                await operation
+
+        self.assertEqual([], self.climate.calls)
 
 
 class VelairSchedulerPreconditioningTest(unittest.IsolatedAsyncioTestCase):
@@ -8986,6 +10112,51 @@ class VelairSchedulerZoneRuntimeStatusTest(unittest.TestCase):
 
         self.assertEqual(result["state"], "idle")
         self.assertEqual(result["target_temperature"], 21.5)
+
+    def test_external_runtime_projects_default_and_profile_effective_schedule(self) -> None:
+        default_schedule = empty_week_schedule()
+        default_schedule["tuesday"] = [{
+            "start": "00:00", "action": ACTION_SET_TEMPERATURE,
+            "temperature": 21, "hvac_mode": "heat",
+        }]
+        profile_schedule = empty_week_schedule()
+        profile_schedule["tuesday"] = [{
+            "start": "00:00", "action": ACTION_SET_TEMPERATURE,
+            "temperature": 18, "hvac_mode": "heat",
+        }]
+        self.data["zones"][self.entity_id]["schedule"] = default_schedule
+        self.data["zones"][self.entity_id]["execution"] = {
+            "type": "external", "provider": "provider"
+        }
+        self.data["profiles"] = [{
+            "key": "away", "name": "Away", "color": "#336699",
+            "zones": {
+                self.entity_id: {
+                    "behavior": "schedule", "schedule": profile_schedule,
+                }
+            },
+        }]
+        external = SimpleNamespace(
+            authority=ExecutionAuthority(self.data),
+            set_update_callback=Mock(),
+        )
+        scheduler = VelairScheduler(
+            self.scheduler._hass,
+            self.data,
+            self.scheduler._climate_manager,
+            Mock(),
+            external_execution=external,
+        )
+        scheduler._current_hvac_mode = Mock(return_value="cool")
+
+        default_runtime = scheduler._zone_runtime_status(self.entity_id)
+        self.data["global_"]["active_profile_ids"] = ["away"]
+        profile_runtime = scheduler._zone_runtime_status(self.entity_id)
+
+        self.assertEqual(21, default_runtime["target_temperature"])
+        self.assertEqual(18, profile_runtime["target_temperature"])
+        self.assertEqual("heat", profile_runtime["hvac_mode"])
+        self.assertEqual("externally_managed", profile_runtime["state"])
 
     def test_idle_rejects_a_climate_target_outside_supported_limits(self) -> None:
         self.scheduler._get_active_zone_override = Mock(return_value=None)

@@ -9,7 +9,7 @@ import {
 import { unmatchedPreconditioningLearningEntities } from "../domain/portable";
 import type { VelairViewHost } from "../host-types";
 import { renderInlineHelp } from "./inline-help";
-import type { PortableSection } from "../types";
+import type { ExternalExecutionInfo, PortableSection } from "../types";
 
 type SettingsViewHost = VelairViewHost;
 
@@ -56,6 +56,8 @@ export function renderSettingsView(host: SettingsViewHost, zoneIds: string[]) {
         ></ha-switch>
       </section>
 
+      ${renderExternalSystemsSettings(host)}
+
       ${renderPortabilitySettings(host)}
 
       <section class="settings-zone-order">
@@ -76,6 +78,147 @@ export function renderSettingsView(host: SettingsViewHost, zoneIds: string[]) {
       ${renderMaintenanceSettings(host)}
     </section>
   `;
+}
+
+export function renderExternalSystemsSettings(host: SettingsViewHost) {
+  const external = host._data?.external_execution;
+  if (!external || (!external.systems.length && !Object.keys(external.zones).length)) {
+    return nothing;
+  }
+  const eligibleProviders = new Map<string, Array<{ provider: string; name: string }>>();
+  for (const system of external.systems) {
+    for (const entityId of system.entities) {
+      const providers = eligibleProviders.get(entityId) ?? [];
+      providers.push({ provider: system.provider, name: system.name });
+      eligibleProviders.set(entityId, providers);
+    }
+  }
+  const entityIds = Array.from(new Set([
+    ...eligibleProviders.keys(),
+    ...Object.keys(external.zones),
+  ]));
+  const systemsByProvider = new Map(external.systems.map((system) => [system.provider, system]));
+  const selectedSystems = selectedExternalSystems(external);
+  return html`
+    <section class="settings-startup external-systems-settings">
+      <ha-icon class="settings-startup-icon" icon="mdi:calendar-export"></ha-icon>
+      <div class="settings-startup-copy">
+        <span class="section-label">${host._t("externalSystems")}</span>
+        <p>${host._t("externalSystemsDescription")}</p>
+        <div class="settings-zone-list">
+          ${entityIds.map((entityId) => {
+            const configured = external.zones[entityId];
+            const providers = eligibleProviders.get(entityId) ?? [];
+            return html`
+              <label class="settings-field external-system-zone">
+                <span class="external-system-zone-identity">
+                  <strong>${host._friendlyEntityName(entityId)}</strong>
+                </span>
+                <span class="select-wrap external-system-zone-select">
+                  <select
+                    ?disabled=${host._settingsSaving}
+                    @change=${async (event: Event) => {
+                      const select = event.currentTarget as HTMLSelectElement;
+                      const provider = select.value;
+                      const selected = await host._setZoneExecution(
+                        entityId,
+                        provider || undefined,
+                      );
+                      if (!selected) {
+                        select.value = host._data?.external_execution?.zones[entityId]?.provider ?? "";
+                      }
+                    }}
+                  >
+                    <option value="" ?selected=${!configured}>${host._t("externalExecutionVelair")}</option>
+                    ${providers.map((provider) => html`
+                      <option
+                        value=${provider.provider}
+                        ?selected=${configured?.provider === provider.provider}
+                      >${provider.name}${configured?.provider === provider.provider && !configured.available
+                        ? ` (${host._t("externalProviderUnavailable")})`
+                        : ""}</option>
+                    `)}
+                    ${configured && !providers.some((item) => item.provider === configured.provider)
+                      ? html`<option value=${configured.provider} selected>${systemsByProvider.get(configured.provider)?.name
+                        ?? configured.provider} (${host._t("externalProviderUnavailable")})</option>`
+                      : nothing}
+                  </select>
+                </span>
+              </label>
+            `;
+          })}
+        </div>
+        ${selectedSystems.length ? html`
+          <div class="external-controllers-in-use">
+            <strong>${host._t("externalControllersInUse")}</strong>
+            ${selectedSystems.map((system) => html`
+              <details class="external-controller-conditions">
+                <summary>
+                  <ha-icon icon="mdi:server-network"></ha-icon>
+                  <strong>${system.name}</strong>
+                  <ha-icon class="external-controller-expand-icon" icon="mdi:chevron-down"></ha-icon>
+                </summary>
+                <div class="external-controller-conditions-body">
+                ${system.capabilities ? html`
+                  <ul>
+                    ${system.capabilities.supports_profile_schedules
+                      ? html`<li>${host._t("externalConditionProfilesSupported")}</li>` : nothing}
+                    <li>${host._t("externalConditionHvacModes", {
+                      modes: formatExternalCapabilities(host, "hvac", system.capabilities.supported_hvac_modes),
+                    })}</li>
+                    <li>${host._t("externalConditionTargetTypes", {
+                      types: formatExternalCapabilities(host, "target", system.capabilities.supported_target_types),
+                    })}</li>
+                    <li>${host._t("externalConditionActions", {
+                      actions: formatExternalCapabilities(host, "action", system.capabilities.supported_actions),
+                    })}</li>
+                    ${system.capabilities.supported_actions.includes("turn_off")
+                      ? nothing : html`<li>${host._t("externalConditionTurnOffUnsupported")}</li>`}
+                    <li>${system.capabilities.supported_option_fields.length
+                      ? host._t("externalConditionOptionFields", {
+                          fields: system.capabilities.supported_option_fields.join(", "),
+                        })
+                      : host._t("externalConditionOptionsUnsupported")}</li>
+                    <li>${host._t("externalConditionMaxChanges", {
+                      count: system.capabilities.max_switchpoints_per_day,
+                    })}</li>
+                    <li>${host._t("externalConditionTimeGrid", {
+                      minutes: system.capabilities.time_step_minutes,
+                    })}</li>
+                    ${system.capabilities.implicit_midnight_change_counts_toward_limit
+                      ? html`<li>${host._t("externalConditionMidnightContinuityCounts")}</li>`
+                      : nothing}
+                  </ul>
+                ` : html`<small>${host._t("externalConditionsUnavailable")}</small>`}
+                </div>
+              </details>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
+    </section>
+  `;
+}
+
+function formatExternalCapabilities(
+  host: SettingsViewHost,
+  kind: "action" | "hvac" | "target",
+  values: string[],
+): string {
+  return values.map((value) => {
+    const key = `externalCapability_${kind}_${value}`;
+    const translated = host._t(key as never);
+    return translated === key ? value.replaceAll("_", " ") : translated;
+  }).join(", ");
+}
+
+export function selectedExternalSystems(external: ExternalExecutionInfo) {
+  const systems = new Map(external.systems.map((system) => [system.provider, system]));
+  return Array.from(new Set(Object.values(external.zones).map((zone) => zone.provider)))
+    .map((provider) => {
+      const system = systems.get(provider);
+      return system ?? { provider, name: provider, capabilities: null };
+    });
 }
 
 export function renderTemperatureUnitSettings(host: SettingsViewHost) {
@@ -407,6 +550,9 @@ export function renderSettingsZoneOrderRow(
 }
 
 export function renderSettingsExternalChangePolicy(host: SettingsViewHost, entityId: string) {
+  if (host._data?.zones[entityId]?.execution?.type === "external") {
+    return html`<small>${host._t("externalActionsInactive")}</small>`;
+  }
   const policy = host._data?.zones[entityId]?.external_change_policy ?? {
     action: "keep_automatic" as const,
     duration_minutes: DEFAULT_EXTERNAL_CHANGE_DURATION_MINUTES,

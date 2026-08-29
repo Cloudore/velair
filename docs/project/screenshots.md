@@ -167,3 +167,55 @@ Manage ordering, startup behavior, portability and the capabilities detected for
 | Tablet | Mobile |
 | --- | --- |
 | ![Velair settings tablet](../../screenshots/settings-tablet.png) | ![Velair settings mobile](../../screenshots/settings-mobile.png) |
+
+### External execution
+
+Preview compatible-system discovery and the external schedule states without installing a vendor integration or connecting real hardware.
+
+#### Compatible system available
+
+RAMSES RF is detected only for compatible heating zones, showing local and external execution choices side by side.
+
+**Desktop**
+
+![Velair compatible system available desktop](../../screenshots/external-settings-desktop.png)
+
+| Tablet | Mobile |
+| --- | --- |
+| ![Velair compatible system available tablet](../../screenshots/external-settings-tablet.png) | ![Velair compatible system available mobile](../../screenshots/external-settings-mobile.png) |
+
+#### Publishing
+
+Velair is sending the effective Workday Profile schedule to the external integration.
+
+**Desktop**
+
+![Velair publishing desktop](../../screenshots/external-publishing-desktop.png)
+
+| Tablet | Mobile |
+| --- | --- |
+| ![Velair publishing tablet](../../screenshots/external-publishing-tablet.png) | ![Velair publishing mobile](../../screenshots/external-publishing-mobile.png) |
+
+#### Published
+
+The external integration accepted the effective Workday Profile schedule; this does not verify the physical controller.
+
+**Desktop**
+
+![Velair published desktop](../../screenshots/external-published-desktop.png)
+
+| Tablet | Mobile |
+| --- | --- |
+| ![Velair published tablet](../../screenshots/external-published-tablet.png) | ![Velair published mobile](../../screenshots/external-published-mobile.png) |
+
+#### Publication failed
+
+The external provider returned an error; Velair keeps local actions inactive for the externally managed climate.
+
+**Desktop**
+
+![Velair publication failed desktop](../../screenshots/external-error-desktop.png)
+
+| Tablet | Mobile |
+| --- | --- |
+| ![Velair publication failed tablet](../../screenshots/external-error-tablet.png) | ![Velair publication failed mobile](../../screenshots/external-error-mobile.png) |

@@ -95,6 +95,85 @@ describe("profiles view", () => {
     element.remove();
   });
 
+  it("offers external zones only representable Profile schedule behavior", async () => {
+    const element = new VelairProfilesView();
+    element.workspace = "profiles";
+    element.scheduleWorkspace = true;
+    element.initialWeekday = "monday";
+    element.hass = {
+      language: "en",
+      states: {
+        "climate.office": {
+          state: "heat",
+          attributes: { friendly_name: "Office", hvac_modes: ["off", "heat", "cool"] },
+        },
+      },
+    } as never;
+    element.data = {
+      ...data,
+      zones: {
+        "climate.office": {
+          enabled: true,
+          schedule: {},
+          execution: { type: "external", provider: "ramses_cc" },
+        },
+      },
+      external_execution: {
+        systems: [{
+          provider: "ramses_cc",
+          name: "RAMSES",
+          entities: ["climate.office"],
+          capabilities: {
+            can_publish: true,
+            can_import: false,
+            supports_profile_schedules: true,
+            supported_actions: ["set_temperature"],
+            supported_hvac_modes: ["heat"],
+            supported_target_types: ["scalar"],
+            supported_option_fields: [],
+            max_switchpoints_per_day: 6,
+            time_step_minutes: 5,
+            implicit_midnight_change_counts_toward_limit: true,
+          },
+        }],
+        zones: {},
+      },
+      settings: { first_weekday: "sunday", zone_order: ["climate.office"] },
+      profiles: [{
+        ...(data.profiles ?? [])[0],
+        zones: {
+          "climate.office": {
+            behavior: "schedule",
+            schedule: {
+              monday: [
+                { start: "10:00", action: "set_temperature", temperature: 19, hvac_mode: "heat" },
+                { start: "18:05", action: "set_temperature", temperature: 20, hvac_mode: "heat" },
+              ],
+            },
+          },
+        },
+      }],
+    } as unknown as ScheduleResponse;
+    document.body.append(element);
+    await element.updateComplete;
+    await selectFirstProfile(element);
+
+    const behaviorOptions = [...element.shadowRoot?.querySelectorAll(".profile-zone-actions option") ?? []]
+      .map((option) => (option as HTMLOptionElement).value);
+    expect(behaviorOptions).toEqual(["normal", "schedule"]);
+    expect(element.shadowRoot?.textContent).toContain(
+      "External zones support Default, Profile or Mode schedules only",
+    );
+    expect((element.shadowRoot?.querySelector(".profile-zone-actions select") as HTMLSelectElement).value)
+      .toBe("schedule");
+    expect(element.shadowRoot?.textContent).toContain("3 of 6 controller switchpoints");
+    expect(element.shadowRoot?.querySelector(".external-switchpoint-usage")?.textContent)
+      .toContain("3 of 6 controller switchpoints");
+    expect(element.shadowRoot?.querySelector(".external-switchpoint-usage")?.textContent)
+      .toContain("2 scheduled blocks + 1 midnight continuity point");
+    element.remove();
+  });
+
   it("marks the thermostat and weekday whose atomic Profile draft changed", async () => {
     const profile = {
       key: "workday",
@@ -1651,10 +1730,37 @@ describe("profiles view", () => {
       ".profile-day-copy input[type=checkbox]",
     )];
     expect(targets).toHaveLength(6);
-    targets[0].checked = true;
-    targets[0].dispatchEvent(new Event("change"));
-    targets[1].checked = true;
-    targets[1].dispatchEvent(new Event("change"));
+    const draftBeforePreset = structuredClone((element as unknown as { _draft: ClimateProfileDraft })._draft);
+    const presetButtons = [...element.shadowRoot!.querySelectorAll<HTMLButtonElement>(
+      ".profile-day-copy .copy-preset-button",
+    )];
+    expect(presetButtons.map((button) => button.textContent?.trim())).toEqual([
+      "Mon–Fri", "Weekend", "All days", "Clear selection",
+    ]);
+    const presetGroup = element.shadowRoot!.querySelector(".profile-day-copy .copy-presets")!;
+    const targetGroup = element.shadowRoot!.querySelector(".profile-day-copy .copy-targets")!;
+    expect(presetGroup.compareDocumentPosition(targetGroup) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+    presetButtons[1].click();
+    await element.updateComplete;
+    expect([...element.shadowRoot!.querySelectorAll<HTMLInputElement>(
+      ".profile-day-copy input[type=checkbox]:checked",
+    )]).toHaveLength(2);
+    expect((element as unknown as { _draft: ClimateProfileDraft })._draft).toEqual(draftBeforePreset);
+    element.shadowRoot!.querySelectorAll<HTMLButtonElement>(
+      ".profile-day-copy .copy-preset-button",
+    )[3].click();
+    await element.updateComplete;
+    expect([...element.shadowRoot!.querySelectorAll<HTMLInputElement>(
+      ".profile-day-copy input[type=checkbox]:checked",
+    )]).toHaveLength(0);
+    const clearedTargets = [...element.shadowRoot!.querySelectorAll<HTMLInputElement>(
+      ".profile-day-copy input[type=checkbox]",
+    )];
+    clearedTargets[0].checked = true;
+    clearedTargets[0].dispatchEvent(new Event("change"));
+    clearedTargets[1].checked = true;
+    clearedTargets[1].dispatchEvent(new Event("change"));
     await element.updateComplete;
 
     const cloneButton = element.shadowRoot?.querySelector(

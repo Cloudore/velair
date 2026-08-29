@@ -12,6 +12,8 @@ from unittest.mock import AsyncMock, Mock
 from . import helpers
 import voluptuous as vol
 
+from custom_components.velair.external_execution.models import ExternalScheduleRequiredError
+
 
 api_module = importlib.import_module("custom_components.velair.api")
 
@@ -40,6 +42,75 @@ class ManualAdjustmentApiSchemaTest(unittest.TestCase):
                         "entity_id": "climate.salon",
                         legacy_field: value,
                     })
+
+
+class ExternalExecutionApiTest(unittest.IsolatedAsyncioTestCase):
+    async def test_schedule_required_uses_specific_websocket_error_code(self) -> None:
+        scheduler = SimpleNamespace(
+            async_set_zone_execution=AsyncMock(
+                side_effect=ExternalScheduleRequiredError(
+                    "External schedules require at least one temperature block"
+                )
+            )
+        )
+        runtime = {
+            "scheduler": scheduler,
+            "storage": SimpleNamespace(temperature_migration_required=False),
+            "operation_active": None,
+            "operation_recovery": None,
+        }
+        connection = SimpleNamespace(send_result=Mock(), send_error=Mock())
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+
+        await api_module.ws_set_zone_execution(
+            SimpleNamespace(),
+            connection,
+            {
+                "id": 1,
+                "type": "velair/set_zone_execution",
+                "entity_id": "climate.salon",
+                "provider": "ramses_cc",
+            },
+        )
+
+        connection.send_error.assert_called_once_with(
+            1,
+            "external_schedule_required",
+            "External schedules require at least one temperature block",
+        )
+        connection.send_result.assert_not_called()
+
+    async def test_other_validation_errors_keep_generic_websocket_code(self) -> None:
+        scheduler = SimpleNamespace(
+            async_set_zone_execution=AsyncMock(side_effect=ValueError("invalid schedule"))
+        )
+        runtime = {
+            "scheduler": scheduler,
+            "storage": SimpleNamespace(temperature_migration_required=False),
+            "operation_active": None,
+            "operation_recovery": None,
+        }
+        connection = SimpleNamespace(send_result=Mock(), send_error=Mock())
+        original_get_runtime = api_module._get_runtime
+        api_module._get_runtime = lambda _hass: runtime
+        self.addCleanup(setattr, api_module, "_get_runtime", original_get_runtime)
+
+        await api_module.ws_set_zone_execution(
+            SimpleNamespace(),
+            connection,
+            {
+                "id": 2,
+                "type": "velair/set_zone_execution",
+                "entity_id": "climate.salon",
+                "provider": "ramses_cc",
+            },
+        )
+
+        connection.send_error.assert_called_once_with(
+            2, "invalid_external_execution", "invalid schedule"
+        )
 
 
 class ClimateProfileApiTest(unittest.IsolatedAsyncioTestCase):

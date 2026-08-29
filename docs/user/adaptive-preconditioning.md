@@ -4,7 +4,11 @@ Adaptive Preconditioning lets Velair start heating or cooling before a scheduled
 
 For example, a schedule block at `07:00` with `21 °C` means "be close to `21 °C` at `07:00`", not "start changing to `21 °C` at `07:00`".
 
-Everything runs locally inside Home Assistant. Velair stores settings and learning samples in Home Assistant storage and does not send schedules, temperatures, climate history, or calibration data to any external service.
+Adaptive Preconditioning runs locally inside Home Assistant. Velair stores its
+settings and learning samples in Home Assistant storage and never sends its
+temperature history, observations, or calibration data to an external
+controller. Zones delegated through External schedule execution do not use
+Adaptive Preconditioning; only their effective weekly schedule is published.
 
 ## Setup
 

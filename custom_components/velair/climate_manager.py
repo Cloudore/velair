@@ -31,6 +31,7 @@ from .const import (
     HVAC_MODE_OFF,
 )
 from .temperature import absolute_temperature
+from .execution import ExecutionAuthority
 
 CLIMATE_DOMAIN = "climate"
 CLIMATE_SERVICE_SET_HVAC_MODE = "set_hvac_mode"
@@ -72,9 +73,12 @@ MAX_OWNED_CONTEXTS = 256
 class ClimateManager:
     """Apply target temperatures through Home Assistant climate services."""
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(
+        self, hass: HomeAssistant, execution_authority: ExecutionAuthority | None = None
+    ) -> None:
         """Initialize the climate manager."""
         self._hass = hass
+        self._execution_authority = execution_authority
         self._contexts: dict[str, float] = {}
         self._expected: dict[str, list[dict[str, Any]]] = {}
 
@@ -88,9 +92,11 @@ class ClimateManager:
         register_expected: bool = True,
     ) -> None:
         """Call climate while marking the resulting state as Velair-owned."""
+        entity_id = data.get(ATTR_ENTITY_ID)
+        if isinstance(entity_id, str) and self._execution_authority is not None:
+            self._execution_authority.ensure_local(entity_id)
         context = context or self._new_owned_context()
         self._prune_owned_actions()
-        entity_id = data.get(ATTR_ENTITY_ID)
         if register_expected and isinstance(entity_id, str):
             expected = self._expected_for_service(service, data)
             structural_transition_fields: set[str] = set()

@@ -187,6 +187,14 @@ export class VelairApiClient {
     });
   }
 
+  public setZoneExecution(entityId: string, provider?: string): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/set_zone_execution",
+      entity_id: entityId,
+      provider: provider ?? null,
+    });
+  }
+
   public resumeAutomaticControl(entityId: string): Promise<ScheduleResponse> {
     return this.hass.connection.sendMessagePromise<ScheduleResponse>({
       type: "velair/resume_automatic_control",

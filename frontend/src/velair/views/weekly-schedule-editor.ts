@@ -12,6 +12,7 @@ export type WeeklyScheduleEditorSections = {
   dayTabs: TemplateResult;
   timeline: TemplateResult;
   templatePanel: TemplateResult;
+  externalUsage?: TemplateResult;
   blockList: TemplateResult;
   primaryActions?: TemplateResult;
   copyPanels: TemplateResult;
@@ -27,6 +28,7 @@ export function renderWeeklyScheduleEditor(sections: WeeklyScheduleEditorSection
       ${sections.timeline}
       <div class="schedule-config-helper">${sections.helper}</div>
       <div class="schedule-config-row">${sections.templatePanel}</div>
+      ${sections.externalUsage}
       ${sections.blockList}
       ${sections.primaryActions}
       ${sections.copyPanels}

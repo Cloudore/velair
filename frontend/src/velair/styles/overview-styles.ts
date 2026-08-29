@@ -746,6 +746,19 @@ export const overviewStyles = css`
 .overview-zone-activity.action-fan .overview-zone-activity-icon { background: color-mix(in srgb, var(--primary-color) 10%, transparent); color: var(--primary-color); }
 .overview-zone-activity.action-idle .overview-zone-activity-icon,
 .overview-zone-activity.action-off .overview-zone-activity-icon { background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); color: var(--secondary-text-color); }
+.overview-zone-signal.overview-external-signal { --overview-external-accent: var(--info-color, #039be5); --overview-external-state-color: var(--info-color, #039be5); background: var(--secondary-background-color); border-color: var(--overview-external-accent); box-sizing: border-box; flex: 0 1 auto; gap: 7px; max-width: 100%; min-height: 28px; min-width: 0; overflow: hidden; padding: 0 8px 0 0; }
+.overview-external-signal-accent { align-items: center; align-self: stretch; background: var(--overview-external-accent); color: white; display: inline-flex; flex: 0 1 auto; gap: 5px; justify-content: center; min-width: 0; padding: 4px 8px; }
+.overview-external-signal .overview-external-signal-accent small { align-items: center; align-self: center; color: inherit; display: inline-flex; font-size: 10px; font-weight: 600; height: 20px; letter-spacing: .02em; line-height: 1; overflow: hidden; text-overflow: ellipsis; }
+.overview-external-signal .overview-external-signal-accent ha-icon { --mdc-icon-size: 17px; color: inherit; flex: 0 0 20px; height: 20px; transform: none; width: 20px; }
+.overview-external-signal > strong { color: var(--primary-text-color); flex: 0 1 auto; font-size: 12px; line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.overview-external-state { align-items: center; background: color-mix(in srgb, var(--overview-external-state-color) 12%, transparent); border: 1px solid color-mix(in srgb, var(--overview-external-state-color) 34%, transparent); border-radius: 50%; box-sizing: border-box; color: var(--overview-external-state-color); display: inline-flex; flex: 0 0 20px; height: 20px; justify-content: center; line-height: 0; width: 20px; }
+.overview-external-state ha-icon { --mdc-icon-size: 13px; color: inherit; flex: 0 0 13px; height: 13px; transform: none; width: 13px; }
+.overview-external-signal .inline-help-wrapper { flex: 0 0 auto; overflow: visible; }
+.overview-external-signal .inline-help { color: var(--secondary-text-color); }
+.overview-external-signal.external-accepted { --overview-external-state-color: var(--success-color, #43a047); }
+.overview-external-signal.external-publishing { --overview-external-state-color: var(--primary-color); }
+.overview-external-signal.external-failed,
+.overview-external-signal.external-unavailable { --overview-external-state-color: var(--error-color, #d93025); }
 .overview-zone-details { background: var(--secondary-background-color); border: 1px solid var(--divider-color); border-radius: 7px; min-width: 0; padding: 7px 9px; }
 .overview-zone-metrics { display: flex; flex-wrap: wrap; gap: 6px; }
 .overview-zone-metric { border-right: 1px solid var(--divider-color); display: grid; gap: 2px; min-width: 66px; padding: 1px 12px 1px 2px; }

@@ -2,7 +2,11 @@
 
 Adaptive preconditioning lets Velair apply a scheduled comfort target before the visible block time so the room is more likely to be at the requested temperature when the block starts.
 
-Everything runs locally inside Home Assistant. Velair stores settings and learning samples in Home Assistant storage and does not send schedules, temperatures, climate history, or calibration data to any external service.
+Adaptive Preconditioning runs locally inside Home Assistant. Its settings,
+learning samples, temperature history, observations, and calibration data are
+not sent to an external controller. Externally executed zones are excluded from
+preconditioning; the separate external execution boundary can publish only
+their effective weekly schedule.
 
 This page documents implementation details. User-facing setup and examples are documented in [Adaptive Preconditioning](../user/adaptive-preconditioning.md).
 

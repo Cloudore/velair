@@ -243,7 +243,12 @@ def _loaded_velair_integration(frontend_module):
         return None
 
     install_module("homeassistant.config_entries", ConfigEntry=ConfigEntry)
-    install_module("homeassistant.const", EVENT_CORE_CONFIG_UPDATE="core_config_updated")
+    install_module(
+        "homeassistant.const",
+        ATTR_ENTITY_ID="entity_id",
+        EVENT_CORE_CONFIG_UPDATE="core_config_updated",
+        UnitOfTemperature=SimpleNamespace(CELSIUS="°C", FAHRENHEIT="°F"),
+    )
     install_module(
         "homeassistant.core",
         CALLBACK_TYPE=object,
@@ -437,6 +442,30 @@ class FrontendRegistrationTest(unittest.TestCase):
 
 
 class FrontendSourceContractTest(unittest.TestCase):
+    def test_external_publication_translations_describe_effective_schedule(self) -> None:
+        """External publication copy must not imply that only Default is published."""
+        publication_keys = (
+            '"externalPublication_publishing"',
+            '"externalPublication_published"',
+            '"externalSystemsDescription"',
+        )
+
+        for translation_path in FRONTEND_TRANSLATIONS_DIR.glob("*.ts"):
+            if translation_path.name in {"index.ts", "types.ts"}:
+                continue
+            source_lines = translation_path.read_text(encoding="utf-8").splitlines()
+            for key in publication_keys:
+                matching_lines = [line for line in source_lines if key in line]
+                self.assertEqual(1, len(matching_lines), f"{key} in {translation_path.name}")
+                self.assertNotIn("Default", matching_lines[0], translation_path.name)
+
+            profile_copy = [
+                line for line in source_lines if '"profileExternalScheduleOnly"' in line
+            ]
+            self.assertEqual(1, len(profile_copy), translation_path.name)
+            if translation_path.name != "template.ts":
+                self.assertIn("Mode", profile_copy[0], translation_path.name)
+
     def test_typescript_sources_do_not_contain_mojibake(self) -> None:
         """UTF-8 user-facing text must not contain common double-encoding markers."""
         source_root = ROOT / "frontend" / "src"

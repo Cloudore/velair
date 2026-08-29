@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_state_change_event
 
 from .climate_manager import ClimateManager
+from .execution import ExecutionAuthority
 from .const import (
     ATTR_HVAC_MODE,
     ATTR_TARGET_TEMP_HIGH,
@@ -30,11 +31,13 @@ class ClimateChangeMonitor:
         entity_ids: list[str],
         climate_manager: ClimateManager,
         scheduler: Any,
+        execution_authority: ExecutionAuthority | None = None,
     ) -> None:
         self._hass = hass
         self._entity_ids = entity_ids
         self._climate_manager = climate_manager
         self._scheduler = scheduler
+        self._execution_authority = execution_authority
         self._unsubscribe = None
         self._tasks: set[asyncio.Task[Any]] = set()
 
@@ -60,6 +63,11 @@ class ClimateChangeMonitor:
         old_state = event.data.get("old_state")
         new_state = event.data.get("new_state")
         if old_state is None or new_state is None:
+            return
+        if (
+            self._execution_authority is not None
+            and self._execution_authority.is_external(new_state.entity_id)
+        ):
             return
         if old_state.state in _UNAVAILABLE or new_state.state in _UNAVAILABLE:
             return

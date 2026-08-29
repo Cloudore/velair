@@ -210,6 +210,30 @@ export const cardStyles = [baseStyles, comfortStyles, diagnosticsStyles, inlineH
       justify-content: flex-end;
     }
 
+    .schedule-editor-badges .pill {
+      font-size: 12px;
+      line-height: 1.2;
+      padding: 4px 8px;
+    }
+
+    .external-execution-notice {
+      background: color-mix(in srgb, var(--info-color, #039be5) 10%, var(--card-background-color));
+      border-color: color-mix(in srgb, var(--info-color, #039be5) 42%, var(--divider-color));
+      box-shadow: none;
+      color: var(--primary-text-color);
+      font-size: 12px;
+      justify-content: flex-start;
+      line-height: 1.4;
+      margin-top: 10px;
+      padding: 9px 10px;
+    }
+
+    .external-execution-notice ha-icon {
+      --mdc-icon-size: 18px;
+      color: var(--info-color, #039be5);
+      flex: 0 0 auto;
+    }
+
     .zones {
       display: flex;
       gap: 8px;
@@ -315,6 +339,90 @@ export const cardStyles = [baseStyles, comfortStyles, diagnosticsStyles, inlineH
 
     .copy-actions .command-button {
       width: auto;
+    }
+
+    .copy-presets {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .copy-preset-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .copy-preset-clear-group {
+      border-left: 1px solid var(--divider-color);
+      margin-left: auto;
+      padding-left: 8px;
+    }
+
+    .copy-preset-button {
+      align-items: center;
+      background: color-mix(in srgb, var(--primary-color) 7%, var(--card-background-color));
+      border: 1px solid color-mix(in srgb, var(--primary-color) 24%, var(--divider-color));
+      border-radius: 999px;
+      color: var(--primary-text-color);
+      cursor: pointer;
+      display: inline-flex;
+      font: inherit;
+      font-size: 13px;
+      gap: 6px;
+      justify-content: center;
+      min-height: 34px;
+      padding: 6px 11px;
+      transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+
+    .copy-preset-button:hover,
+    .copy-preset-button:focus-visible {
+      background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background-color));
+      border-color: color-mix(in srgb, var(--primary-color) 42%, var(--divider-color));
+    }
+
+    .copy-preset-button:active {
+      transform: translateY(1px);
+    }
+
+    .copy-preset-button ha-icon {
+      --mdc-icon-size: 17px;
+      color: var(--primary-color);
+    }
+
+    .copy-preset-button:disabled {
+      cursor: default;
+      opacity: .46;
+      transform: none;
+    }
+
+    .copy-preset-clear {
+      background: transparent;
+      border-color: color-mix(in srgb, var(--secondary-text-color) 28%, var(--divider-color));
+      color: var(--secondary-text-color);
+    }
+
+    .copy-preset-clear.actionable {
+      background: color-mix(in srgb, var(--primary-color) 10%, var(--card-background-color));
+      border-color: color-mix(in srgb, var(--primary-color) 42%, var(--divider-color));
+      color: var(--primary-text-color);
+    }
+
+    .copy-preset-clear.actionable:hover,
+    .copy-preset-clear.actionable:focus-visible {
+      background: color-mix(in srgb, var(--primary-color) 17%, var(--card-background-color));
+      border-color: color-mix(in srgb, var(--primary-color) 62%, var(--divider-color));
+    }
+
+    .copy-preset-clear ha-icon {
+      color: currentColor;
+    }
+
+    .copy-preset-clear.actionable ha-icon {
+      color: var(--primary-color);
     }
 
     .scheduler-menu {
@@ -568,6 +676,71 @@ export const cardStyles = [baseStyles, comfortStyles, diagnosticsStyles, inlineH
 
     .schedule-config-row .schedule-block-actions {
       grid-column: 3;
+    }
+
+    .external-switchpoint-usage {
+      background: color-mix(in srgb, var(--primary-color) 7%, var(--card-background-color));
+      border: 1px solid color-mix(in srgb, var(--primary-color) 26%, var(--divider-color));
+      border-radius: 8px;
+      box-sizing: border-box;
+      display: grid;
+      gap: 3px;
+      margin-bottom: 10px;
+      padding: 9px 12px;
+      width: 100%;
+    }
+
+    .external-switchpoint-usage strong {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .external-switchpoint-usage span {
+      color: var(--secondary-text-color);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .external-switchpoint-usage.at-limit {
+      background: color-mix(in srgb, var(--primary-color) 11%, var(--card-background-color));
+      border-color: color-mix(in srgb, var(--primary-color) 46%, var(--divider-color));
+    }
+
+    .external-switchpoint-usage.at-limit strong {
+      color: var(--primary-color);
+    }
+
+    .external-switchpoint-usage.over-limit {
+      background: color-mix(in srgb, var(--error-color, #db4437) 10%, var(--card-background-color));
+      border-color: color-mix(in srgb, var(--error-color, #db4437) 48%, var(--divider-color));
+    }
+
+    .external-switchpoint-usage.over-limit strong {
+      color: var(--error-color, #db4437);
+    }
+
+    .external-switchpoint-meter {
+      background: color-mix(in srgb, var(--primary-color) 12%, var(--card-background-color));
+      border-radius: 999px;
+      height: 3px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+
+    .external-switchpoint-meter span {
+      background: var(--primary-color);
+      border-radius: inherit;
+      display: block;
+      height: 100%;
+      transition: width 180ms ease;
+    }
+
+    .external-switchpoint-usage.over-limit .external-switchpoint-meter {
+      background: color-mix(in srgb, var(--error-color, #db4437) 15%, var(--card-background-color));
+    }
+
+    .external-switchpoint-usage.over-limit .external-switchpoint-meter span {
+      background: var(--error-color, #db4437);
     }
 
     .editor-actions {

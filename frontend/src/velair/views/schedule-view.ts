@@ -5,6 +5,7 @@ import { draftBlockUsesRange } from "../domain/draft-blocks";
 import { ACTION_SET_TEMPERATURE, ACTION_TURN_OFF } from "../constants";
 import { isActiveBoostOverride } from "../domain/overrides";
 import { dateMs } from "../domain/schedule-events";
+import { externalSwitchpointUsage } from "../domain/schedule-editor";
 import {
   timelineCarryOverFromWeeklySchedule,
   timelineModeClass,
@@ -16,6 +17,7 @@ import type { VelairViewHost } from "../host-types";
 import type { BlockDraftSource, DraftScheduleBlock, ScheduleBlock, ScheduleTemplate, ScheduleZone } from "../types";
 import "../components/profiles-view-element";
 import { renderWeeklyScheduleEditor } from "./weekly-schedule-editor";
+import { renderCloneDayPresets, renderExternalSwitchpointUsage } from "./schedule-editor-controls";
 
 type ScheduleViewHost = VelairViewHost;
 
@@ -120,6 +122,12 @@ export function renderScheduleZonePicker(host: ScheduleViewHost, zoneIds: string
 
 export function renderScheduleEditor(host: ScheduleViewHost, entityId: string, zone: ScheduleZone) {
   const hasValidationError = host._hasDraftValidationError("schedule");
+  const externallyManaged = zone.execution?.type === "external";
+  const externalCapabilities = externallyManaged
+    ? host._data?.external_execution?.systems.find(
+      (system) => system.provider === zone.execution?.provider,
+    )?.capabilities
+    : undefined;
 
   return html`
     <section class="schedule">
@@ -128,12 +136,20 @@ export function renderScheduleEditor(host: ScheduleViewHost, entityId: string, z
           <strong>${host._t("scheduleStepDay")}</strong>
         </div>
         <div class="schedule-editor-badges">
+          ${externallyManaged
+            ? html`<span class="pill">${host._t("overviewZoneExternal")}</span>`
+            : nothing}
           ${host._dirty && host._dirtyEntityId === entityId
             ? html`<span class="pill warning">${host._t("unsaved")}</span>`
             : nothing}
         </div>
       </div>
-      ${renderBoostStatus(host, entityId, zone)}
+      ${externallyManaged
+        ? html`<div class="notice external-execution-notice" role="status">
+          <ha-icon icon="mdi:information-outline"></ha-icon>
+          <span>${host._t("externalActionsInactive")}</span>
+        </div>`
+        : renderBoostStatus(host, entityId, zone)}
       ${renderWeeklyScheduleEditor({
         dayTabs: html`<div class="day-tabs">
           ${host._orderedWeekdays().map((weekday: string) => renderDayTab(host, weekday, zone.schedule[weekday] ?? []))}
@@ -145,6 +161,12 @@ export function renderScheduleEditor(host: ScheduleViewHost, entityId: string, z
         configureHeading: host._t("scheduleStepConfigure"),
         helper: host._t("templateOptionalHint"),
         templatePanel: renderTemplatePanel(host),
+        externalUsage: renderExternalSwitchpointUsage(
+          host._t.bind(host),
+          externalCapabilities
+            ? externalSwitchpointUsage(host._draftBlocks, externalCapabilities)
+            : undefined,
+        ),
         blockList: html`<div class="draft-list">
           ${host._draftBlocks.length
             ? html`
@@ -946,6 +968,11 @@ export function renderCopyTargets(host: ScheduleViewHost) {
           <strong>${host._t("otherDays")}</strong>
         </div>
       </div>
+      ${renderCloneDayPresets(
+        host._t.bind(host),
+        (preset) => host._setCopyTargetPreset(preset),
+        host._copyTargets.size > 0,
+      )}
       <div class="copy-targets">
         ${targets.map((weekday: string) => renderCopyDayTarget(host, weekday))}
       </div>
