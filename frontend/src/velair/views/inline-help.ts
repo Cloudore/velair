@@ -85,7 +85,7 @@ export function renderInlineHelp(
         @focus=${(event: FocusEvent) => showTooltip(event.currentTarget as HTMLElement, "focus")}
         @focusout=${(event: FocusEvent) => {
           const tooltip = tooltipFor(event.currentTarget as HTMLElement);
-          if (tooltip) hideTooltip(tooltip);
+          if (tooltip && tooltip.dataset.openCause !== "click") hideTooltip(tooltip);
         }}
         @pointerenter=${(event: PointerEvent) => showTooltip(event.currentTarget as HTMLElement, "hover")}
         @pointerleave=${(event: PointerEvent) => {

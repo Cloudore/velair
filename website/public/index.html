@@ -119,38 +119,18 @@
         </div>
       </section>
 
-      <section class="section features" id="external-systems" aria-labelledby="external-systems-title">
-        <div class="section-heading">
-          <p class="eyebrow">Optional controller handoff</p>
-          <h2 id="external-systems-title">Publish the effective week to a compatible external system.</h2>
-          <p>For eligible zones, Velair can hand the complete Default, Profile, or Mode schedule to a detected controller instead of executing climate actions itself. Provider capabilities keep the handoff explicit and separate from the core scheduler.</p>
-        </div>
-
-        <div class="feature-grid">
-          <article class="feature" data-reveal>
-            <div class="feature-copy">
-              <span class="feature-number">04</span>
-              <h3>Conditions stay visible</h3>
-              <p>Settings shows each in-use controller once, including its supported targets, modes, time grid, and daily change limit. External zones do not receive Boost, pause, Manual adjustment, Room Assist, Adaptive Preconditioning, or other direct climate actions from Velair.</p>
-              <a class="text-link" href="https://github.com/cgonfer/velair/blob/main/docs/user/external-systems.md">Read the external systems guide <span aria-hidden="true">→</span></a>
-            </div>
-            <div class="screenshot-frame feature-shot compact-shot">
-              <img class="theme-image" src="assets/screenshots/dark/external-settings-desktop.png" data-dark-src="assets/screenshots/dark/external-settings-desktop.png" data-light-src="assets/screenshots/light/external-settings-desktop.png" alt="Velair Settings showing eligible zones and the conditions of an external schedule controller" loading="lazy">
-            </div>
-          </article>
-
-          <article class="feature" data-reveal>
-            <div class="feature-copy">
-              <span class="feature-number">05</span>
-              <h3>Publication evidence, without overclaiming</h3>
-              <p>Overview reports Publishing, Published, or Failed. Published means the Home Assistant provider accepted the service call; it does not verify that physical hardware applied the schedule.</p>
-              <p class="quiet-note">The first supported path targets scalar Evohome heating schedules through <code>ramses_cc</code>, with a 5-minute grid and at most six translated switchpoints per day. Real-hardware validation is still pending.</p>
-            </div>
-            <div class="screenshot-frame feature-shot compact-shot external-publication-shot">
-              <img class="theme-image" src="assets/screenshots/dark/external-published-mobile.png" data-dark-src="assets/screenshots/dark/external-published-mobile.png" data-light-src="assets/screenshots/light/external-published-mobile.png" alt="Velair responsive Overview showing an effective Profile schedule accepted by an external integration" loading="lazy">
-            </div>
-          </article>
-        </div>
+      <section class="section external-system-highlight" id="external-systems" aria-labelledby="external-systems-title">
+        <article class="feature feature-wide external-system-feature" data-reveal>
+          <div class="feature-copy">
+            <p class="eyebrow">Optional controller handoff</p>
+            <h2 id="external-systems-title">Publish schedules to compatible external systems.</h2>
+            <p>For eligible zones, Velair can publish the effective Default, Profile, or Mode week to a detected controller while keeping provider-specific execution separate from the core scheduler.</p>
+            <a class="text-link" href="https://github.com/cgonfer/velair/blob/main/docs/user/external-systems.md">Explore supported systems and limits <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="screenshot-frame feature-shot external-publication-shot">
+            <img class="theme-image" src="assets/screenshots/dark/external-published-mobile.png" data-dark-src="assets/screenshots/dark/external-published-mobile.png" data-light-src="assets/screenshots/light/external-published-mobile.png" alt="Velair Overview showing a weekly schedule published to an external controller" loading="lazy">
+          </div>
+        </article>
       </section>
 
       <section class="section assist" aria-labelledby="assist-title" data-reveal>

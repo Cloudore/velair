@@ -24,6 +24,7 @@ import type {
 } from "./types";
 import type { DiagnosticHistoryFilters } from "./domain/diagnostics-history";
 import type { DiagnosticsLogColumns } from "./domain/diagnostics-log-layout";
+import type { CloneDayPreset } from "./domain/schedule-editor";
 
 export type PortableSummaryViewItem = {
   label: string;
@@ -190,7 +191,7 @@ export type VelairViewHost = {
   _saveSelectedTemplateFromLibrary(template: ScheduleTemplate): Promise<void>;
   _saveSettings(settings: Partial<PanelSettings>): Promise<void>;
   _saveExternalChangePolicy(entityId: string, policy: ExternalChangePolicy): Promise<void>;
-  _setZoneExecution(entityId: string, provider?: string): Promise<void>;
+  _setZoneExecution(entityId: string, provider?: string): Promise<boolean>;
   _resumeAutomaticControl(entityId: string): Promise<void>;
   _enterManualAdjustment(entityId: string): Promise<void>;
   _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;
@@ -221,6 +222,7 @@ export type VelairViewHost = {
   _templateNameInputValue(template: ScheduleTemplate): string;
   _timelineBlocks(source?: BlockDraftSource): TimelineBlock[];
   _toggleCopyTarget(weekday: string, checked: boolean): void;
+  _setCopyTargetPreset(preset: CloneDayPreset): void;
   _toggleComfortZone(entityId: string): void;
   _togglePreconditioningZone(entityId: string): void;
   _togglePortableSection(target: "export" | "import", section: PortableSection, checked: boolean): void;

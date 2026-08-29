@@ -433,21 +433,27 @@ Velair normally stores a zone's weekly plan and executes it through its Home
 Assistant `climate.*` entity. When **Settings → External systems** detects a
 compatible controller, an eligible zone can instead delegate execution to that
 system. Velair then publishes the complete effective week selected by Default,
-a Profile, or a Mode.
+a Profile, or a Mode. The zone must first have a saved effective schedule with
+at least one temperature block; otherwise Velair keeps local execution and
+explains the prerequisite in Settings.
 
 An externally managed zone remains schedule-only. Velair does not send direct
 climate actions for Boost, pause or resume, Manual adjustment, Room Assist, or
 Adaptive Preconditioning. Profile **Pause** behavior is unavailable, while
 **Default schedule** and **Profile schedule** select the week that is published.
 Controller-specific limits are shown once per in-use system in Settings and are
-also enforced while editing compatible Profile schedules.
+also enforced while editing compatible Default and Profile schedules. When a
+controller requires an implicit midnight continuity point, the editor includes
+it in the visible daily switchpoint usage.
 
 Overview reports only **Publishing**, **Published**, or **Failed** after an
 attempt in the current Home Assistant runtime. **Published** means that the
 external integration accepted the service call; it is not confirmation that
-the physical controller applied the schedule. Velair does not poll, read back,
-or retry automatically. See [External schedule execution](external-systems.md)
-for supported systems, limits, handoff behavior, and current validation status.
+the physical controller applied the schedule. The zone keeps its normal
+schedule activity and next event, while a compact **External** indicator shows
+the controller and publication state. Velair does not poll, read back, or retry
+automatically. See [External schedule execution](external-systems.md) for
+supported systems, limits, handoff behavior, and current validation status.
 
 ## Clone Schedules
 
@@ -455,6 +461,11 @@ Below the editor, Velair can clone the current day:
 
 - to other weekdays on the same climate;
 - to the same weekday on other managed climates.
+
+For weekday cloning, **Mon–Fri**, **Weekend**, **All days**, and **Clear
+selection** provide quick target selection while leaving individual weekdays
+available. These shortcuts only change the selected targets; **Clone** remains
+an explicit action and the source day is never included.
 
 Clone actions save pending changes first when needed.
 

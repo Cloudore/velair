@@ -111,22 +111,22 @@ export function renderExternalSystemsSettings(host: SettingsViewHost) {
             const providers = eligibleProviders.get(entityId) ?? [];
             return html`
               <label class="settings-field external-system-zone">
-                <span>
+                <span class="external-system-zone-identity">
                   <strong>${host._friendlyEntityName(entityId)}</strong>
-                  <small>${configured
-                    ? host._t("externalProviderAvailability", {
-                        state: host._t(configured.available
-                          ? "externalProviderAvailable"
-                          : "externalProviderUnavailable"),
-                      })
-                    : host._t("externalExecutionLocal")}</small>
                 </span>
-                <span class="select-wrap">
+                <span class="select-wrap external-system-zone-select">
                   <select
                     ?disabled=${host._settingsSaving}
-                    @change=${(event: Event) => {
-                      const provider = (event.currentTarget as HTMLSelectElement).value;
-                      void host._setZoneExecution(entityId, provider || undefined);
+                    @change=${async (event: Event) => {
+                      const select = event.currentTarget as HTMLSelectElement;
+                      const provider = select.value;
+                      const selected = await host._setZoneExecution(
+                        entityId,
+                        provider || undefined,
+                      );
+                      if (!selected) {
+                        select.value = host._data?.external_execution?.zones[entityId]?.provider ?? "";
+                      }
                     }}
                   >
                     <option value="" ?selected=${!configured}>${host._t("externalExecutionVelair")}</option>
@@ -134,7 +134,9 @@ export function renderExternalSystemsSettings(host: SettingsViewHost) {
                       <option
                         value=${provider.provider}
                         ?selected=${configured?.provider === provider.provider}
-                      >${provider.name}</option>
+                      >${provider.name}${configured?.provider === provider.provider && !configured.available
+                        ? ` (${host._t("externalProviderUnavailable")})`
+                        : ""}</option>
                     `)}
                     ${configured && !providers.some((item) => item.provider === configured.provider)
                       ? html`<option value=${configured.provider} selected>${systemsByProvider.get(configured.provider)?.name
@@ -150,8 +152,13 @@ export function renderExternalSystemsSettings(host: SettingsViewHost) {
           <div class="external-controllers-in-use">
             <strong>${host._t("externalControllersInUse")}</strong>
             ${selectedSystems.map((system) => html`
-              <article class="external-controller-conditions">
-                <strong>${system.name}</strong>
+              <details class="external-controller-conditions">
+                <summary>
+                  <ha-icon icon="mdi:server-network"></ha-icon>
+                  <strong>${system.name}</strong>
+                  <ha-icon class="external-controller-expand-icon" icon="mdi:chevron-down"></ha-icon>
+                </summary>
+                <div class="external-controller-conditions-body">
                 ${system.capabilities ? html`
                   <ul>
                     ${system.capabilities.supports_profile_schedules
@@ -183,7 +190,8 @@ export function renderExternalSystemsSettings(host: SettingsViewHost) {
                       : nothing}
                   </ul>
                 ` : html`<small>${host._t("externalConditionsUnavailable")}</small>`}
-              </article>
+                </div>
+              </details>
             `)}
           </div>
         ` : nothing}

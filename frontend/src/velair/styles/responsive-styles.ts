@@ -447,6 +447,30 @@ export const responsiveStyles = css`
       grid-template-columns: 1fr;
     }
 
+    .copy-presets {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .copy-preset-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .copy-preset-clear-group {
+      border-left: 0;
+      border-top: 1px solid var(--divider-color);
+      display: flex;
+      justify-content: flex-end;
+      margin-left: 0;
+      padding-left: 0;
+      padding-top: 8px;
+    }
+
+    .external-switchpoint-usage {
+      width: 100%;
+    }
+
     .template-panel {
       grid-template-columns: minmax(0, 1fr);
       justify-self: stretch;

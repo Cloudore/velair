@@ -6,6 +6,12 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 
+class ExternalScheduleRequiredError(ValueError):
+    """Raised when external execution has no temperature schedule to publish."""
+
+    code = "external_schedule_required"
+
+
 @dataclass(frozen=True, slots=True)
 class ExternalScheduleCapabilities:
     """Schedule constraints declared by an external provider."""

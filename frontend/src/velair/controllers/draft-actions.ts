@@ -9,6 +9,7 @@ import { toggleSetValue } from "../domain/settings";
 import { climateSupportsRangeTarget, climateSupportsSingleTarget } from "../domain/climate";
 import { draftBlockUsesRange } from "../domain/draft-blocks";
 import { sortDraftBlocksByStart } from "../domain/timeline";
+import { cloneDayPresetTargets, type CloneDayPreset } from "../domain/schedule-editor";
 import type { BlockDraftSource, DraftScheduleBlock, ScheduleResponse } from "../types";
 
 type DraftActionsHost = {
@@ -134,6 +135,11 @@ export function toggleCopyTarget(host: DraftActionsHost, weekday: string, checke
   }
 
   host._copyTargets = toggleSetValue(host._copyTargets, weekday, checked);
+  host._saveMessage = undefined;
+}
+
+export function setCopyTargetPreset(host: DraftActionsHost, preset: CloneDayPreset): void {
+  host._copyTargets = cloneDayPresetTargets(preset, host._selectedWeekday);
   host._saveMessage = undefined;
 }
 

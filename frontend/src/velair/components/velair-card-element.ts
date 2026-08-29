@@ -88,6 +88,7 @@ import {
   removeBlock,
   setDraftBlockStart,
   toggleCopyTarget,
+  setCopyTargetPreset,
   toggleZoneTarget,
   updateDraftBlock,
 } from "../controllers/draft-actions";
@@ -1155,6 +1156,10 @@ export class VelairCard extends LitElement {
     toggleCopyTarget(asDraftActionsHost(this), weekday, checked);
   }
 
+  private _setCopyTargetPreset(preset: import("../domain/schedule-editor").CloneDayPreset): void {
+    setCopyTargetPreset(asDraftActionsHost(this), preset);
+  }
+
   private _toggleZoneTarget(entityId: string, checked: boolean): void {
     toggleZoneTarget(asDraftActionsHost(this), entityId, checked);
   }
@@ -1329,16 +1334,35 @@ export class VelairCard extends LitElement {
     }
   }
 
-  private async _setZoneExecution(entityId: string, provider?: string): Promise<void> {
+  private async _setZoneExecution(entityId: string, provider?: string): Promise<boolean> {
     const api = this._api();
-    if (!api || this._settingsSaving) return;
+    if (!api || this._settingsSaving) return false;
     this._settingsSaving = true;
     this._error = undefined;
     try {
       this._applyScheduleData(await api.setZoneExecution(entityId, provider));
       this._showSuccess(this._t(provider ? "externalExecutionEnabled" : "externalExecutionDisabled"));
+      return true;
     } catch (error) {
-      this._error = error instanceof Error ? error.message : this._t("unableSaveSettings");
+      const websocketError = error && typeof error === "object"
+        ? error as { code?: unknown; message?: unknown }
+        : undefined;
+      if (websocketError?.code === "external_schedule_required") {
+        this._error = this._t("externalScheduleRequired");
+        return false;
+      }
+      this._error = error instanceof Error
+        ? error.message
+        : typeof websocketError?.message === "string"
+          ? websocketError.message
+          : this._t("unableSaveSettings");
+      try {
+        this._applyScheduleData(await api.getSchedule());
+        return this._data?.external_execution?.zones[entityId]?.provider === provider;
+      } catch {
+        // Without authoritative state, do not visually claim that ownership rolled back.
+        return true;
+      }
     } finally {
       this._settingsSaving = false;
     }

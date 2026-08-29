@@ -19,6 +19,7 @@ import {
   renderEventDetails,
   renderNextEvents,
   renderOverviewActiveBoosts,
+  renderOverviewSummary,
   renderOverviewTimelineName,
   renderOverviewTimelineTrack,
   renderOverviewTimelines,
@@ -43,8 +44,36 @@ function host() {
 }
 
 describe("overview next events", () => {
+  it("shows externally executed zones as an informational notice in the scheduler status", () => {
+    const container = document.createElement("div");
+    const overviewHost = {
+      ...host(),
+      _canResumeScheduler: () => false,
+      _controlAction: undefined,
+      _data: {
+        global: { mode: "auto" },
+        operational_status: "running",
+        zones: {
+          "climate.external": { enabled: true, schedule: {}, execution: { type: "external", provider: "ramses_cc" } },
+          "climate.local": { enabled: true, schedule: {} },
+        },
+      },
+      _pauseDurationMinutes: 60,
+      _pauseExpirationMs: () => undefined,
+    } as unknown as VelairViewHost;
+
+    render(renderOverviewSummary(overviewHost, ["climate.external", "climate.local"]), container);
+
+    const notice = container.querySelector(".overview-external-summary");
+    expect(notice?.classList).toContain("external-execution-notice");
+    expect(notice?.getAttribute("role")).toBe("status");
+    expect(notice?.querySelector("ha-icon")?.getAttribute("icon")).toBe("mdi:information-outline");
+    expect(notice?.textContent).toContain("overviewExternalZonesUnaffected1");
+    expect(container.querySelector("small.overview-scheduler-detail")).toBeNull();
+  });
+
   it.each(["publishing", "published", "failed"] as const)(
-    "shows only the factual external publication state %s",
+    "shows the compact factual external publication state %s",
     (state) => {
       const container = document.createElement("div");
       const overviewHost = {
@@ -60,10 +89,20 @@ describe("overview next events", () => {
           zone_runtime: {
             "climate.office": {
               state: "externally_managed",
+              hvac_mode: "heat",
               manual_adjustment_allowed: false,
               manual_adjustment_unavailable_reason: "external_execution",
             },
           },
+          next_events: [{
+            action: "set_temperature",
+            entity_id: "climate.office",
+            hvac_mode: "heat",
+            start: "18:00",
+            temperature: 20,
+            weekday: "friday",
+            when: "2026-08-29T18:00:00+02:00",
+          }],
           external_execution: {
             systems: [{
               provider: "ramses_cc",
@@ -87,7 +126,7 @@ describe("overview next events", () => {
                 type: "external",
                 provider: "ramses_cc",
                 available: true,
-                publication: { state },
+                publication: { state, error: state === "failed" ? "controller timeout" : null },
               },
             },
           },
@@ -96,12 +135,61 @@ describe("overview next events", () => {
 
       render(renderOverviewZones(overviewHost, ["climate.office"]), container);
 
-      expect(container.textContent).toContain("overviewExternalExecutionProviderEvohome via ramses_cc");
-      expect(container.textContent).toContain(`externalPublication_${state}`);
+      const compactKeys = {
+        publishing: "overviewExternalStatusPublishing",
+        published: "overviewExternalStatusAccepted",
+        failed: "overviewExternalStatusFailed",
+      } as const;
+      const signal = container.querySelector(".overview-external-signal")!;
+      const tooltip = signal.querySelector(".inline-help-tooltip")!;
+      expect(signal.textContent).toContain("Evohome via ramses_cc");
+      expect(signal.textContent).not.toContain(compactKeys[state]);
+      expect(signal.classList).toContain("overview-zone-signal");
+      expect(signal.classList).toContain(`external-${state === "published" ? "accepted" : state}`);
+      expect(signal.querySelector(".overview-external-signal-accent small")?.textContent)
+        .toBe("overviewExternalLabel");
+      expect(signal.querySelector(":scope > strong")?.textContent).toBe("Evohome via ramses_cc");
+      expect(signal.querySelector(".overview-external-state")?.getAttribute("aria-label"))
+        .toBe(compactKeys[state]);
+      expect(signal.querySelector(".overview-external-state")?.getAttribute("title"))
+        .toBe(compactKeys[state]);
+      expect(tooltip.textContent).toContain("overviewExternalExecutionDescription");
+      expect(tooltip.textContent).not.toContain(`externalPublication_${state}`);
+      expect(signal.querySelector(".inline-help")?.getAttribute("aria-label"))
+        .toContain("overviewExternalInfoActionEvohome via ramses_cc");
+      expect(signal.querySelector(".inline-help")?.classList).toContain("compact");
+      (signal.querySelector(".inline-help") as HTMLButtonElement).click();
+      expect(tooltip.classList).toContain("visible");
+      const activity = container.querySelector(".overview-zone-activity")!;
+      expect(activity.classList).toContain("state-scheduled");
+      expect(activity.textContent).toContain("overviewZoneScheduled");
+      expect(activity.textContent).toContain("mode:heat");
+      expect(activity.textContent).toContain("overviewZoneNextAt");
+      expect(container.querySelector(".manual-control-reason")).toBeNull();
+      if (state === "failed") {
+        expect(signal.getAttribute("role")).toBe("alert");
+        expect(tooltip.textContent).toContain("controller timeout");
+      }
       expect(container.textContent).not.toContain("not synced");
       expect(container.querySelector('[role="group"]')).toBeNull();
     },
   );
+
+  it("matches the established Overview signal shape and keeps help viewport-safe", () => {
+    const cssText = overviewStyles.cssText;
+
+    expect(cssText).toMatch(/\.overview-zone-signal\s*\{[^}]*border-radius:\s*8px/);
+    expect(cssText).toMatch(/\.overview-zone-signal\.overview-external-signal\s*\{[^}]*gap:\s*7px[^}]*min-height:\s*28px[^}]*padding:\s*0 8px 0 0/);
+    expect(cssText).toMatch(/\.overview-external-signal-accent\s*\{[^}]*align-self:\s*stretch[^}]*background:\s*var\(--overview-external-accent\)[^}]*padding:\s*4px 8px/);
+    expect(cssText).toMatch(/\.overview-external-signal \.overview-external-signal-accent ha-icon\s*\{[^}]*--mdc-icon-size:\s*17px[^}]*height:\s*20px[^}]*width:\s*20px/);
+    expect(cssText).toMatch(/\.overview-external-signal \.overview-external-signal-accent small\s*\{[^}]*align-items:\s*center[^}]*display:\s*inline-flex[^}]*font-size:\s*10px[^}]*height:\s*20px/);
+    expect(cssText).toMatch(/\.overview-external-signal > strong\s*\{[^}]*font-size:\s*12px[^}]*line-height:\s*1\.3/);
+    expect(cssText).toMatch(/\.overview-external-state\s*\{[^}]*background:[^}]*var\(--overview-external-state-color\) 12%[^}]*border:[^}]*var\(--overview-external-state-color\) 34%[^}]*border-radius:\s*50%[^}]*flex:\s*0 0 20px[^}]*height:\s*20px[^}]*width:\s*20px/);
+    expect(cssText).toMatch(/\.overview-external-state ha-icon\s*\{[^}]*--mdc-icon-size:\s*13px[^}]*height:\s*13px[^}]*width:\s*13px/);
+    expect(cssText).toMatch(/\.overview-zone-profile\s*\{[^}]*gap:\s*7px[^}]*min-height:\s*28px/);
+    expect(cssText).toMatch(/\.overview-zone-profile-accent\s*\{[^}]*gap:\s*5px[^}]*padding:\s*4px 8px/);
+    expect(cssText).not.toMatch(/\.overview-zone-signal\.overview-external-signal\s*\{[^}]*border-radius:\s*999px/);
+  });
 
   it("shows the effective Profile and timeline for an externally executed zone", () => {
     const container = document.createElement("div");
@@ -171,9 +259,18 @@ describe("overview next events", () => {
 
     render(renderOverviewZones(overviewHost, ["climate.office"]), container);
 
-    expect(container.textContent).toContain("overviewExternalExecutionProviderunknown");
-    expect(container.textContent).toContain("overviewExternalProviderUnavailable");
-    expect(container.textContent).not.toContain("externalPublication_");
+    const signal = container.querySelector(".overview-external-signal")!;
+    const tooltip = signal.querySelector(".inline-help-tooltip")!;
+    expect(signal.textContent).toContain("unknown");
+    expect(signal.textContent).not.toContain("overviewExternalStatusUnavailable");
+    expect(signal.querySelector(".overview-external-state")?.getAttribute("aria-label"))
+      .toBe("overviewExternalStatusUnavailable");
+    expect(signal.classList).toContain("external-unavailable");
+    expect(signal.getAttribute("role")).toBe("alert");
+    expect(tooltip.textContent).not.toContain("overviewExternalProviderUnavailable");
+    expect(tooltip.textContent).not.toContain("externalPublication_");
+    expect(container.querySelector(".overview-zone-activity")?.classList).toContain("state-scheduled");
+    expect(container.querySelector(".manual-control-reason")).toBeNull();
     expect(container.querySelector(".overview-zone-card")?.classList).toContain("state-externally_managed");
     expect(container.querySelector('[role="group"]')).toBeNull();
   });

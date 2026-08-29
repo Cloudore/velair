@@ -38,8 +38,9 @@ import {
   roomAssistRangeShift,
   scheduledAssistRange,
 } from "../domain/room-assist";
+import { renderInlineHelp } from "./inline-help";
 import type { VelairViewHost } from "../host-types";
-import type { ComfortAssessment, RoomSensorAssistStatus, ScheduleBlock, ScheduleEvent, ScheduleZone, ZoneRuntimeStatus } from "../types";
+import type { ComfortAssessment, ExternalExecutionInfo, RoomSensorAssistStatus, ScheduleBlock, ScheduleEvent, ScheduleZone, ZoneRuntimeStatus } from "../types";
 
 type OverviewViewHost = VelairViewHost;
 type OverviewSchedulerState = "running" | "paused" | "stopped";
@@ -138,7 +139,12 @@ export function renderOverviewSummary(host: OverviewViewHost, zoneIds: string[])
           <span class="overview-scheduler-detail">${schedulerState.detail}</span>
         </div>
         ${renderPauseProgress(host)}
-        ${externalCount ? html`<small class="overview-scheduler-detail">${host._t("overviewExternalZonesUnaffected", { count: externalCount })}</small>` : nothing}
+        ${externalCount ? html`
+          <div class="notice external-execution-notice overview-external-summary" role="status">
+            <ha-icon icon="mdi:information-outline"></ha-icon>
+            <span>${host._t("overviewExternalZonesUnaffected", { count: externalCount })}</span>
+          </div>
+        ` : nothing}
       </div>
     </section>
   `;
@@ -266,7 +272,6 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
     ? formatOverviewRange(host, targetLow, targetHigh, entityId)
     : undefined;
   const appliedTemperature = numericTemperature(status.applied_temperature);
-  const presentation = zoneStatePresentation[displayStatus.state];
   const manualDetail = displayStatus.control_mode === "manual"
     ? manualControlSessionDetail(host, displayStatus)
     : undefined;
@@ -280,7 +285,9 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
   const externalProvider = host._data?.external_execution?.systems.find(
     (system) => system.provider === externalExecution?.provider,
   );
-  const externalPublication = externalExecution?.publication;
+  const activityStatus = externallyManaged
+    ? { ...displayStatus, state: "scheduled" as const }
+    : displayStatus;
   const assistIsActive = Boolean(assist && (assist.status === "assisting" || assist.status === "holding")
     && hasRoomAssistThermalData(assist));
   const hasStandardDetails = roomTemperature !== undefined
@@ -302,32 +309,26 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
           manualAllowed,
           manualUnavailable,
         )}
-        ${renderOverviewStateBadge(host, entityId, displayStatus, presentation)}
+        ${renderOverviewStateBadge(
+          host,
+          entityId,
+          activityStatus,
+          zoneStatePresentation[activityStatus.state],
+        )}
         <div class="overview-zone-signals">
           ${renderOverviewZoneProfile(host, entityId)}
+          ${externallyManaged && externalExecution
+            ? renderExternalControllerSignal(
+              host,
+              entityId,
+              externalProvider?.name ?? externalExecution.provider ?? host._t("externalProviderUnavailable"),
+              externalExecution,
+            )
+            : nothing}
           ${externallyManaged ? nothing : renderRoomAssistSignal(host, assist)}
           ${externallyManaged ? nothing : renderOverviewComfortSignals(host, comfort)}
         </div>
       </div>
-      ${externallyManaged ? html`
-        <p class="manual-control-reason">${host._t("overviewExternalExecutionDescription")}</p>
-        <p class="manual-control-reason">
-          ${host._t("overviewExternalExecutionProvider", {
-            provider: externalProvider?.name ?? externalExecution?.provider ?? host._t("externalProviderUnavailable"),
-          })}
-        </p>
-        ${externalExecution && !externalExecution.available
-          ? html`<p class="manual-control-reason" role="status">${host._t("overviewExternalProviderUnavailable")}</p>`
-          : nothing}
-        ${externalPublication ? html`
-          <p class="manual-control-reason" aria-live="polite">
-            ${host._t(`externalPublication_${externalPublication.state}` as never)}
-          </p>
-        ` : nothing}
-        ${externalPublication?.error
-          ? html`<p class="manual-control-reason" role="alert">${externalPublication.error}</p>`
-          : nothing}
-      ` : nothing}
       ${assistIsActive || hasStandardDetails ? html`<div class="overview-zone-details">
         ${assistIsActive ? renderRoomAssistThermalFlow(host, entityId, assist!) : html`<div class="overview-zone-metrics">
           ${roomTemperature !== undefined
@@ -345,6 +346,60 @@ function renderOverviewRuntimeZone(host: OverviewViewHost, entityId: string) {
         </div>`}
       </div>` : nothing}
     </article>`;
+}
+
+type ExternalZoneExecution = ExternalExecutionInfo["zones"][string];
+
+function renderExternalControllerSignal(
+  host: OverviewViewHost,
+  entityId: string,
+  providerName: string,
+  execution: ExternalZoneExecution,
+) {
+  const publication = execution.publication;
+  const presentation = !execution.available
+    ? { icon: "mdi:cloud-off-outline", key: "overviewExternalStatusUnavailable", state: "unavailable" }
+    : publication?.state === "publishing"
+      ? { icon: "mdi:cloud-sync-outline", key: "overviewExternalStatusPublishing", state: "publishing" }
+      : publication?.state === "published"
+        ? { icon: "mdi:cloud-check-outline", key: "overviewExternalStatusAccepted", state: "accepted" }
+        : publication?.state === "failed"
+          ? { icon: "mdi:cloud-alert-outline", key: "overviewExternalStatusFailed", state: "failed" }
+          : { icon: "mdi:calendar-export", key: "overviewZoneExternal", state: "active" };
+  const stateLabel = host._t(presentation.key as never);
+  const tooltipParts = [
+    host._t("overviewExternalExecutionDescription"),
+    publication?.error ?? "",
+  ].filter(Boolean);
+  const externalLabel = host._t("overviewExternalLabel");
+  const accessibleParts = [externalLabel, providerName, stateLabel].filter(Boolean);
+  const helpId = `overview-external-help-${entityId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const isError = presentation.state === "failed" || presentation.state === "unavailable";
+
+  return html`<section
+    class=${`overview-zone-signal overview-external-signal external-${presentation.state}`}
+    aria-label=${accessibleParts.join(". ")}
+    aria-live=${publication?.state === "publishing" ? "polite" : nothing}
+    role=${isError ? "alert" : nothing}
+  >
+    <span class="overview-external-signal-accent">
+      <ha-icon icon="mdi:server-network"></ha-icon>
+      <small>${externalLabel}</small>
+    </span>
+    <strong>${providerName}</strong>
+    <span
+      class="overview-external-state"
+      aria-label=${stateLabel}
+      role="img"
+      title=${stateLabel}
+    ><ha-icon icon=${presentation.icon} aria-hidden="true"></ha-icon></span>
+    ${renderInlineHelp(
+      helpId,
+      host._t("overviewExternalInfoAction", { provider: providerName }),
+      tooltipParts.join(" "),
+      { compact: true },
+    )}
+  </section>`;
 }
 
 function renderManualControlSelector(

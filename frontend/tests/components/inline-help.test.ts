@@ -71,6 +71,8 @@ describe("inline help", () => {
 
     button.click();
     expect(tooltip.classList).toContain("visible");
+    button.dispatchEvent(new FocusEvent("focusout"));
+    expect(tooltip.classList).toContain("visible");
     button.click();
     expect(tooltip.classList).not.toContain("visible");
 

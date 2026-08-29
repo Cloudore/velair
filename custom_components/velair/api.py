@@ -50,6 +50,7 @@ from .config_helpers import (
     get_configured_climate_entities,
     should_apply_active_schedule_on_startup,
 )
+from .external_execution.models import ExternalScheduleRequiredError
 from .models import (
     DEFAULT_COMFORT_TEMPERATURE_MAX,
     DEFAULT_COMFORT_TEMPERATURE_MIN,
@@ -328,6 +329,9 @@ async def ws_set_zone_execution(
         await runtime["scheduler"].async_set_zone_execution(
             msg[ATTR_ENTITY_ID], msg["provider"]
         )
+    except ExternalScheduleRequiredError as err:
+        connection.send_error(msg["id"], err.code, str(err))
+        return
     except ValueError as err:
         connection.send_error(msg["id"], "invalid_external_execution", str(err))
         return

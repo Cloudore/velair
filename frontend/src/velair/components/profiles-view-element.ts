@@ -63,6 +63,11 @@ import {
 import { dictionaryLabel, languageFromHass, shortWeekdayName, translate, weekdayName } from "../i18n";
 import { PROFILE_DESCRIPTION_MAX_LENGTH, MODE_NAME_MAX_LENGTH, WEEKDAYS } from "../constants";
 import { orderedWeekdays, orderedZoneIds } from "../domain/settings";
+import {
+  cloneDayPresetTargets,
+  externalSwitchpointUsage,
+  type CloneDayPreset,
+} from "../domain/schedule-editor";
 import { cardStyles } from "../styles/card-styles";
 import { profileStyles } from "../styles/profile-styles";
 import { NoticeTransitions, type DesiredNotice } from "../controllers/notice-transitions";
@@ -86,6 +91,7 @@ import {
 } from "../views/schedule-view";
 import { renderWeeklyScheduleEditor } from "../views/weekly-schedule-editor";
 import { renderContextualNoticeStack } from "../views/notice-view";
+import { renderCloneDayPresets, renderExternalSwitchpointUsage } from "../views/schedule-editor-controls";
 
 export class VelairProfilesView extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -1070,7 +1076,8 @@ export class VelairProfilesView extends LitElement {
         <div class="profile-zone-content">
           ${this._isExternalEntity(entityId) ? html`
             <div class="library-concept-note compact"><ha-icon icon="mdi:cloud-upload-outline"></ha-icon><span><small>${this._t("profileExternalScheduleOnly")}</small></span></div>
-          ` : zone?.behavior === "pause" ? html`
+          ` : nothing}
+          ${!this._isExternalEntity(entityId) && zone?.behavior === "pause" ? html`
             <label class="profile-pause-action"><span>${this._t("profilePauseAction")}</span>
               <span class="select-wrap">
                 <select .value=${zone.action} @change=${(event: Event) => this._setPauseAction(entityId, (event.currentTarget as HTMLSelectElement).value as "none" | "turn_off")}>
@@ -1081,7 +1088,8 @@ export class VelairProfilesView extends LitElement {
             </label>
           ` : zone?.behavior === "schedule"
             ? this._renderSchedule(entityId, zone)
-            : html`<div class="library-concept-note compact"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon><span><small>${this._t("profileDefaultScheduleHelp")}</small></span></div>`}
+            : this._isExternalEntity(entityId) ? nothing
+              : html`<div class="library-concept-note compact"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon><span><small>${this._t("profileDefaultScheduleHelp")}</small></span></div>`}
         </div>
       </article>
     `;
@@ -1165,6 +1173,7 @@ export class VelairProfilesView extends LitElement {
     const initialWeekday = weekdays.includes(this.initialWeekday) ? this.initialWeekday : weekdays[0];
     const weekday = this._selectedDays[entityId] ?? initialWeekday;
     const blocks = zone.schedule[weekday] ?? [];
+    const externalCapabilities = this._externalCapabilities(entityId);
     const cloneWeekdayTargets = new Set(
       [...(this._cloneWeekdayTargets[entityId] ?? [])].filter((day) => day !== weekday),
     );
@@ -1247,6 +1256,11 @@ export class VelairProfilesView extends LitElement {
               <strong>${this._t("otherDays")}</strong>
             </div>
           </div>
+          ${renderCloneDayPresets(
+            this._t.bind(this),
+            (preset) => this._setCloneDayPreset(entityId, weekday, preset),
+            cloneWeekdayTargets.size > 0,
+          )}
           <div class="copy-targets">
             ${weekdays
               .filter((day) => day !== weekday)
@@ -1327,6 +1341,12 @@ export class VelairProfilesView extends LitElement {
           configureHeading: this._t("scheduleStepConfigure"),
           helper: this._t("templateOptionalHint"),
           templatePanel,
+          externalUsage: renderExternalSwitchpointUsage(
+            this._t.bind(this),
+            externalCapabilities
+              ? externalSwitchpointUsage(blocks, externalCapabilities)
+              : undefined,
+          ),
           blockList,
           primaryActions,
           copyPanels,
@@ -1423,6 +1443,13 @@ export class VelairProfilesView extends LitElement {
     if (checked) targets.add(weekday);
     else targets.delete(weekday);
     this._cloneWeekdayTargets = { ...this._cloneWeekdayTargets, [entityId]: targets };
+  }
+
+  private _setCloneDayPreset(entityId: string, weekday: string, preset: CloneDayPreset): void {
+    this._cloneWeekdayTargets = {
+      ...this._cloneWeekdayTargets,
+      [entityId]: cloneDayPresetTargets(preset, weekday),
+    };
   }
 
   private _toggleCloneClimateTarget(entityId: string, targetEntityId: string, checked: boolean): void {

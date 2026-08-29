@@ -19,7 +19,7 @@ from ..const import (
 )
 from ..models import WEEKDAYS
 from ..execution import ExecutionAuthority
-from .models import ExternalPublicationStatus
+from .models import ExternalPublicationStatus, ExternalScheduleRequiredError
 from .provider import ExternalScheduleProvider
 
 _LOGGER = logging.getLogger(__name__)
@@ -201,7 +201,9 @@ class ExternalExecutionManager:
                 if unsupported_options:
                     raise ValueError("External schedules do not support climate options")
         if not has_temperature:
-            raise ValueError("External schedules require at least one temperature block")
+            raise ExternalScheduleRequiredError(
+                "External schedules require at least one temperature block"
+            )
 
     async def async_set_execution(
         self,

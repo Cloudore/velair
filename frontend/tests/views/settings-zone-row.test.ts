@@ -100,7 +100,13 @@ describe("settings climate row", () => {
 
     expect((container.querySelector(".external-system-zone select") as HTMLSelectElement).value)
       .toBe("ramses_cc");
+    expect(container.querySelector(".external-system-zone-identity strong")?.textContent).toBe("Office");
+    expect(container.querySelector(".external-system-zone-identity small")).toBeNull();
     expect(container.querySelectorAll(".external-controller-conditions")).toHaveLength(1);
+    expect((container.querySelector(".external-controller-conditions") as HTMLDetailsElement).open)
+      .toBe(false);
+    expect(container.querySelector(".external-controller-conditions summary")?.textContent)
+      .toContain("RAMSES RF");
     const conditions = container.querySelector(".external-controller-conditions")?.textContent ?? "";
     for (const key of [
       "externalConditionProfilesSupported",
@@ -115,6 +121,17 @@ describe("settings climate row", () => {
     ]) {
       expect(conditions).toContain(key);
     }
+  });
+
+  it("keeps external system rows compact on wide layouts and stacks them responsively", () => {
+    const cssText = settingsStyles.cssText;
+
+    expect(cssText).toMatch(/\.external-systems-settings\s*\{[^}]*align-items:\s*start/);
+    expect(cssText).toMatch(/\.external-systems-settings > \.settings-startup-icon\s*\{[^}]*align-self:\s*start/);
+    expect(cssText).toMatch(/\.external-system-zone\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(160px, 1fr\) minmax\(220px, 0\.8fr\)/);
+    expect(cssText).toMatch(/@container \(max-width:\s*720px\)[\s\S]*\.external-system-zone\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+    expect(cssText).toMatch(/\.external-system-zone-identity strong\s*\{[^}]*font-size:\s*14px/);
+    expect(cssText).toMatch(/\.external-controller-conditions summary\s*\{[^}]*cursor:\s*pointer/);
   });
 
   it("selects local execution for an eligible zone without external configuration", () => {
@@ -153,6 +170,47 @@ describe("settings climate row", () => {
     expect((container.querySelector(".external-system-zone select") as HTMLSelectElement).value)
       .toBe("");
     expect(container.querySelector(".external-controllers-in-use")).toBeNull();
+  });
+
+  it("restores the backend selection when external execution is rejected", async () => {
+    const container = document.createElement("div");
+    const setZoneExecution = vi.fn().mockResolvedValue(false);
+    const viewHost = {
+      _data: {
+        external_execution: {
+          systems: [{
+            provider: "ramses_cc",
+            name: "RAMSES RF",
+            entities: ["climate.office"],
+            capabilities: {
+              can_publish: true,
+              can_import: false,
+              supports_profile_schedules: true,
+              supported_actions: ["set_temperature"],
+              supported_hvac_modes: ["heat"],
+              supported_target_types: ["scalar"],
+              supported_option_fields: [],
+              max_switchpoints_per_day: 6,
+              time_step_minutes: 5,
+              implicit_midnight_change_counts_toward_limit: true,
+            },
+          }],
+          zones: {},
+        },
+      },
+      _friendlyEntityName: () => "Office",
+      _setZoneExecution: setZoneExecution,
+      _settingsSaving: false,
+      _t: (key: string) => key,
+    } as unknown as VelairViewHost;
+
+    render(renderExternalSystemsSettings(viewHost), container);
+    const select = container.querySelector(".external-system-zone select") as HTMLSelectElement;
+    select.value = "ramses_cc";
+    select.dispatchEvent(new Event("change"));
+
+    await vi.waitFor(() => expect(select.value).toBe(""));
+    expect(setZoneExecution).toHaveBeenCalledWith("climate.office", "ramses_cc");
   });
 
   it("shows one conditions block for a controller used by multiple zones", () => {
@@ -207,7 +265,7 @@ describe("settings climate row", () => {
           systems: [{
             provider: "ramses_cc",
             name: "Evohome via ramses_cc",
-            entities: [],
+            entities: ["climate.office"],
             capabilities: {
               can_publish: true,
               can_import: false,
@@ -241,6 +299,8 @@ describe("settings climate row", () => {
 
     expect(container.querySelector('option[value="ramses_cc"]')?.textContent)
       .toContain("Evohome via ramses_cc");
+    expect(container.querySelector('option[value="ramses_cc"]')?.textContent)
+      .toContain("externalProviderUnavailable");
     expect(container.querySelector(".external-controller-conditions")?.textContent)
       .toContain("Evohome via ramses_cc");
   });

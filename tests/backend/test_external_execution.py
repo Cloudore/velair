@@ -13,6 +13,7 @@ from . import helpers  # noqa: F401 - install Home Assistant stubs
 from custom_components.velair.execution import ExecutionAuthority, ExternalExecutionError
 from custom_components.velair.climate_manager import ClimateManager
 from custom_components.velair.external_execution.manager import ExternalExecutionManager
+from custom_components.velair.external_execution.models import ExternalScheduleRequiredError
 from custom_components.velair.external_execution.ramses_cc import (
     RamsesCcScheduleProvider,
     translate_weekly_schedule,
@@ -444,6 +445,33 @@ class ExternalProviderTest(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaisesRegex(RuntimeError, "storage unavailable"):
             await manager.async_set_execution("climate.zone", "ramses_cc", schedule=_schedule())
+        self.assertNotIn("execution", data["zones"]["climate.zone"])
+        self.assertFalse(manager.authority.is_external("climate.zone"))
+
+    async def test_empty_schedule_is_rejected_before_execution_is_persisted(self) -> None:
+        hass = self._hass()
+        data = {"zones": {"climate.zone": {"schedule": empty_week_schedule()}}}
+        saved = []
+
+        async def save():
+            saved.append(True)
+
+        manager = ExternalExecutionManager(
+            data,
+            {"ramses_cc": RamsesCcScheduleProvider(hass)},
+            save,
+            lambda entity_id: "°C",
+        )
+
+        with self.assertRaises(ExternalScheduleRequiredError) as raised:
+            await manager.async_set_execution(
+                "climate.zone",
+                "ramses_cc",
+                schedule=empty_week_schedule(),
+            )
+
+        self.assertEqual("external_schedule_required", raised.exception.code)
+        self.assertEqual([], saved)
         self.assertNotIn("execution", data["zones"]["climate.zone"])
         self.assertFalse(manager.authority.is_external("climate.zone"))
 

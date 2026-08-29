@@ -95,6 +95,50 @@ export const settingsStyles = css`
   min-width: 0;
 }
 
+.external-systems-settings {
+  align-items: start;
+}
+
+.external-systems-settings > .settings-startup-icon {
+  align-self: start;
+  margin-top: 1px;
+}
+
+.external-system-zone {
+  align-items: center;
+  background: var(--card-background-color);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(160px, 1fr) minmax(220px, 0.8fr);
+}
+
+.external-system-zone-identity {
+  min-width: 0;
+}
+
+.external-system-zone-identity strong {
+  color: var(--primary-text-color);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.external-system-zone-select {
+  margin-top: 0;
+  min-width: 0;
+}
+
+.external-system-zone-select select {
+  box-sizing: border-box;
+  font-size: 14px;
+  margin: 0;
+  min-height: 40px;
+  width: 100%;
+}
+
 .settings-maintenance {
   display: grid;
   gap: 12px;
@@ -184,9 +228,49 @@ export const settingsStyles = css`
   background: var(--card-background-color);
   border: 1px solid var(--divider-color);
   border-radius: 8px;
+  min-width: 0;
+}
+
+.external-controller-conditions summary {
+  align-items: center;
+  cursor: pointer;
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  grid-template-columns: 20px minmax(0, 1fr) 20px;
+  list-style: none;
+  min-width: 0;
   padding: 10px;
+}
+
+.external-controller-conditions summary::-webkit-details-marker {
+  display: none;
+}
+
+.external-controller-conditions summary > ha-icon:first-child {
+  --mdc-icon-size: 17px;
+  color: var(--primary-color);
+}
+
+.external-controller-conditions summary strong {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.external-controller-expand-icon {
+  --mdc-icon-size: 18px;
+  color: var(--secondary-text-color);
+  transition: transform 140ms ease;
+}
+
+.external-controller-conditions[open] .external-controller-expand-icon {
+  transform: rotate(180deg);
+}
+
+.external-controller-conditions-body {
+  border-top: 1px solid var(--divider-color);
+  padding: 9px 10px 10px;
 }
 
 .external-controller-conditions ul {
@@ -469,6 +553,11 @@ export const settingsStyles = css`
 
 @media (max-width: 720px) {
   .settings-zone-main { grid-template-columns: minmax(0, 1fr); }
+  .external-system-zone { align-items: stretch; grid-template-columns: minmax(0, 1fr); }
+}
+
+@container (max-width: 720px) {
+  .external-system-zone { align-items: stretch; grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (pointer: coarse) {

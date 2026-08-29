@@ -99,6 +99,7 @@ describe("profiles view", () => {
     const element = new VelairProfilesView();
     element.workspace = "profiles";
     element.scheduleWorkspace = true;
+    element.initialWeekday = "monday";
     element.hass = {
       language: "en",
       states: {
@@ -137,9 +138,20 @@ describe("profiles view", () => {
         }],
         zones: {},
       },
+      settings: { first_weekday: "sunday", zone_order: ["climate.office"] },
       profiles: [{
         ...(data.profiles ?? [])[0],
-        zones: { "climate.office": { behavior: "normal" } },
+        zones: {
+          "climate.office": {
+            behavior: "schedule",
+            schedule: {
+              monday: [
+                { start: "10:00", action: "set_temperature", temperature: 19, hvac_mode: "heat" },
+                { start: "18:05", action: "set_temperature", temperature: 20, hvac_mode: "heat" },
+              ],
+            },
+          },
+        },
       }],
     } as unknown as ScheduleResponse;
     document.body.append(element);
@@ -152,6 +164,13 @@ describe("profiles view", () => {
     expect(element.shadowRoot?.textContent).toContain(
       "External zones support Default, Profile or Mode schedules only",
     );
+    expect((element.shadowRoot?.querySelector(".profile-zone-actions select") as HTMLSelectElement).value)
+      .toBe("schedule");
+    expect(element.shadowRoot?.textContent).toContain("3 of 6 controller switchpoints");
+    expect(element.shadowRoot?.querySelector(".external-switchpoint-usage")?.textContent)
+      .toContain("3 of 6 controller switchpoints");
+    expect(element.shadowRoot?.querySelector(".external-switchpoint-usage")?.textContent)
+      .toContain("2 scheduled blocks + 1 midnight continuity point");
     element.remove();
   });
 
@@ -1711,10 +1730,37 @@ describe("profiles view", () => {
       ".profile-day-copy input[type=checkbox]",
     )];
     expect(targets).toHaveLength(6);
-    targets[0].checked = true;
-    targets[0].dispatchEvent(new Event("change"));
-    targets[1].checked = true;
-    targets[1].dispatchEvent(new Event("change"));
+    const draftBeforePreset = structuredClone((element as unknown as { _draft: ClimateProfileDraft })._draft);
+    const presetButtons = [...element.shadowRoot!.querySelectorAll<HTMLButtonElement>(
+      ".profile-day-copy .copy-preset-button",
+    )];
+    expect(presetButtons.map((button) => button.textContent?.trim())).toEqual([
+      "Mon–Fri", "Weekend", "All days", "Clear selection",
+    ]);
+    const presetGroup = element.shadowRoot!.querySelector(".profile-day-copy .copy-presets")!;
+    const targetGroup = element.shadowRoot!.querySelector(".profile-day-copy .copy-targets")!;
+    expect(presetGroup.compareDocumentPosition(targetGroup) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+    presetButtons[1].click();
+    await element.updateComplete;
+    expect([...element.shadowRoot!.querySelectorAll<HTMLInputElement>(
+      ".profile-day-copy input[type=checkbox]:checked",
+    )]).toHaveLength(2);
+    expect((element as unknown as { _draft: ClimateProfileDraft })._draft).toEqual(draftBeforePreset);
+    element.shadowRoot!.querySelectorAll<HTMLButtonElement>(
+      ".profile-day-copy .copy-preset-button",
+    )[3].click();
+    await element.updateComplete;
+    expect([...element.shadowRoot!.querySelectorAll<HTMLInputElement>(
+      ".profile-day-copy input[type=checkbox]:checked",
+    )]).toHaveLength(0);
+    const clearedTargets = [...element.shadowRoot!.querySelectorAll<HTMLInputElement>(
+      ".profile-day-copy input[type=checkbox]",
+    )];
+    clearedTargets[0].checked = true;
+    clearedTargets[0].dispatchEvent(new Event("change"));
+    clearedTargets[1].checked = true;
+    clearedTargets[1].dispatchEvent(new Event("change"));
     await element.updateComplete;
 
     const cloneButton = element.shadowRoot?.querySelector(
