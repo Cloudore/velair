@@ -830,6 +830,31 @@ Only provided fields change. Enabling requires a sensor, a target, and a pulse t
 
 The schedule response includes `humidity_assist`, a runtime-only per-zone status (`state`, `decision`, `last_evaluation`, `reason`, `target`, `effective_target`, `raw`, `median`, `excess`, `priority`, `gate_active`, `pull_down_active`, `emergency_high`, phase timestamps, and `next_transition_at`), and `humidity_assist_compliant`. See [Humidity Assist internals](humidity-assist.md).
 
+## Zone House Modes
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/update_zone_house_modes",
+  entity_id: "climate.master_bedroom",
+  house_modes: {
+    away_enabled: true,
+    away_temperature: 26,
+    away_deep_temperature: 28,
+    sleep_enabled: true,
+    sleep_temperature: 25,
+    sleep_constraint: "absolute",
+    sleep_fan_mode: "high",
+    sleep_minimum_temperature: 22,
+    presleep_temperature: 24,
+    travel_park_enabled: true
+  }
+});
+```
+
+Only provided fields change. Temperatures must fall inside the climate's own target range and `sleep_constraint` must be one of the hold constraints; violations return `invalid_house_modes`. The global parameters are updated through `velair/update_settings` with a `house_modes` object containing any of `enabled`, `presence_entity_ids`, `presence_corroboration_entity_ids`, `presence_corroboration_quiet_minutes`, `away_after_minutes`, `away_deep_after_minutes`, `arrival_release_minutes`, `sleep_entity_id`, `presleep_time`, `presleep_duration_minutes`, `travel_entity_id`, `travel_park_temperature`, `travel_park_hvac_mode`, `travel_park_fan_mode`, `travel_freeze_off_heads`, `travel_enable_humidity_assist`, and `travel_auto_exit_on_arrival`.
+
+The schedule response includes the normalized global parameters in `settings.house_modes` and a runtime-only `house_mode` status (`state`, `sleeping`, `travel_active`, `away_stage`, `presence_empty`, `presence_certain`, `empty_since`, `next_stage_at`, `travel_since`, `sleep_since`, `zones_parked`, `zones_frozen`, `zones_away`, `zones_sleeping`, `zones_presleep`, `zone_reasons`, `next_evaluation_at`, `last_action`, `last_action_at`, plus `settings` and every zone's normalized `zones` configuration). See [House Modes](../user/house-modes.md).
+
 ## Climate Profiles
 
 Create or replace a complete profile definition. Omitting `key` creates a new

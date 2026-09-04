@@ -655,6 +655,47 @@ median: 22.4
 next_transition_at: "2026-08-10T15:10:00+00:00"
 ```
 
+## House Mode Changed
+
+`house_mode_changed` is emitted whenever the whole-home mode reported by
+`sensor.velair_house_mode` changes, or when sleep turns on or off while another
+mode (travel, away) is reported as the state. `previous` and `state` are one
+of `home`, `away`, `away_deep`, `travel`, `sleep`, or `disabled`; `sleeping`
+tells whether the sleep entity is on regardless of the reported state.
+`reason` names what triggered the evaluation (`start`, `state`, `timer`,
+`settings`, `config`, or `rerun`). Repeating the same state does not emit it.
+See [House Modes](house-modes.md).
+
+```yaml
+domain: velair
+event: house_mode_changed
+previous: home
+state: away
+sleeping: false
+reason: timer
+empty_since: "2026-08-10T14:00:00+00:00"
+travel_since: null
+sleep_since: null
+```
+
+## House Zone Parked
+
+`house_zone_parked` is emitted for each zone that House Modes parks or freezes
+while travel is on. `pause_id` is `travel_park` (a raise-only hold at the park
+temperature) or `travel_off` (an indefinite freeze of a head a person turned
+off); `action` mirrors the hold action and `temperature` is `null` for a
+freeze. `reason` is `travel_started`, `travel_recheck`, or `head_turned_off`.
+
+```yaml
+domain: velair
+event: house_zone_parked
+entity_id: climate.guest_room
+pause_id: travel_park
+action: hold
+temperature: 29
+reason: travel_started
+```
+
 ## Boost Started
 
 `boost_started` is emitted after a boost target and override have been applied

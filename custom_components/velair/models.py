@@ -9,6 +9,7 @@ import re
 import unicodedata
 from typing import Any, Literal, NotRequired, TypedDict
 
+from .house_modes_models import HouseModesRuntimeData, HouseModesSettingsData, HouseModesZoneData, normalize_house_modes_data, normalize_house_modes_runtime_data, normalize_house_modes_settings
 from .const import (
     ACTION_SET_TEMPERATURE,
     ACTION_TURN_OFF,
@@ -429,6 +430,7 @@ class ZoneData(TypedDict):
     execution: NotRequired[ZoneExecutionData]
     delivery: DeliveryData
     humidity_assist: NotRequired[HumidityAssistData]
+    house_modes: NotRequired[HouseModesZoneData]
 
 
 class ScheduleTemplateData(TypedDict):
@@ -448,6 +450,8 @@ class PanelSettingsData(TypedDict):
     max_temperature: float
     delivery_stagger_seconds: int
     humidity_assist: NotRequired[HumidityAssistSettingsData]
+    house_modes: NotRequired[HouseModesSettingsData]
+    house_modes_runtime: NotRequired[HouseModesRuntimeData]
 
 
 class GlobalData(TypedDict):
@@ -838,6 +842,7 @@ def normalize_schedule_data(
             "humidity_assist": normalize_humidity_assist_data(
                 zone_data.get("humidity_assist")
             ),
+            **({"house_modes": normalize_house_modes_data(zone_data.get("house_modes"))} if isinstance(zone_data.get("house_modes"), dict) else {}),
         }
         execution = normalize_zone_execution(zone_data.get("execution"))
         if execution is not None:
@@ -1444,6 +1449,8 @@ def normalize_panel_settings(
         "humidity_assist": normalize_humidity_assist_settings(
             settings.get("humidity_assist")
         ),
+        **({"house_modes": normalize_house_modes_settings(settings.get("house_modes"))} if isinstance(settings.get("house_modes"), dict) else {}),
+        **({"house_modes_runtime": normalize_house_modes_runtime_data(settings.get("house_modes_runtime"))} if isinstance(settings.get("house_modes_runtime"), dict) else {}),
     }
 
 

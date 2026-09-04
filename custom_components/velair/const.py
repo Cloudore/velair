@@ -48,6 +48,8 @@ EVENT_TYPE_ZONE_RESUMED = "zone_resumed"
 EVENT_TYPE_ZONE_CONTROL_CHANGED = "zone_control_changed"
 EVENT_TYPE_DELIVERY_OUTCOME = "delivery_outcome"
 EVENT_TYPE_HUMIDITY_ASSIST_STATE_CHANGED = "humidity_assist_state_changed"
+EVENT_TYPE_HOUSE_MODE_CHANGED = "house_mode_changed"
+EVENT_TYPE_HOUSE_ZONE_PARKED = "house_zone_parked"
 
 SERVICE_APPLY_SCHEDULE = "apply_schedule"
 SERVICE_ACTIVATE_PROFILE = "activate_profile"
@@ -192,7 +194,8 @@ ZONE_CONTROL_UNIQUE_ID_SUFFIXES = (
     "humidity_priority",
     "humidity_target",
 )
+HOUSE_MODES_ZONE_UNIQUE_ID_SUFFIXES = ("away_temperature", "away_deep_temperature", "sleep_temperature", "sleep_minimum_temperature", "presleep_temperature", "away_setback", "sleep_hold")
 ZONE_ENTITY_UNIQUE_ID_SUFFIXES = (
-    ZONE_SENSOR_UNIQUE_ID_SUFFIXES + ZONE_CONTROL_UNIQUE_ID_SUFFIXES
+    ZONE_SENSOR_UNIQUE_ID_SUFFIXES + ZONE_CONTROL_UNIQUE_ID_SUFFIXES + HOUSE_MODES_ZONE_UNIQUE_ID_SUFFIXES
 )
 ZONE_ENTITY_DOMAIN_PREFIXES = ("sensor.", "switch.", "number.")

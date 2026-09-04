@@ -15,6 +15,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from . import VelairConfigEntry
 from .config_helpers import get_configured_climate_entities
 from .entity import VelairEntity
+from .house_modes_entities import build_house_modes_numbers
 from .models import (
     HUMIDITY_ASSIST_MEASURE_DEW_POINT,
     normalize_humidity_assist_settings,
@@ -43,6 +44,7 @@ async def async_setup_entry(
         for bound in ZONE_LIMIT_BOUNDS
     )
     async_add_entities(build_humidity_assist_number_entities(hass, entry))
+    async_add_entities(build_house_modes_numbers(hass, entry))
 
 class ZoneTemperatureLimitNumber(VelairEntity, NumberEntity):
     """Editable setpoint floor or ceiling enforced on every Velair delivery.

@@ -193,7 +193,8 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
 
         await sensor_module.async_setup_entry(hass, entry, entities.extend)
 
-        self.assertEqual(len(entities), 17)
+        # Three global sensors, seven per zone, plus the House Modes sensor.
+        self.assertEqual(len(entities), 18)
         target_sensors = [
             entity
             for entity in entities
@@ -707,6 +708,7 @@ class SensorTranslationTest(unittest.TestCase):
                         "zone_preconditioning_start",
                         "zone_room_assist_state",
                         "zone_humidity_assist",
+                        "house_mode",
                     },
                 )
                 self.assertEqual(
@@ -727,6 +729,9 @@ class SensorTranslationTest(unittest.TestCase):
                         "automatic_scheduling",
                         "zone_humidity_assist",
                         "zone_humidity_priority",
+                        "house_modes",
+                        "zone_away_setback",
+                        "zone_sleep_hold",
                     },
                 )
                 self.assertEqual(

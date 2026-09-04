@@ -147,6 +147,7 @@ from .zone_limit_notifications import (
     async_notify_zone_limit,
 )
 from .humidity_assist import HumidityAssistCoordinator
+from .house_modes import HouseModesCoordinator
 from .models import (
     HumidityAssistData,
     normalize_humidity_assist_data,
@@ -393,6 +394,7 @@ class VelairScheduler:
         self._profile_mutation_lock = asyncio.Lock()
         self._operation_status: OperationStatus | None = None
         self._humidity_assist = HumidityAssistCoordinator(self)
+        self.house_modes = HouseModesCoordinator(self)
 
     @property
     def mode(self) -> str:
@@ -426,6 +428,7 @@ class VelairScheduler:
         if apply_current_schedule and self.mode == MODE_AUTO:
             await self.async_apply_current_schedule(source="startup")
         await self._humidity_assist.async_start()
+        await self.house_modes.async_start()
 
     async def async_stop(self) -> None:
         """Stop scheduling events."""
@@ -450,6 +453,7 @@ class VelairScheduler:
             self._clear_comfort_listener()
             self._preconditioning_plan_snapshots.clear()
             await self._humidity_assist.async_stop()
+            await self.house_modes.async_stop()
 
     def handle_temperature_unit_change(self) -> None:
         """Discard unit-bound runtime caches and rebuild scheduler projections."""
@@ -2209,6 +2213,7 @@ class VelairScheduler:
                 "policy": session_policy["action"],
             },
         )
+        self.house_modes.handle_external_change(entity_id, previous, current)
         if (
             existing_manual is None
             and session_policy["action"] == EXTERNAL_CHANGE_KEEP_AUTOMATIC
@@ -2685,6 +2690,7 @@ class VelairScheduler:
         await self._async_save_data()
         if "humidity_assist" in settings:
             await self._humidity_assist.async_settings_changed()
+        if "house_modes" in settings: await self.house_modes.async_settings_changed()
         self._async_write_state()
         return next_settings
 

@@ -124,6 +124,17 @@
           "pulsing": "Pulsando",
           "resting": "Em repouso"
         }
+      },
+      "house_mode": {
+        "name": "House mode",
+        "state": {
+          "home": "Home",
+          "away": "Away",
+          "away_deep": "Away (deep)",
+          "travel": "Travel",
+          "sleep": "Sleep",
+          "disabled": "Disabled"
+        }
       }
     },
     "select": {
@@ -140,6 +151,15 @@
       },
       "zone_humidity_priority": {
         "name": "Prioridade de umidade de {zone}"
+      },
+      "house_modes": {
+        "name": "House modes"
+      },
+      "zone_away_setback": {
+        "name": "{zone} away setback"
+      },
+      "zone_sleep_hold": {
+        "name": "{zone} sleep hold"
       }
     },
     "binary_sensor": {
@@ -192,6 +212,33 @@
       },
       "zone_max_temperature_limit": {
         "name": "Temperatura máxima de {zone}"
+      },
+      "zone_away_temperature": {
+        "name": "{zone} away temperature"
+      },
+      "zone_away_deep_temperature": {
+        "name": "{zone} away deep temperature"
+      },
+      "zone_sleep_temperature": {
+        "name": "{zone} sleep temperature"
+      },
+      "zone_sleep_minimum_temperature": {
+        "name": "{zone} sleep minimum temperature"
+      },
+      "zone_presleep_temperature": {
+        "name": "{zone} presleep temperature"
+      },
+      "house_away_after_minutes": {
+        "name": "House away after minutes"
+      },
+      "house_away_deep_after_minutes": {
+        "name": "House away deep after minutes"
+      },
+      "house_arrival_release_minutes": {
+        "name": "House arrival release minutes"
+      },
+      "travel_park_temperature": {
+        "name": "Travel park temperature"
       }
     }
   }

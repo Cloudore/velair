@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
+from .house_modes_models import HOUSE_MODES_SETTINGS_TEMPERATURE_KEYS, HOUSE_MODES_ZONE_TEMPERATURE_KEYS, convert_house_modes_temperatures
 from .models import (
     DEFAULT_ROOM_SENSOR_ASSIST_DEADBAND,
     SchedulerData,
@@ -631,6 +632,7 @@ def _snap_migrated_editable_temperatures(
                 and isinstance(humidity_assist.get("target"), (int, float))
             ):
                 humidity_assist["target"] = _nearest_step(humidity_assist["target"], 0.1)
+        for key in HOUSE_MODES_ZONE_TEMPERATURE_KEYS: snap_target(zone.get("house_modes"), key)
 
 
 def _convert_scheduler_temperatures(
@@ -698,6 +700,7 @@ def _convert_scheduler_temperatures(
                         absolute_temperature(humidity_assist["target"], source, target),
                         6,
                     )
+            convert_house_modes_temperatures(zone.get("house_modes"), HOUSE_MODES_ZONE_TEMPERATURE_KEYS, source, target)
     templates = data.get("templates", [])
     if isinstance(templates, list):
         for template in templates:
@@ -726,6 +729,7 @@ def _convert_scheduler_temperatures(
                     humidity_assist[key] = round(
                         temperature_delta(humidity_assist[key], source, target), 6
                     )
+        convert_house_modes_temperatures(settings.get("house_modes"), HOUSE_MODES_SETTINGS_TEMPERATURE_KEYS, source, target)
     learning = data.get("preconditioning_learning", {})
     if isinstance(learning, dict):
         for entity_id, directions in learning.items():
