@@ -236,6 +236,7 @@ const zoneStatePresentation: Record<ZoneRuntimeStatus["state"], { icon: string; 
   stopped: { icon: "mdi:stop-circle-outline", key: "overviewZoneAutomationOff" },
   paused: { icon: "mdi:pause-circle", key: "overviewZonePaused" },
   boost: { icon: "mdi:lightning-bolt", key: "overviewZoneBoost" },
+  drying: { icon: "mdi:water-percent", key: "overviewZoneDrying" },
   preconditioning: { icon: "mdi:clock-fast", key: "overviewZonePreconditioning" },
   scheduled: { icon: "mdi:calendar-clock", key: "overviewZoneScheduled" },
   idle: { icon: "mdi:hand-back-right-outline", key: "overviewZoneManual" },
@@ -525,6 +526,10 @@ function renderOverviewStateBadge(host: OverviewViewHost, entityId: string, stat
   let detail = "";
   if (status.state === "paused") detail = status.until ? host._t("overviewZoneResumes", { time: host._formatDateTime(status.until) }) : host._t("overviewZoneUntilResumed");
   if (status.state === "boost" && status.until) detail = host._t("overviewZoneUntil", { time: host._formatDateTime(status.until) });
+  if (status.state === "drying") {
+    const nextTransition = host._data?.humidity_assist?.[entityId]?.next_transition_at;
+    detail = nextTransition ? host._t("overviewZoneUntil", { time: host._formatDateTime(nextTransition) }) : "";
+  }
   if (status.state === "preconditioning" && status.target_when) detail = host._t("overviewZoneReadyAt", { time: host._formatDateTime(status.target_when) });
   if (status.state === "scheduled") {
     const next = host._data?.next_events?.find((event) => event.entity_id === entityId);

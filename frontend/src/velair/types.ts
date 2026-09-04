@@ -91,7 +91,7 @@ export type VelairPanelRoute = {
   prefix?: string;
 };
 
-export type VelairPanelView = "overview" | "modes" | "schedules" | "templates" | "sensors" | "comfort" | "preconditioning" | "diagnostics" | "settings";
+export type VelairPanelView = "overview" | "modes" | "schedules" | "templates" | "sensors" | "comfort" | "humidity" | "preconditioning" | "diagnostics" | "settings";
 export type VelairOverviewCardView =
   | "overview-status"
   | "active-setup"
@@ -212,6 +212,74 @@ export type ComfortSettings = {
   co2_attention: number;
   co2_poor: number;
   stale_after_minutes: number;
+};
+
+export type HumidityAssistMeasure = "dew_point" | "relative_humidity";
+export type HumidityAssistPulseMode = "cool" | "dry";
+
+export type HumidityAssistSettings = {
+  enabled: boolean;
+  sensor_entity_id: string | null;
+  measure: HumidityAssistMeasure;
+  target: number | null;
+  priority: boolean;
+  pulse_temperature: number | null;
+  pulse_hvac_mode: HumidityAssistPulseMode;
+  pulse_fan_mode: string | null;
+};
+
+export type HumidityAssistGlobalSettings = {
+  start_buffer: number;
+  stop_buffer: number;
+  min_on_minutes: number;
+  max_on_minutes: number;
+  min_off_minutes: number;
+  max_simultaneous_pulses: number;
+  emergency_margin_priority: number;
+  emergency_margin_standard: number;
+  median_window_minutes: number;
+  initial_pull_down_window_minutes: number;
+  initial_pull_down_max_run_minutes: number;
+  initial_pull_down_target_offset: number;
+  gate_entity_id: string | null;
+};
+
+export type HumidityAssistState =
+  | "disabled"
+  | "unavailable"
+  | "blocked_manual"
+  | "blocked_gate"
+  | "waiting"
+  | "pulsing"
+  | "resting";
+
+export type HumidityAssistStatus = {
+  state: HumidityAssistState;
+  decision?: string | null;
+  last_evaluation?: string | null;
+  reason?: string | null;
+  enabled: boolean;
+  configured: boolean;
+  sensor_entity_id?: string | null;
+  measure?: HumidityAssistMeasure;
+  unit?: string;
+  target?: number | null;
+  effective_target?: number | null;
+  raw?: number | null;
+  median?: number | null;
+  excess?: number | null;
+  priority?: boolean;
+  pulse_temperature?: number | null;
+  pulse_hvac_mode?: HumidityAssistPulseMode;
+  pulse_fan_mode?: string | null;
+  gate_entity_id?: string | null;
+  gate_active?: boolean;
+  pull_down_active?: boolean;
+  emergency_high?: boolean;
+  phase_started_at?: string | null;
+  last_pulse_started_at?: string | null;
+  last_pulse_ended_at?: string | null;
+  next_transition_at?: string | null;
 };
 
 export type ComfortMetricAssessment = {
@@ -337,6 +405,7 @@ export type ScheduleZone = {
   }>;
   preconditioning?: PreconditioningSettings;
   comfort?: ComfortSettings;
+  humidity_assist?: Partial<HumidityAssistSettings>;
   external_change_policy?: ExternalChangePolicy;
   execution?: { type: "external"; provider: string };
 };
@@ -389,7 +458,7 @@ export type ManualControl = {
 };
 
 export type ZoneRuntimeStatus = {
-  state: "stopped" | "paused" | "boost" | "preconditioning" | "scheduled" | "idle" | "externally_managed";
+  state: "stopped" | "paused" | "boost" | "drying" | "preconditioning" | "scheduled" | "idle" | "externally_managed";
   room_temperature?: number | null;
   target_temperature?: number | null;
   target_temp_low?: number | null;
@@ -466,6 +535,7 @@ export type PanelSettings = {
   min_temperature?: number;
   max_temperature?: number;
   apply_active_schedule_on_startup?: boolean;
+  humidity_assist?: Partial<HumidityAssistGlobalSettings>;
 };
 
 export type OperationStatus = {
@@ -576,6 +646,8 @@ export type ScheduleResponse = {
   active_overrides: Record<string, Record<string, unknown>>;
   room_sensor_assist?: Record<string, RoomSensorAssistStatus>;
   comfort?: Record<string, ComfortAssessment>;
+  humidity_assist?: Record<string, HumidityAssistStatus>;
+  humidity_assist_compliant?: boolean;
   zone_runtime?: Record<string, ZoneRuntimeStatus>;
   preconditioning_learning?: Record<string, PreconditioningLearningSummary>;
   diagnostics?: DiagnosticsSnapshot;

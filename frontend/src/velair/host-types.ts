@@ -5,6 +5,8 @@ import type { SupportedLanguage, TranslationKey } from "./translations";
 import type {
   BlockDraftSource,
   ComfortSettings,
+  HumidityAssistGlobalSettings,
+  HumidityAssistSettings,
   DiagnosticsSnapshot,
   DraftScheduleBlock,
   EntityDiagnostic,
@@ -53,6 +55,7 @@ export type VelairViewHost = {
   _draftBlocks: DraftScheduleBlock[];
   _error?: string;
   _expandedComfortZones: Set<string>;
+  _expandedHumidityZones: Set<string>;
   _expandedPreconditioningZones: Set<string>;
   _exportSections: Set<PortableSection>;
   _hasExternalConfig: boolean;
@@ -195,6 +198,8 @@ export type VelairViewHost = {
   _resumeAutomaticControl(entityId: string): Promise<void>;
   _enterManualAdjustment(entityId: string): Promise<void>;
   _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;
+  _saveZoneHumidityAssist(entityId: string, humidityAssist: Partial<HumidityAssistSettings>): Promise<void>;
+  _saveHumidityAssistSettings(settings: Partial<HumidityAssistGlobalSettings>): Promise<void>;
   _saveZonePreconditioning(entityId: string, preconditioning: Partial<PreconditioningSettings>): Promise<void>;
   _saveTemplate(saveAsNew: boolean): Promise<void>;
   _scheduleTemplates(): ScheduleTemplate[];
@@ -224,6 +229,7 @@ export type VelairViewHost = {
   _toggleCopyTarget(weekday: string, checked: boolean): void;
   _setCopyTargetPreset(preset: CloneDayPreset): void;
   _toggleComfortZone(entityId: string): void;
+  _toggleHumidityZone(entityId: string): void;
   _togglePreconditioningZone(entityId: string): void;
   _togglePortableSection(target: "export" | "import", section: PortableSection, checked: boolean): void;
   _toggleTemplateApplyPanel(): void;

@@ -1,6 +1,14 @@
 import { WEEKDAYS } from "../constants";
 import type { VelairApiClient } from "../api/client";
-import type { ComfortSettings, PanelSettings, PreconditioningSettings, ScheduleResponse, VelairCardConfig } from "../types";
+import type {
+  ComfortSettings,
+  HumidityAssistGlobalSettings,
+  HumidityAssistSettings,
+  PanelSettings,
+  PreconditioningSettings,
+  ScheduleResponse,
+  VelairCardConfig,
+} from "../types";
 
 type SettingsActionsHost = {
   _config: VelairCardConfig;
@@ -101,6 +109,51 @@ export async function saveZoneComfort(
   host._saveMessage = undefined;
   try {
     const data = await api.updateZoneComfort(entityId, comfort);
+    host._applyScheduleData(data);
+  } catch (error) {
+    host._error = error instanceof Error ? error.message : host._t("unableSaveSettings");
+  } finally {
+    host._settingsSaving = false;
+  }
+}
+
+export async function saveZoneHumidityAssist(
+  host: SettingsActionsHost,
+  entityId: string,
+  humidityAssist: Partial<HumidityAssistSettings>,
+): Promise<void> {
+  const api = host._api();
+  if (!api) {
+    return;
+  }
+
+  host._settingsSaving = true;
+  host._error = undefined;
+  host._saveMessage = undefined;
+  try {
+    const data = await api.updateZoneHumidityAssist(entityId, humidityAssist);
+    host._applyScheduleData(data);
+  } catch (error) {
+    host._error = error instanceof Error ? error.message : host._t("unableSaveSettings");
+  } finally {
+    host._settingsSaving = false;
+  }
+}
+
+export async function saveHumidityAssistSettings(
+  host: SettingsActionsHost,
+  settings: Partial<HumidityAssistGlobalSettings>,
+): Promise<void> {
+  const api = host._api();
+  if (!api) {
+    return;
+  }
+
+  host._settingsSaving = true;
+  host._error = undefined;
+  host._saveMessage = undefined;
+  try {
+    const data = await api.updateSettings({ humidity_assist: settings });
     host._applyScheduleData(data);
   } catch (error) {
     host._error = error instanceof Error ? error.message : host._t("unableSaveSettings");

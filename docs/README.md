@@ -15,6 +15,7 @@ Velair documentation is grouped by audience and topic.
 - [Room Assist](user/room-assist.md): use a separate room temperature sensor for TRVs, thermostats, and AC units.
 - [Resilient climate delivery](user/resilient-climate-delivery.md): understand deferred retries and reconnection behavior when a climate is temporarily unavailable.
 - [Environmental Comfort](user/comfort.md): understand temperature, humidity, CO2 air quality, and reading freshness through local room assessments.
+- [Humidity Assist](user/humidity-assist.md): pulse zones colder for bounded runs whenever a room's dew point or humidity drifts above its target, with priority rooms, compressor rests, and an external gate.
 - [Temperature Units and Migration](user/temperature-units.md): understand Celsius/Fahrenheit defaults, upgrades, migration, import/export, and recovery.
 - [Troubleshooting](user/troubleshooting.md): common setup, frontend resource, and runtime issues.
 - [Diagnostics](user/diagnostics.md): local runtime health, bounded history, and redacted issue reports.
@@ -28,6 +29,7 @@ Velair documentation is grouped by audience and topic.
 - [Room Assist internals](developer/room-assist.md): room sensor source selection, assisted target calculation, runtime status, restoration, and events.
 - [Climate delivery internals](developer/climate-delivery.md): event-driven retry, availability recovery, serialization, generations, and success boundaries.
 - [Environmental Comfort internals](developer/comfort.md): source selection, condition assessment, data quality, listeners, API output, and events.
+- [Humidity Assist internals](developer/humidity-assist.md): state machine, coordinator arbitration, timers, samples, persistence, and delivery hooks.
 - [Temperature unit internals](developer/temperature-units.md): storage metadata, migration boundaries, portable conversion, validation, and runtime safety.
 - [Frontend](developer/frontend.md): frontend runtime elements, build commands, Lovelace resource, translations, UI principles, and frontend workflow.
 - [Development](developer/development.md): local checks, generated files, coding guidelines, and contribution workflow.

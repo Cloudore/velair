@@ -181,6 +181,7 @@ Supported Lovelace `view` values:
 - `schedules`
 - `sensors`
 - `comfort`
+- `humidity`
 - `preconditioning`
 
 Do not keep an old `/local/velair-card.js` resource active while testing an installed or HACS-style build. Browser custom elements cannot be redefined in place, so a second resource URL can still register obsolete elements before Velair's canonical module loads.

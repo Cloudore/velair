@@ -28,9 +28,12 @@ custom_components/velair/
   entity.py            shared entity base
   entity_registry.py   cleanup for retired and removed-climate entities
   frontend.py          panel and static frontend registration
+  humidity_assist.py   Humidity Assist state machine, coordinator, timers, and persistence
   models.py            typed normalization, preconditioning prediction, serialization
   runtime_diagnostics.py bounded runtime health/history projection and report redaction
   scheduler.py         event calculation, timers, overrides, preconditioning runtime
+  number.py            Humidity Assist target and shared parameter numbers
+  binary_sensor.py     Humidity Assist compliance sensor
   sensor.py            scheduler and per-zone state sensors
   services.py          Home Assistant service actions
   services.yaml        service descriptions
