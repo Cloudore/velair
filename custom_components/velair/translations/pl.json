@@ -122,6 +122,14 @@
       "automatic_scheduling": {
         "name": "Automatyczny harmonogram"
       }
+    },
+    "number": {
+      "zone_min_temperature_limit": {
+        "name": "{zone} temperatura minimalna"
+      },
+      "zone_max_temperature_limit": {
+        "name": "{zone} temperatura maksymalna"
+      }
     }
   }
 }

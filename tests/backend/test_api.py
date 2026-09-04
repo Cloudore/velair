@@ -746,6 +746,93 @@ class PortableTemperatureContractTest(unittest.TestCase):
             68,
         )
 
+    def test_zone_limits_export_and_import_round_trip(self) -> None:
+        zones = helpers.normalize_schedule_data(
+            {
+                "zones": {
+                    "climate.salon": {
+                        "schedule": {},
+                        "limits": {"min_temperature": 21, "max_temperature": 24},
+                        "override": {"type": "boost", "temperature": 25},
+                    }
+                }
+            },
+            ["climate.salon"],
+        )["zones"]
+
+        exported = api_module._export_zones(zones)
+
+        self.assertEqual(
+            exported["climate.salon"]["limits"],
+            {"min_temperature": 21.0, "max_temperature": 24.0},
+        )
+        self.assertNotIn("override", exported["climate.salon"])
+
+        payload = {
+            "format": api_module.EXPORT_FORMAT,
+            "model_version": api_module.EXPORT_MODEL_VERSION,
+            "temperature_unit": api_module.CELSIUS,
+            "sections": {"zones": exported},
+        }
+        celsius_runtime = self._runtime(api_module.CELSIUS, step=0.5)
+        celsius_runtime["storage"]._hass.states["climate.salon"].attributes.update(
+            {"min_temp": 5, "max_temp": 35}
+        )
+        imported = api_module._build_import_data(celsius_runtime, payload, ["zones"])
+        self.assertEqual(
+            imported["zones"]["climate.salon"]["limits"],
+            {"min_temperature": 21.0, "max_temperature": 24.0},
+        )
+
+        converted = api_module._build_import_data(
+            self._runtime(api_module.FAHRENHEIT), payload, ["zones"]
+        )
+        self.assertEqual(
+            converted["zones"]["climate.salon"]["limits"],
+            {"min_temperature": 70.0, "max_temperature": 75.0},
+        )
+
+    def test_import_without_limits_key_keeps_the_zone_unlimited(self) -> None:
+        payload = {
+            "format": api_module.EXPORT_FORMAT,
+            "model_version": api_module.EXPORT_MODEL_VERSION,
+            "temperature_unit": api_module.CELSIUS,
+            "sections": {
+                "zones": {
+                    "climate.salon": {
+                        "schedule": {
+                            "monday": [{"start": "08:00", "temperature": 20}]
+                        }
+                    }
+                }
+            },
+        }
+
+        imported = api_module._build_import_data(
+            self._runtime(api_module.FAHRENHEIT), payload, ["zones"]
+        )
+
+        self.assertEqual(
+            imported["zones"]["climate.salon"]["limits"],
+            {"min_temperature": None, "max_temperature": None},
+        )
+
+    def test_import_rejects_malformed_zone_limits(self) -> None:
+        for limits in ("21", {"min_temperature": "warm"}, {"max_temperature": float("inf")}):
+            with self.subTest(limits=limits):
+                payload = {
+                    "format": api_module.EXPORT_FORMAT,
+                    "model_version": api_module.EXPORT_MODEL_VERSION,
+                    "temperature_unit": api_module.CELSIUS,
+                    "sections": {
+                        "zones": {"climate.salon": {"schedule": {}, "limits": limits}}
+                    },
+                }
+                with self.assertRaisesRegex(ValueError, "Temperature limits"):
+                    api_module._build_import_data(
+                        self._runtime(api_module.CELSIUS), payload, ["zones"]
+                    )
+
     def test_legacy_import_copies_minimum_delta_into_room_assist_deadband(self) -> None:
         payload = {
             "format": api_module.EXPORT_FORMAT,

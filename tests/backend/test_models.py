@@ -23,6 +23,8 @@ from custom_components.velair.models import (
     predict_preconditioning_lead,
     validate_pause_id,
     zone_pause_override_from_reasons,
+    normalize_zone_limits,
+    serialize_schedule_data,
 )
 
 
@@ -527,6 +529,62 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
         self.assertFalse(data["zones"]["climate.bedroom"]["comfort"]["enabled"])
         self.assertTrue(
             data["zones"]["climate.bedroom"]["comfort"]["humidity_enabled"]
+        )
+
+    def test_normalize_schedule_data_adds_zone_limits(self) -> None:
+        data = normalize_schedule_data(
+            {
+                "zones": {
+                    "climate.salon": {
+                        "enabled": True,
+                        "schedule": empty_week_schedule(),
+                        "limits": {"min_temperature": 21, "max_temperature": "24.5"},
+                    }
+                }
+            },
+            ["climate.salon", "climate.bedroom"],
+        )
+
+        self.assertEqual(
+            data["zones"]["climate.salon"]["limits"],
+            {"min_temperature": 21.0, "max_temperature": 24.5},
+        )
+        self.assertEqual(
+            data["zones"]["climate.bedroom"]["limits"],
+            {"min_temperature": None, "max_temperature": None},
+        )
+        self.assertEqual(
+            serialize_schedule_data(data)["zones"]["climate.salon"]["limits"],
+            {"min_temperature": 21.0, "max_temperature": 24.5},
+        )
+
+    def test_normalize_zone_limits_tolerates_missing_and_garbage_values(self) -> None:
+        self.assertEqual(
+            normalize_zone_limits(None),
+            {"min_temperature": None, "max_temperature": None},
+        )
+        self.assertEqual(
+            normalize_zone_limits("21"),
+            {"min_temperature": None, "max_temperature": None},
+        )
+        self.assertEqual(
+            normalize_zone_limits(
+                {"min_temperature": "warm", "max_temperature": float("nan")}
+            ),
+            {"min_temperature": None, "max_temperature": None},
+        )
+        self.assertEqual(
+            normalize_zone_limits({"min_temperature": True, "max_temperature": 500}),
+            {"min_temperature": None, "max_temperature": None},
+        )
+        self.assertEqual(
+            normalize_zone_limits({"min_temperature": 18}),
+            {"min_temperature": 18.0, "max_temperature": None},
+        )
+        # An inverted pair is unsafe to enforce, so both limits are dropped.
+        self.assertEqual(
+            normalize_zone_limits({"min_temperature": 25, "max_temperature": 20}),
+            {"min_temperature": None, "max_temperature": None},
         )
 
     def test_normalize_comfort_data_resets_invalid_ranges(self) -> None:

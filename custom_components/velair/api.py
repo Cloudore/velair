@@ -245,6 +245,19 @@ COMFORT_SCHEMA = vol.Schema(
     }
 )
 
+ZONE_LIMITS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("min_temperature"): vol.Any(
+            None,
+            vol.All(vol.Coerce(float), vol.Range(min=-58, max=212)),
+        ),
+        vol.Optional("max_temperature"): vol.Any(
+            None,
+            vol.All(vol.Coerce(float), vol.Range(min=-58, max=212)),
+        ),
+    }
+)
+
 
 def async_setup_api(hass: HomeAssistant) -> None:
     """Register WebSocket API commands."""
@@ -276,6 +289,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_resume_automatic_control)
     websocket_api.async_register_command(hass, ws_update_zone_preconditioning)
     websocket_api.async_register_command(hass, ws_update_zone_comfort)
+    websocket_api.async_register_command(hass, ws_update_zone_limits)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_learning)
     websocket_api.async_register_command(hass, ws_export_data)
@@ -1150,6 +1164,40 @@ async def ws_update_zone_comfort(
 
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): f"{DOMAIN}/update_zone_limits",
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required("limits"): ZONE_LIMITS_SCHEMA,
+    }
+)
+@websocket_api.async_response
+async def ws_update_zone_limits(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle persisted per-zone temperature limit updates."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+
+    scheduler = runtime["scheduler"]
+    try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
+        await scheduler.async_update_zone_limits(
+            msg[ATTR_ENTITY_ID],
+            msg["limits"],
+        )
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_limits", str(err))
+        return
+
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): f"{DOMAIN}/reset_zone_preconditioning_settings",
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
     }
@@ -1766,6 +1814,9 @@ def _hydrate_portable_temperature_defaults(
     for zone in zones.values():
         if not isinstance(zone, dict):
             continue
+        # Limits are absolute temperatures without a unit default: an absent
+        # limit means "no limit" and is never hydrated from a Celsius value.
+        zone.setdefault("limits", {"min_temperature": None, "max_temperature": None})
         comfort = zone.setdefault("comfort", {})
         if isinstance(comfort, dict):
             comfort.setdefault(
@@ -1854,6 +1905,9 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
             "schedule": deepcopy(zone.get("schedule", {})),
             "preconditioning": deepcopy(zone.get("preconditioning", {})),
             "comfort": deepcopy(zone.get("comfort", {})),
+            "limits": deepcopy(
+                zone.get("limits", {"min_temperature": None, "max_temperature": None})
+            ),
             "external_change_policy": deepcopy(
                 zone.get("external_change_policy", {})
             ),
@@ -2166,6 +2220,24 @@ def _validate_portable_zone_schedules(
                 raise ValueError(
                     f"Room Assist deadband for {entity_id} must be between 0 and {maximum:g}"
                 )
+        limits = zone.get("limits")
+        if limits is not None and not isinstance(limits, dict):
+            raise ValueError(f"Temperature limits for {entity_id} are not valid")
+        if isinstance(limits, dict):
+            for key in ("min_temperature", "max_temperature"):
+                value = limits.get(key)
+                if value is None:
+                    continue
+                try:
+                    number = float(value)
+                except (TypeError, ValueError) as err:
+                    raise ValueError(
+                        f"Temperature limits for {entity_id} are not valid"
+                    ) from err
+                if not math.isfinite(number):
+                    raise ValueError(
+                        f"Temperature limits for {entity_id} are not valid"
+                    )
         raw_schedule = zone.get("schedule", {})
         if not isinstance(raw_schedule, dict):
             raise ValueError(f"Schedule for {entity_id} is not valid")

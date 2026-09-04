@@ -208,6 +208,13 @@ class ComfortData(TypedDict):
     stale_after_minutes: int
 
 
+class ZoneLimitsData(TypedDict):
+    """Optional absolute setpoint floor and ceiling for one climate zone."""
+
+    min_temperature: float | None
+    max_temperature: float | None
+
+
 class ExternalChangePolicyData(TypedDict):
     """Persisted response to changes not made by Velair."""
 
@@ -312,6 +319,7 @@ class ZoneData(TypedDict):
     pauses: NotRequired[list[ZonePauseReason]]
     preconditioning: PreconditioningData
     comfort: ComfortData
+    limits: ZoneLimitsData
     external_change_policy: ExternalChangePolicyData
     execution: NotRequired[ZoneExecutionData]
 
@@ -712,6 +720,7 @@ def normalize_schedule_data(
                 zone_data.get("preconditioning")
             ),
             "comfort": normalize_comfort_data(zone_data.get("comfort")),
+            "limits": normalize_zone_limits(zone_data.get("limits")),
             "external_change_policy": normalize_external_change_policy(
                 zone_data.get("external_change_policy")
             ),
@@ -730,6 +739,7 @@ def normalize_schedule_data(
                 "pauses": [],
                 "preconditioning": normalize_preconditioning_data(None),
                 "comfort": normalize_comfort_data(None),
+                "limits": normalize_zone_limits(None),
                 "external_change_policy": normalize_external_change_policy(None),
             },
         )
@@ -1484,6 +1494,17 @@ def normalize_comfort_data(raw_data: Any) -> ComfortData:
     }
 
 
+def normalize_zone_limits(raw_data: Any) -> ZoneLimitsData:
+    """Normalize optional per-zone setpoint limits; ``None`` means no limit."""
+    data = raw_data if isinstance(raw_data, dict) else {}
+    minimum = _optional_temperature_limit(data.get("min_temperature"))
+    maximum = _optional_temperature_limit(data.get("max_temperature"))
+    if minimum is not None and maximum is not None and minimum > maximum:
+        minimum = None
+        maximum = None
+    return {"min_temperature": minimum, "max_temperature": maximum}
+
+
 def predict_preconditioning_lead(
     raw_observations: Any,
     mode: str,
@@ -2108,6 +2129,19 @@ def _normalize_temperature_limit(value: Any, fallback: float) -> float:
     if temperature < -58 or temperature > 212:
         return fallback
 
+    return temperature
+
+
+def _optional_temperature_limit(value: Any) -> float | None:
+    """Return a finite absolute temperature inside the runtime envelope, or None."""
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        temperature = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not isfinite(temperature) or temperature < -58 or temperature > 212:
+        return None
     return temperature
 
 
