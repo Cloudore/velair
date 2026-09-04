@@ -531,19 +531,28 @@ class HouseModesCoordinator:
     # Evaluation
     # ------------------------------------------------------------------
     async def async_evaluate(self, *, reason: str = "manual") -> None:
-        """Evaluate presence, sleep, and travel and apply transitions."""
+        """Evaluate presence, sleep, and travel and apply transitions.
+
+        Coalesces any evaluation requested while one is already running into
+        one more pass of the same loop, rather than recursing: a sustained
+        burst of rerun requests (e.g. during a slow or failing climate
+        delivery) must not grow the call stack without bound.
+        """
         if self._evaluating:
             self._rerun_requested = True
             return
         async with self._lock:
             self._evaluating = True
             try:
-                await self._async_evaluate_locked(reason)
+                current_reason = reason
+                while True:
+                    await self._async_evaluate_locked(current_reason)
+                    if not self._rerun_requested:
+                        break
+                    self._rerun_requested = False
+                    current_reason = "rerun"
             finally:
                 self._evaluating = False
-        if self._rerun_requested:
-            self._rerun_requested = False
-            await self.async_evaluate(reason="rerun")
 
     async def _async_evaluate_locked(self, reason: str) -> None:
         now = dt_util.now()

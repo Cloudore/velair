@@ -6,6 +6,7 @@ import asyncio
 from copy import deepcopy
 from datetime import timedelta
 import importlib
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, Mock
@@ -1232,6 +1233,27 @@ class ConfigurationValidationTest(HumidityAssistTestCase):
             self.data["humidity_assist_runtime"][GUEST]["pull_down_started_at"],
             NOW.isoformat(),
         )
+
+
+class RerunCoalescingTest(HumidityAssistTestCase):
+    """A sustained burst of rerun requests must not grow the call stack."""
+
+    async def test_sustained_rerun_bursts_do_not_recurse(self) -> None:
+        coordinator = self.coordinator
+        calls = {"n": 0}
+        target_reruns = sys.getrecursionlimit() + 500
+
+        async def fake_locked(reason: str) -> None:
+            calls["n"] += 1
+            if calls["n"] <= target_reruns:
+                coordinator._rerun_requested = True
+
+        coordinator._async_evaluate_locked = fake_locked
+        await coordinator.async_evaluate(reason="test")
+
+        self.assertEqual(calls["n"], target_reruns + 1)
+        self.assertFalse(coordinator._evaluating)
+        self.assertFalse(coordinator._rerun_requested)
 
 
 if __name__ == "__main__":
