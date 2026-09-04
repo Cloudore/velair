@@ -278,8 +278,11 @@ class ZoneTemperatureLimitNumberTest(unittest.IsolatedAsyncioTestCase):
 
         await number_module.async_setup_entry(hass, self.entry, added.extend)
 
+        # The number platform also adds Humidity Assist numbers after the
+        # per-zone limits; the limits are always the leading entries.
+        limits = added[:4]
         self.assertEqual(
-            [entity._attr_unique_id for entity in added],
+            [entity._attr_unique_id for entity in limits],
             [
                 "entry_climate_salon_min_temperature_limit",
                 "entry_climate_salon_max_temperature_limit",
@@ -288,7 +291,7 @@ class ZoneTemperatureLimitNumberTest(unittest.IsolatedAsyncioTestCase):
             ],
         )
         self.assertEqual(
-            [entity._attr_translation_placeholders["zone"] for entity in added],
+            [entity._attr_translation_placeholders["zone"] for entity in limits],
             ["Salon", "Salon", "climate.bedroom", "climate.bedroom"],
         )
         self.assertEqual(added[0]._attr_native_unit_of_measurement, "°C")
