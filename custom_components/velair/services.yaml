@@ -626,6 +626,9 @@ set_humidity_assist:
 snooze_off:
   name: Snooze never-off
   description: Keep a head that a person turned off from being relit by the Guards never-off rule. Velair freezes the zone with the neveroff_snooze pause for the duration, ends the Manual adjustment that protected the turn-off, and relights the head when the snooze expires, when the room stays empty, or when the house is empty for the configured time.
+set_occupancy_assist:
+  name: Set Occupancy Assist
+  description: Update Occupancy Assist settings for one managed climate. Only the provided fields change. Changing the comfort temperature (or the setback modes) rewrites the zone's default weekly schedule while "Sync comfort to schedule" is on.
   fields:
     entity_id:
       required: true
@@ -644,6 +647,90 @@ snooze_off:
           max: 10080
           step: 5
           unit_of_measurement: min
+    enabled:
+      required: false
+      description: Run the occupancy state machine for this climate. Disabling releases the setback and comfort holds.
+      selector:
+        boolean:
+    occupancy_entity_id:
+      required: false
+      description: Occupancy, presence, or motion entity whose state is "on" while the room is occupied.
+      example: binary_sensor.living_room_occupied
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - input_boolean
+    blocking_entity_ids:
+      required: false
+      description: While any of these entities is "on", no new setback stage is applied (existing stages stay).
+      example: "[\"input_boolean.guest_mode\"]"
+      selector:
+        entity:
+          multiple: true
+    corroboration_entity_ids:
+      required: false
+      description: When set, arrival also requires at least one of these entities to be "on".
+      example: "[\"binary_sensor.living_room_phone_present\"]"
+      selector:
+        entity:
+          multiple: true
+    setback_stages:
+      required: false
+      description: Up to three stages, ascending minutes, each raising the empty room to its temperature (raise-only hold).
+      example: "[{\"after_minutes\": 10, \"temperature\": 23}, {\"after_minutes\": 30, \"temperature\": 25}, {\"after_minutes\": 90, \"temperature\": 26}]"
+      selector:
+        object:
+    setback_hvac_mode:
+      required: false
+      description: HVAC mode written with each setback hold and comfort schedule. Empty keeps the current mode.
+      example: cool
+      selector:
+        select:
+          options:
+            - heat
+            - cool
+            - heat_cool
+            - auto
+            - dry
+            - fan_only
+    setback_fan_mode:
+      required: false
+      description: Fan mode written with each setback hold and comfort schedule.
+      example: auto
+      selector:
+        text:
+    arrival_stages:
+      required: false
+      description: One or two stages, ascending minutes. A stage with a temperature holds it lower-only; the last stage has no temperature and releases to the schedule.
+      example: "[{\"after_minutes\": 5, \"temperature\": 26}, {\"after_minutes\": 10, \"temperature\": null}]"
+      selector:
+        object:
+    arrival_exit_grace_minutes:
+      required: false
+      description: Leaving for less than this many minutes does not cancel an arrival stage.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10080
+          step: 1
+          mode: box
+    comfort_temperature:
+      required: false
+      description: The room's comfort temperature, written as its default weekly schedule while sync is on.
+      example: 26
+      selector:
+        number:
+          min: -58
+          max: 212
+          step: 0.5
+          mode: box
+    sync_comfort_to_schedule:
+      required: false
+      description: Keep the default weekly schedule equal to one block at the comfort temperature. Turn off to keep a hand-authored schedule.
+      selector:
+        boolean:
 
 set_external_change_policy:
   name: Set external change policy

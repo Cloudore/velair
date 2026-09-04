@@ -92,6 +92,7 @@ from .models import (
     validate_modes,
 )
 from .storage import STORAGE_VERSION, convert_portable_temperature_data
+from .occupancy_assist_api import register_occupancy_assist_ws
 from .temperature import (
     CELSIUS,
     FAHRENHEIT,
@@ -380,6 +381,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_update_zone_humidity_assist)
     register_house_modes_ws(hass)
     register_guards_ws(hass)
+    register_occupancy_assist_ws(hass)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_learning)
     websocket_api.async_register_command(hass, ws_export_data)
@@ -1807,6 +1809,7 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
         ),
         "house_mode": house_modes_status_payload(runtime),
         "guards": guards_status_payload(scheduler),
+        "occupancy_assist": {} if getattr(scheduler, "temperature_migration_blocked", False) else getattr(scheduler, "get_occupancy_assist_statuses", lambda: {})(),
         "zone_runtime": (
             {} if getattr(scheduler, "temperature_migration_blocked", False)
             else getattr(scheduler, "get_zone_runtime_statuses", lambda: {})()
@@ -2126,6 +2129,7 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
             "humidity_assist": deepcopy(zone.get("humidity_assist", {})),
             "house_modes": export_zone_house_modes(zone),
             "guards": deepcopy(zone.get("guards", {})),
+            "occupancy_assist": deepcopy(zone.get("occupancy_assist", {})),
         }
         for entity_id, zone in zones.items()
     }

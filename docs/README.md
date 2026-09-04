@@ -18,6 +18,7 @@ Velair documentation is grouped by audience and topic.
 - [Guards](user/guards.md): relight heads a person turned off after a grace period unless snoozed, release stale Manual adjustments on credible vacancy, travel or owner absence, and hold zones while an activity entity is on.
 - [Humidity Assist](user/humidity-assist.md): pulse zones colder for bounded runs whenever a room's dew point or humidity drifts above its target, with priority rooms, compressor rests, and an external gate.
 - [House Modes](user/house-modes.md): stage away setbacks from whole-home presence, apply sleep and pre-sleep holds, and park or freeze heads while travelling, all through Velair holds.
+- [Occupancy Assist](user/occupancy-assist.md): warm empty rooms in raise-only stages and cool them back in stages when someone arrives, with blocking and corroboration entities, exit grace, and a comfort dial synced to the schedule.
 - [Temperature Units and Migration](user/temperature-units.md): understand Celsius/Fahrenheit defaults, upgrades, migration, import/export, and recovery.
 - [Troubleshooting](user/troubleshooting.md): common setup, frontend resource, and runtime issues.
 - [Diagnostics](user/diagnostics.md): local runtime health, bounded history, and redacted issue reports.

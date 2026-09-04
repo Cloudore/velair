@@ -12,6 +12,7 @@ from .const import MODE_AUTO, MODE_PAUSED
 from .entity import VelairEntity
 from .house_modes_entities import build_house_modes_switches
 from .guards_entities import build_guards_switch_entities
+from .occupancy_assist_entities import build_occupancy_assist_switches
 
 
 async def async_setup_entry(
@@ -24,6 +25,7 @@ async def async_setup_entry(
     entities.extend(_humidity_assist_switches(hass, entry))
     entities.extend(build_house_modes_switches(hass, entry))
     entities.extend(build_guards_switch_entities(hass, entry))
+    entities.extend(build_occupancy_assist_switches(hass, entry))
     async_add_entities(entities)
 
 

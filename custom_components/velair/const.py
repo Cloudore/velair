@@ -55,6 +55,7 @@ EVENT_TYPE_NEVER_OFF_RECOVERED = "never_off_recovered"
 EVENT_TYPE_NEVER_OFF_SNOOZED = "never_off_snoozed"
 EVENT_TYPE_MANUAL_HOLD_RELEASED = "manual_hold_released"
 EVENT_TYPE_ACTIVITY_HOLD_CHANGED = "activity_hold_changed"
+EVENT_TYPE_OCCUPANCY_ASSIST_STATE_CHANGED = "occupancy_assist_state_changed"
 
 SERVICE_APPLY_SCHEDULE = "apply_schedule"
 SERVICE_ACTIVATE_PROFILE = "activate_profile"
@@ -78,6 +79,7 @@ SERVICE_ENABLE_HUMIDITY_ASSIST = "enable_humidity_assist"
 SERVICE_DISABLE_HUMIDITY_ASSIST = "disable_humidity_assist"
 SERVICE_SET_HUMIDITY_ASSIST = "set_humidity_assist"
 SERVICE_SNOOZE_OFF = "snooze_off"
+SERVICE_SET_OCCUPANCY_ASSIST = "set_occupancy_assist"
 
 ATTR_ACTION = "action"
 ATTR_APPLY_CURRENT_SCHEDULE = "apply_current_schedule"
@@ -190,16 +192,31 @@ ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
     "room_assist_state",
     "humidity_assist_state",
     "guard_state",
+    "occupancy_assist_state",
 )
 
 ZONE_NUMBER_UNIQUE_ID_SUFFIXES = (
     "min_temperature_limit",
     "max_temperature_limit",
 )
+ZONE_OCCUPANCY_ASSIST_UNIQUE_ID_SUFFIXES = (
+    "occupancy_assist_enabled",
+    "occupancy_setback_1_minutes",
+    "occupancy_setback_1_temperature",
+    "occupancy_setback_2_minutes",
+    "occupancy_setback_2_temperature",
+    "occupancy_setback_3_minutes",
+    "occupancy_setback_3_temperature",
+    "occupancy_arrival_1_minutes",
+    "occupancy_arrival_2_minutes",
+    "occupancy_arrival_1_temperature",
+    "occupancy_comfort_temperature",
+)
 ZONE_CONTROL_UNIQUE_ID_SUFFIXES = (
     "humidity_assist_enabled",
     "humidity_priority",
     "humidity_target",
+    *ZONE_OCCUPANCY_ASSIST_UNIQUE_ID_SUFFIXES,
 )
 HOUSE_MODES_ZONE_UNIQUE_ID_SUFFIXES = ("away_temperature", "away_deep_temperature", "sleep_temperature", "sleep_minimum_temperature", "presleep_temperature", "away_setback", "sleep_hold")
 ZONE_ENTITY_UNIQUE_ID_SUFFIXES = (

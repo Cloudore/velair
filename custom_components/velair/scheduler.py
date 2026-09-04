@@ -150,6 +150,7 @@ from .humidity_assist import HumidityAssistCoordinator
 from .house_modes import HouseModesCoordinator
 from .guards import GuardsCoordinator
 from .guards_models import GuardsZoneData
+from .occupancy_assist import OccupancyAssistCoordinator
 from .models import (
     HumidityAssistData,
     normalize_humidity_assist_data,
@@ -398,6 +399,7 @@ class VelairScheduler:
         self._humidity_assist = HumidityAssistCoordinator(self)
         self.house_modes = HouseModesCoordinator(self)
         self._guards = GuardsCoordinator(self)
+        self._occupancy_assist = OccupancyAssistCoordinator(self)
 
     @property
     def mode(self) -> str:
@@ -433,6 +435,7 @@ class VelairScheduler:
         await self._humidity_assist.async_start()
         await self.house_modes.async_start()
         await self._guards.async_start()
+        await self._occupancy_assist.async_start()
 
     async def async_stop(self) -> None:
         """Stop scheduling events."""
@@ -459,6 +462,7 @@ class VelairScheduler:
             await self._humidity_assist.async_stop()
             await self.house_modes.async_stop()
             await self._guards.async_stop()
+            await self._occupancy_assist.async_stop()
 
     def handle_temperature_unit_change(self) -> None:
         """Discard unit-bound runtime caches and rebuild scheduler projections."""
@@ -479,6 +483,7 @@ class VelairScheduler:
                 self._async_refresh_room_sensor_assist_from_current_event(entity_id)
             )
         self._humidity_assist.handle_unit_change()
+        self._occupancy_assist.handle_unit_change()
 
     async def async_apply_current_schedule(
         self,
@@ -2698,6 +2703,7 @@ class VelairScheduler:
             await self._humidity_assist.async_settings_changed()
         if "house_modes" in settings: await self.house_modes.async_settings_changed()
         if "guards" in settings: await self._guards.async_settings_changed()
+        await self._occupancy_assist.async_settings_changed(settings)
         self._async_write_state()
         return next_settings
 
@@ -3185,6 +3191,10 @@ class VelairScheduler:
         """Keep a head off for a while instead of relighting it."""
         self._ensure_local_execution(entity_id)
         await self._guards.async_snooze(entity_id, duration_minutes)
+    def get_occupancy_assist_statuses(self) -> dict[str, dict[str, object]]: return self._occupancy_assist.statuses()
+    def get_occupancy_assist_status(self, entity_id: str) -> dict[str, object]: return self._occupancy_assist.status(entity_id)
+    def get_occupancy_assist_config(self, entity_id: str): return self._occupancy_assist.config(entity_id)
+    async def async_update_zone_occupancy_assist(self, entity_id: str, occupancy_assist: dict): return await self._occupancy_assist.async_update_config(entity_id, occupancy_assist)
 
     async def async_reset_zone_preconditioning_learning(
         self,

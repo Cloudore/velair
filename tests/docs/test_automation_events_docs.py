@@ -43,6 +43,7 @@ PUBLIC_EVENTS = (
     "never_off_snoozed",
     "manual_hold_released",
     "activity_hold_changed",
+    "occupancy_assist_state_changed",
 )
 
 

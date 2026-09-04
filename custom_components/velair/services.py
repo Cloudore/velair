@@ -66,6 +66,7 @@ from .const import (
     SERVICE_ENABLE_HUMIDITY_ASSIST,
     SERVICE_SET_HUMIDITY_ASSIST,
     SERVICE_SNOOZE_OFF,
+    SERVICE_SET_OCCUPANCY_ASSIST,
     ZONE_PAUSE_ACTION_NONE,
     ZONE_PAUSE_ACTION_OPTIONS,
     EXTERNAL_CHANGE_POLICY_OPTIONS,
@@ -73,6 +74,7 @@ from .const import (
 from .models import WEEKDAYS, normalize_schedule_blocks, validate_pause_id
 from .models import HUMIDITY_ASSIST_MEASURES, HUMIDITY_ASSIST_PULSE_HVAC_MODES
 from .guards_api import SNOOZE_OFF_SCHEMA
+from .occupancy_assist_api import SET_OCCUPANCY_ASSIST_SCHEMA, build_set_occupancy_assist_handler
 
 
 def _validate_pause_id(value: str) -> str:
@@ -703,6 +705,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         schema=SET_HUMIDITY_ASSIST_SCHEMA,
     )
     hass.services.async_register(DOMAIN, SERVICE_SNOOZE_OFF, async_snooze_off, schema=SNOOZE_OFF_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_SET_OCCUPANCY_ASSIST, build_set_occupancy_assist_handler(hass), schema=SET_OCCUPANCY_ASSIST_SCHEMA)
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_EXTERNAL_CHANGE_POLICY,
@@ -745,6 +748,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_DISABLE_HUMIDITY_ASSIST,
         SERVICE_SET_HUMIDITY_ASSIST,
         SERVICE_SNOOZE_OFF,
+        SERVICE_SET_OCCUPANCY_ASSIST,
         SERVICE_SET_EXTERNAL_CHANGE_POLICY,
         SERVICE_ENTER_MANUAL_ADJUSTMENT,
         SERVICE_RESUME_AUTOMATIC_CONTROL,

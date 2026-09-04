@@ -20,6 +20,7 @@ from .models import (
     normalize_schedule_data,
     serialize_schedule_data,
 )
+from .occupancy_assist_models import convert_occupancy_assist_temperatures, snap_occupancy_assist_temperatures
 from .temperature import (
     CELSIUS,
     FAHRENHEIT,
@@ -634,6 +635,7 @@ def _snap_migrated_editable_temperatures(
             ):
                 humidity_assist["target"] = _nearest_step(humidity_assist["target"], 0.1)
         for key in HOUSE_MODES_ZONE_TEMPERATURE_KEYS: snap_target(zone.get("house_modes"), key)
+        snap_occupancy_assist_temperatures(zone, snap_target)
 
 
 def _convert_scheduler_temperatures(
@@ -703,6 +705,7 @@ def _convert_scheduler_temperatures(
                     )
             convert_house_modes_temperatures(zone.get("house_modes"), HOUSE_MODES_ZONE_TEMPERATURE_KEYS, source, target)
             convert_guards_zone_temperatures(zone.get("guards"), source, target)
+            convert_occupancy_assist_temperatures(zone, source, target)
     templates = data.get("templates", [])
     if isinstance(templates, list):
         for template in templates:

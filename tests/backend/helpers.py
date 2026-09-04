@@ -94,6 +94,7 @@ def _install_homeassistant_stubs() -> None:
     event.async_track_point_in_time = lambda *args, **kwargs: (lambda: None)
     event.async_track_state_change_event = lambda *args, **kwargs: (lambda: None)
     event.async_call_later = lambda *args, **kwargs: (lambda: None)
+    event.async_track_point_in_utc_time = lambda *args, **kwargs: (lambda: None)
     sys.modules["homeassistant.helpers.event"] = event
 
     util = ModuleType("homeassistant.util")

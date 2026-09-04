@@ -49,6 +49,8 @@ from .const import (
 )
 from .guards_models import GuardsRuntimeData, GuardsSettingsData, GuardsZoneData, normalize_guards_runtime_data, normalize_guards_settings, normalize_guards_zone_data
 
+from .occupancy_assist_models import OccupancyAssistData, OccupancyAssistRuntimeData, normalize_occupancy_assist_data, normalize_occupancy_assist_runtime_data
+
 WEEKDAYS = (
     "monday",
     "tuesday",
@@ -433,6 +435,7 @@ class ZoneData(TypedDict):
     humidity_assist: NotRequired[HumidityAssistData]
     house_modes: NotRequired[HouseModesZoneData]
     guards: NotRequired[GuardsZoneData]
+    occupancy_assist: NotRequired[OccupancyAssistData]
 
 
 class ScheduleTemplateData(TypedDict):
@@ -527,6 +530,7 @@ class SchedulerData(TypedDict):
     profiles: list[ClimateProfileData]
     modes: list[VelairModeData]
     humidity_assist_runtime: NotRequired[dict[str, HumidityAssistRuntimeData]]
+    occupancy_assist_runtime: NotRequired[dict[str, OccupancyAssistRuntimeData]]
 
 
 DEFAULT_SCHEDULE_TEMPLATES: list[ScheduleTemplateData] = [
@@ -848,6 +852,7 @@ def normalize_schedule_data(
             ),
             **({"house_modes": normalize_house_modes_data(zone_data.get("house_modes"))} if isinstance(zone_data.get("house_modes"), dict) else {}),
             "guards": normalize_guards_zone_data(zone_data.get("guards")),
+            "occupancy_assist": normalize_occupancy_assist_data(zone_data.get("occupancy_assist")),
         }
         execution = normalize_zone_execution(zone_data.get("execution"))
         if execution is not None:
@@ -868,6 +873,7 @@ def normalize_schedule_data(
                 "delivery": normalize_zone_delivery(None),
                 "humidity_assist": normalize_humidity_assist_data(None),
                 "guards": normalize_guards_zone_data(None),
+                "occupancy_assist": normalize_occupancy_assist_data(None),
             },
         )
 
@@ -976,6 +982,7 @@ def normalize_schedule_data(
             data.get("humidity_assist_runtime"),
             climate_entities,
         ),
+        "occupancy_assist_runtime": normalize_occupancy_assist_runtime_data(data.get("occupancy_assist_runtime"), climate_entities),
     }
 
 
@@ -1019,6 +1026,7 @@ def serialize_schedule_data(data: SchedulerData) -> dict[str, Any]:
         "profiles": data.get("profiles", []),
         "modes": data.get("modes", []),
         "humidity_assist_runtime": data.get("humidity_assist_runtime", {}),
+        "occupancy_assist_runtime": data.get("occupancy_assist_runtime", {}),
     }
 
 
