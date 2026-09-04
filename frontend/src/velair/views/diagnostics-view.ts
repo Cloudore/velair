@@ -154,6 +154,7 @@ function renderUnitDetail(host: VelairViewHost, entityId: string, unit: UnitDiag
     { label: "diagnosticsProfile", value: unit.effective_setup.profile_owner_name ?? unit.effective_setup.profile_owner_id },
     { label: "diagnosticsOverride", value: overrideSummary(host, unit.override) },
     { label: "diagnosticsPauses", value: unit.pauses?.length ? unit.pauses.length : undefined },
+    { label: "diagnosticsZoneLimits", value: zoneLimitsSummary(host, entityId, configuration.limits) },
   ];
   const deviceRows: DetailRow[] = [
     {
@@ -644,6 +645,7 @@ function historyDescription(host: VelairViewHost, item: DiagnosticHistoryItem): 
       data.hvac_mode ? host._modeLabel(String(data.hvac_mode)) : undefined,
       diagnosticControlEventLabel(host, data.action ?? data.operation),
       scheduledTargetSummary(host, data, item.entity_id ?? ""),
+      zoneLimitEvidence(host, data, item.entity_id ?? ""),
       diagnosticReasonLabel(host, data.reason),
     ].filter(Boolean).join(" · ");
   }
@@ -688,7 +690,26 @@ function formatDiagnosticTimestamp(host: VelairViewHost, value: string): string 
 function temperatureValue(host: VelairViewHost, entityId: string, value: unknown): string | undefined { return typeof value === "number" ? host._formatTemperature(value, entityId) : undefined; }
 function rangeValue(host: VelairViewHost, entityId: string, minimum: unknown, maximum: unknown): string | undefined { return typeof minimum === "number" && typeof maximum === "number" ? `${host._formatTemperature(minimum, entityId)} – ${host._formatTemperature(maximum, entityId)}` : undefined; }
 function intentSummary(host: VelairViewHost, value: unknown, entityId: string): string | undefined { const item = record(value); return [controlModeLabel(host, item.control_mode), runtimeStateLabel(host, item.state), item.hvac_mode ? host._modeLabel(String(item.hvac_mode)) : undefined, scheduledTargetSummary(host, item, entityId)].filter(Boolean).join(" · ") || undefined; }
-function applicationSummary(host: VelairViewHost, value: unknown, entityId: string): string | undefined { const item = record(value); return [item.at ? host._formatDateTime(String(item.at)) : undefined, item.hvac_mode ? host._modeLabel(String(item.hvac_mode)) : undefined, scheduledTargetSummary(host, item, entityId)].filter(Boolean).join(" · ") || undefined; }
+function applicationSummary(host: VelairViewHost, value: unknown, entityId: string): string | undefined { const item = record(value); return [item.at ? host._formatDateTime(String(item.at)) : undefined, item.hvac_mode ? host._modeLabel(String(item.hvac_mode)) : undefined, scheduledTargetSummary(host, item, entityId), zoneLimitEvidence(host, item, entityId)].filter(Boolean).join(" · ") || undefined; }
+function zoneLimitsSummary(host: VelairViewHost, entityId: string, value: unknown): string | undefined {
+  const limits = record(value);
+  const minimum = typeof limits.min_temperature === "number" ? host._formatTemperature(limits.min_temperature, entityId) : undefined;
+  const maximum = typeof limits.max_temperature === "number" ? host._formatTemperature(limits.max_temperature, entityId) : undefined;
+  if (minimum && maximum) return `${minimum} – ${maximum}`;
+  if (minimum) return `≥ ${minimum}`;
+  if (maximum) return `≤ ${maximum}`;
+  return undefined;
+}
+function zoneLimitEvidence(host: VelairViewHost, value: Record<string, any>, entityId: string): string | undefined {
+  if (value.limited_by !== "zone_limits") return undefined;
+  const requested = scheduledTargetSummary(host, {
+    temperature: value.requested_temperature,
+    target_temp_low: value.requested_target_temp_low ?? value.target_temp_low,
+    target_temp_high: value.requested_target_temp_high ?? value.target_temp_high,
+  }, entityId);
+  const label = host._t("diagnosticsLimitedByZoneLimits");
+  return requested ? `${label} (${host._t("diagnosticsRequestedTarget")}: ${requested})` : label;
+}
 function scheduledTargetSummary(host: VelairViewHost, value: Record<string, any>, entityId: string): string | undefined {
   const scalar = value.temperature ?? value.target_temperature;
   if (typeof scalar === "number") return host._formatTemperature(scalar, entityId);

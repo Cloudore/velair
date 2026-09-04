@@ -123,6 +123,14 @@
       "automatic_scheduling": {
         "name": "Автоматическое расписание"
       }
+    },
+    "number": {
+      "zone_min_temperature_limit": {
+        "name": "{zone}: минимальная температура"
+      },
+      "zone_max_temperature_limit": {
+        "name": "{zone}: максимальная температура"
+      }
     }
   }
 }

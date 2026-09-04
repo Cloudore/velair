@@ -123,6 +123,14 @@
       "automatic_scheduling": {
         "name": "Automatische Zeitplanung"
       }
+    },
+    "number": {
+      "zone_min_temperature_limit": {
+        "name": "{zone} Mindesttemperatur"
+      },
+      "zone_max_temperature_limit": {
+        "name": "{zone} Höchsttemperatur"
+      }
     }
   }
 }

@@ -344,6 +344,7 @@ export type ScheduleZone = {
   }>;
   preconditioning?: PreconditioningSettings;
   comfort?: ComfortSettings;
+  limits?: ZoneLimits;
   external_change_policy?: ExternalChangePolicy;
   execution?: { type: "external"; provider: string };
 };
@@ -381,6 +382,11 @@ export type ExternalExecutionInfo = {
 export type ExternalChangePolicy = {
   action: "keep_automatic" | "until_next_block" | "for_duration" | "until_resumed";
   duration_minutes?: number;
+};
+
+export type ZoneLimits = {
+  min_temperature: number | null;
+  max_temperature: number | null;
 };
 
 export type ManualAdjustmentPolicy = Exclude<ExternalChangePolicy["action"], "keep_automatic">;

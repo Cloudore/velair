@@ -25,9 +25,27 @@ async def async_notify_room_assist_limit(
     requested: str,
     applied: str,
     limit: str,
+    zone_limit: bool = False,
 ) -> bool:
     """Create or replace the persistent notification for an active limit."""
     boundary = "maximum" if limited_by == "maximum" else "minimum"
+    if zone_limit:
+        message = (
+            f"Room Assist has reached the {boundary} target allowed by the Velair "
+            f"zone limits for `{entity_id}`. It requested {requested}; the zone "
+            f"limit is {limit}, so Velair applied {applied}. Further correction is "
+            "limited until the readings return within the zone limits. "
+            "[Open Velair](/velair)."
+        )
+    else:
+        message = (
+            f"Room Assist has reached the {boundary} target supported by "
+            f"`{entity_id}`. It requested {requested}; the supported limit is "
+            f"{limit}, so Velair applied {applied}. Further correction is "
+            "limited until "
+            "the readings return within the thermostat's supported range. "
+            "[Open Velair](/velair)."
+        )
     try:
         await hass.services.async_call(
             "persistent_notification",
@@ -35,14 +53,7 @@ async def async_notify_room_assist_limit(
             {
                 "notification_id": notification_id(entity_id),
                 "title": "Velair Room Assist target limited",
-                "message": (
-                    f"Room Assist has reached the {boundary} target supported by "
-                    f"`{entity_id}`. It requested {requested}; the supported limit is "
-                    f"{limit}, so Velair applied {applied}. Further correction is "
-                    "limited until "
-                    "the readings return within the thermostat's supported range. "
-                    "[Open Velair](/velair)."
-                ),
+                "message": message,
             },
             blocking=True,
         )

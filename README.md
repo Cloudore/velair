@@ -51,6 +51,7 @@ Contributions, testing, bug reports, and constructive feedback are always welcom
 - Optional climate controls per block where supported, including fan mode, preset mode, swing mode, horizontal swing mode, and target humidity.
 - Dedicated Diagnostics tab with live runtime health, bounded history, filters, and privacy-aware issue reports.
 - Settings tab with climate ordering, startup behavior, portability tools, and maintenance information.
+- Per-climate temperature limits enforced by the scheduler on every delivered target, editable from the Settings tab or native Home Assistant number entities, with the requested value kept in events, the logbook, and Diagnostics.
 - Global pause, stop, and resume controls, plus per-zone pause and resume.
 - Velair-scoped services for activating climate profiles, starting and cancelling boosts, pauses, schedule application, schedule editing, day cloning, and schedule clearing.
 - Automation events through `velair_event` for Profile changes, scheduler mode changes, Adaptive Preconditioning plans, cancellations and observations, Room Assist state and target changes, Comfort assessments, applied climate targets, boosts, and per-zone pause/resume lifecycle changes.

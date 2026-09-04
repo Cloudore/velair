@@ -748,6 +748,50 @@ describe("diagnostics view", () => {
     expect(container.querySelectorAll(".diagnostics-group h4 ha-icon").length).toBeGreaterThan(1);
   });
 
+  it("shows configured zone temperature limits and limited deliveries", () => {
+    const snapshot = diagnostics();
+    snapshot.units["climate.warning"].configuration.limits = { min_temperature: 21, max_temperature: 24 };
+    snapshot.units["climate.warning"].last_application = {
+      at: "2026-08-18T10:00:00Z", action: "set_temperature", temperature: 21,
+      limited_by: "zone_limits", requested_temperature: 19,
+    };
+    snapshot.units["climate.healthy"].configuration.limits = { min_temperature: null, max_temperature: 26 };
+    snapshot.history = [
+      {
+        at: "2026-08-18T10:00:00Z", kind: "event", category: "control",
+        severity: "info", entity_id: "climate.warning",
+        data: {
+          event: "climate_target_applied", action: "set_temperature", temperature: 21,
+          limited_by: "zone_limits", requested_temperature: 19, source: "scheduled_event",
+        },
+      },
+      {
+        at: "2026-08-18T10:01:00Z", kind: "event", category: "control",
+        severity: "info", entity_id: "climate.warning",
+        data: {
+          event: "climate_target_applied", action: "set_temperature",
+          target_temp_low: 21, target_temp_high: 24,
+          limited_by: "zone_limits", requested_target_temp_low: 18,
+        },
+      },
+    ];
+    const container = document.createElement("div");
+    const viewHost = host(snapshot); viewHost._selectedDiagnosticEntity = "climate.warning";
+    render(renderDiagnosticsView(viewHost), container);
+
+    const detail = container.querySelector(".diagnostics-detail-panel")?.textContent ?? "";
+    expect(detail).toContain("diagnosticsZoneLimits");
+    expect(detail).toContain("21 °C – 24 °C");
+    expect(detail).toContain("diagnosticsLimitedByZoneLimits (diagnosticsRequestedTarget: 19 °C)");
+    const log = container.querySelector(".diagnostics-log")?.textContent ?? container.textContent ?? "";
+    expect(log).toContain("diagnosticsLimitedByZoneLimits (diagnosticsRequestedTarget: 19 °C)");
+    expect(log).toContain("diagnosticsLimitedByZoneLimits (diagnosticsRequestedTarget: 18 °C – 24 °C)");
+
+    viewHost._selectedDiagnosticEntity = "climate.healthy";
+    render(renderDiagnosticsView(viewHost), container);
+    expect(container.querySelector(".diagnostics-detail-panel")?.textContent).toContain("≤ 26 °C");
+  });
+
   it("shows safe feature evidence in retained history", () => {
     const snapshot = diagnostics();
     snapshot.history = [

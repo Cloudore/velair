@@ -101,7 +101,8 @@ Expected entity types include:
 - one active target temperature sensor per managed climate;
 - environmental condition and air-quality sensors per managed climate;
 - zone override, preconditioning start, and Room Assist state sensors per
-  managed climate.
+  managed climate;
+- minimum and maximum temperature limit numbers per managed climate.
 
 Confirm that:
 
@@ -504,6 +505,19 @@ If you only need to verify next-event scheduling, Home Assistant Developer Tools
 10. Add a CO2 sensor and confirm Good air, CO2 elevated, and Poor air quality remain separate from the environmental condition.
 11. Make every monitored reading unavailable or stale and confirm No readings or Readings outdated is shown.
 12. Disable Comfort for that climate and confirm changing those sensors no longer emits comfort events.
+
+## Zone Temperature Limits Smoke Test
+
+1. Open Settings and set a minimum temperature above the current schedule block target for one climate.
+2. Confirm the climate immediately receives the minimum, the logbook shows one `zone limits` line, `climate_target_applied` carries `limited_by: zone_limits` with `requested_temperature`, and one persistent notification appears.
+3. Reapply the same block and confirm no second notification is created.
+4. Save a block inside the limits and confirm the notification is dismissed and the event no longer carries `limited_by`.
+5. Start a Boost and call `velair.set_temperature` outside the limits; confirm both deliveries are clamped.
+6. With Room Assist enabled, confirm the assisted target never crosses a limit and the Room Assist status reports the limit.
+7. Change the target from the climate card while a Manual policy is active and confirm the external setpoint is preserved even outside the limits.
+8. Enter a limit outside the climate range or a minimum above the maximum and confirm Settings shows the backend error.
+9. Set the minimum number entity to the climate minimum and confirm the limit is cleared (`limit_active: false`).
+10. Export the zones section, confirm `limits` is present, and reimport it in the other temperature unit.
 
 ## Automation Event Smoke Test
 

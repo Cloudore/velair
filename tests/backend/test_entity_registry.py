@@ -119,6 +119,33 @@ class EntityRegistryCleanupTest(unittest.TestCase):
             },
         )
 
+    def test_cleanup_removes_stale_zone_limit_numbers_only(self) -> None:
+        registry = FakeRegistry(
+            {
+                "number.living_min": _entry(
+                    "entry_climate_living_min_temperature_limit"
+                ),
+                "number.living_max": _entry(
+                    "entry_climate_living_max_temperature_limit"
+                ),
+                "number.old_min": _entry("entry_climate_old_min_temperature_limit"),
+                "number.old_max": _entry("entry_climate_old_max_temperature_limit"),
+                "number.other_platform": _entry(
+                    "entry_climate_old_min_temperature_limit",
+                    platform="other",
+                ),
+            }
+        )
+        entity_registry_module.async_get = lambda hass: registry
+
+        registry_module.cleanup_entity_registry(
+            SimpleNamespace(),
+            SimpleNamespace(entry_id="entry"),
+            ["climate.living"],
+        )
+
+        self.assertEqual(set(registry.removed), {"number.old_min", "number.old_max"})
+
     def test_cleanup_preserves_all_current_zone_sensor_unique_ids(self) -> None:
         entities = {
             f"sensor.zone_{index}": _entry(

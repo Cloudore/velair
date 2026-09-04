@@ -52,6 +52,10 @@ _CONTROL_EVENT_FIELDS = (
     "until",
     "weekday",
     "policy",
+    "limited_by",
+    "requested_temperature",
+    "requested_target_temp_high",
+    "requested_target_temp_low",
 )
 _CONTROL_SNAPSHOT_FIELDS = (
     "hvac_mode",
@@ -848,6 +852,7 @@ class RuntimeDiagnosticsManager:
                 "enabled": bool(zone.get("enabled", True)),
                 "preconditioning": preconditioning,
                 "comfort": comfort_config,
+                "limits": deepcopy(zone.get("limits", {})),
             },
             "effective_setup": _effective_setup(data, entity_id),
             "intent": deepcopy(runtime_status),

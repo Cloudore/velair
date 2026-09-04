@@ -10,6 +10,7 @@ import type {
   PortableSection,
   PreconditioningSettings,
   ScheduleBlock,
+  ZoneLimits,
   ScheduleResponse,
   ScheduleUpdateMessage,
   ExternalChangePolicy,
@@ -230,6 +231,17 @@ export class VelairApiClient {
       type: "velair/update_zone_comfort",
       entity_id: entityId,
       comfort,
+    });
+  }
+
+  public updateZoneLimits(
+    entityId: string,
+    limits: Partial<ZoneLimits>,
+  ): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/update_zone_limits",
+      entity_id: entityId,
+      limits,
     });
   }
 

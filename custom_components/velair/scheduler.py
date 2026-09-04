@@ -6,7 +6,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from collections.abc import Awaitable, Callable
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, time, timedelta, timezone
 import logging
 import math
@@ -119,6 +119,8 @@ from .models import (
     normalize_hold_fields,
     zone_pause_effective_action,
     zone_pause_override_from_reasons,
+    ZoneLimitsData,
+    normalize_zone_limits,
 )
 from .temperature import (
     CELSIUS,
@@ -130,6 +132,10 @@ from .temperature import (
 from .room_assist_notifications import (
     async_dismiss_room_assist_limit_notification,
     async_notify_room_assist_limit,
+)
+from .zone_limit_notifications import (
+    async_dismiss_zone_limit_notification,
+    async_notify_zone_limit,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -360,6 +366,8 @@ class VelairScheduler:
         self._room_sensor_assist_suppressed: set[str] = set()
         self._room_sensor_assist_limit_notifications: dict[str, tuple[object, ...]] = {}
         self._room_sensor_assist_notification_cleanup_done: set[str] = set()
+        self._zone_limit_notifications: dict[str, tuple[object, ...]] = {}
+        self._zone_limit_notifications_active: set[str] = set()
         self._comfort_entities: tuple[str, ...] = ()
         self._comfort_assessment_snapshots: dict[str, tuple[object, ...]] = {}
         self.next_event: ClimateEvent | None = None
@@ -550,6 +558,11 @@ class VelairScheduler:
             > normalized_target[ATTR_TARGET_TEMP_HIGH]
         ):
             raise ValueError("target_temp_low must not be greater than target_temp_high")
+        delivered_target, limited_target = self._clamp_target_to_limits(
+            entity_id,
+            normalized_target,
+            self.get_zone_limits(entity_id),
+        )
         is_range = ATTR_TARGET_TEMP_LOW in normalized_target
         self._climate_manager.validate_temperature_target(
             entity_id,
@@ -578,10 +591,10 @@ class VelairScheduler:
 
         def resolve_manual() -> Delivery:
             async def apply() -> None:
-                if "temperature" in normalized_target:
+                if "temperature" in delivered_target:
                     await self._climate_manager.async_set_temperature(
                         entity_id,
-                        normalized_target["temperature"],
+                        delivered_target["temperature"],
                         ensure_on=ensure_on,
                         hvac_mode=hvac_mode,
                         **climate_options,
@@ -589,8 +602,8 @@ class VelairScheduler:
                 else:
                     await self._climate_manager.async_set_temperature_range(
                         entity_id,
-                        normalized_target[ATTR_TARGET_TEMP_LOW],
-                        normalized_target[ATTR_TARGET_TEMP_HIGH],
+                        delivered_target[ATTR_TARGET_TEMP_LOW],
+                        delivered_target[ATTR_TARGET_TEMP_HIGH],
                         ensure_on=ensure_on,
                         hvac_mode=hvac_mode,
                         **climate_options,
@@ -602,12 +615,17 @@ class VelairScheduler:
                 if log_action:
                     await self._async_log_climate_temperature(
                         entity_id,
-                        normalized_target.get("temperature"),
-                        target_temp_low=normalized_target.get(ATTR_TARGET_TEMP_LOW),
-                        target_temp_high=normalized_target.get(ATTR_TARGET_TEMP_HIGH),
+                        delivered_target.get("temperature"),
+                        target_temp_low=delivered_target.get(ATTR_TARGET_TEMP_LOW),
+                        target_temp_high=delivered_target.get(ATTR_TARGET_TEMP_HIGH),
                         hvac_mode=hvac_mode,
                         scheduled=False,
                     )
+                if not is_current():
+                    return
+                await self._async_publish_zone_limit_effects(
+                    entity_id, delivered_target, limited_target
+                )
                 if not is_current():
                     return
                 if event_source is not None:
@@ -615,10 +633,15 @@ class VelairScheduler:
                         {
                             "entity_id": entity_id,
                             "action": ACTION_SET_TEMPERATURE,
-                            **normalized_target,
+                            **delivered_target,
                             "hvac_mode": hvac_mode,
                             **climate_options,
                             "source": event_source,
+                            **(
+                                {"limited_by": "zone_limits", **limited_target}
+                                if limited_target
+                                else {}
+                            ),
                         }
                     )
 
@@ -2856,6 +2879,124 @@ class VelairScheduler:
         self._async_update_comfort_snapshots(fire_events=True)
         self._async_write_state()
         return next_comfort
+
+    def get_zone_limits(self, entity_id: str) -> ZoneLimitsData:
+        """Return the persisted setpoint limits for one managed zone."""
+        self.ensure_managed_entity(entity_id)
+        return normalize_zone_limits(self._data["zones"][entity_id].get("limits"))
+
+    def get_effective_temperature_limits(self, entity_id: str) -> tuple[float, float]:
+        """Return the climate range narrowed by the zone's own limits."""
+        minimum, maximum = self.get_temperature_limits(entity_id)
+        limits = self.get_zone_limits(entity_id)
+        floor = limits["min_temperature"]
+        ceiling = limits["max_temperature"]
+        if floor is not None:
+            minimum = max(minimum, min(maximum, floor))
+        if ceiling is not None:
+            maximum = min(maximum, max(minimum, ceiling))
+        return minimum, maximum
+
+    async def async_update_zone_limits(
+        self,
+        entity_id: str,
+        limits: dict,
+    ) -> ZoneLimitsData:
+        """Validate and persist zone limits, then redeliver a changed target."""
+        self.ensure_managed_entity(entity_id)
+        if self._temperature_migration_blocked:
+            raise ValueError(
+                "Temperature migration must be resolved before changing limits"
+            )
+        zone = self._data["zones"][entity_id]
+        current = self.get_zone_limits(entity_id)
+        next_limits = self._validate_zone_limits(entity_id, {**current, **limits})
+        if next_limits == current:
+            return current
+        previous_stored = deepcopy(zone.get("limits"))
+        zone["limits"] = next_limits
+        try:
+            await self._async_save_data()
+        except (asyncio.CancelledError, Exception):
+            if previous_stored is None:
+                zone.pop("limits", None)
+            else:
+                zone["limits"] = previous_stored
+            raise
+        self._async_write_state()
+        await self._async_reapply_after_zone_limits_change(entity_id, current)
+        return next_limits
+
+    def _validate_zone_limits(self, entity_id: str, limits: dict) -> ZoneLimitsData:
+        """Reject limits outside the climate range or with an inverted order."""
+        minimum, maximum = self.get_temperature_limits(entity_id)
+        validated: dict[str, float | None] = {}
+        for key in ("min_temperature", "max_temperature"):
+            value = limits.get(key)
+            if value is None:
+                validated[key] = None
+                continue
+            if isinstance(value, bool):
+                raise ValueError(f"{key} must be a number")
+            try:
+                number = float(value)
+            except (TypeError, ValueError) as err:
+                raise ValueError(f"{key} must be a number") from err
+            if not math.isfinite(number):
+                raise ValueError(f"{key} must be a finite number")
+            if number < minimum - 0.000001 or number > maximum + 0.000001:
+                raise ValueError(
+                    f"{key} must be between {minimum:g} and {maximum:g} for {entity_id}"
+                )
+            validated[key] = self.normalize_target_temperature(entity_id, number)
+        floor = validated["min_temperature"]
+        ceiling = validated["max_temperature"]
+        if floor is not None and ceiling is not None and floor > ceiling + 0.000001:
+            raise ValueError("min_temperature must not be greater than max_temperature")
+        return normalize_zone_limits(validated)
+
+    async def _async_reapply_after_zone_limits_change(
+        self,
+        entity_id: str,
+        previous_limits: ZoneLimitsData,
+    ) -> None:
+        """Redeliver the authoritative target when new limits change what is sent."""
+        if self.mode != MODE_AUTO or not self._data["zones"][entity_id]["enabled"]:
+            return
+        event = self._resolve_authoritative_delivery_event(entity_id)
+        if event is None or event.action == ACTION_TURN_OFF:
+            return
+        target = _event_target_mapping(event)
+        if not target:
+            return
+        previous_delivery, _previous = self._clamp_target_to_limits(
+            entity_id, target, previous_limits
+        )
+        next_delivery, _next = self._clamp_target_to_limits(
+            entity_id, target, self.get_zone_limits(entity_id)
+        )
+        if all(
+            abs(previous_delivery[key] - next_delivery[key]) < 0.000001
+            for key in target
+        ):
+            if entity_id in self._room_sensor_assist_states:
+                # The scheduled target is unchanged, but Room Assist bounds its
+                # own correction by the effective range and must recalculate.
+                await self._async_refresh_room_sensor_assist_from_current_event(
+                    entity_id
+                )
+            return
+        try:
+            await self._async_apply_event(
+                event,
+                hvac_mode=event.hvac_mode,
+                source="zone_limits_updated",
+            )
+        except Exception:
+            _LOGGER.exception(
+                "Failed to reapply the current target after updating limits for %s",
+                entity_id,
+            )
 
     async def async_set_room_sensor_assist(
         self,
@@ -5376,6 +5517,92 @@ class VelairScheduler:
             return self._current_schedule_event(entity_id, authority_now)
         return self._room_sensor_assist_target_event(entity_id)
 
+    def _clamp_target_to_limits(
+        self,
+        entity_id: str,
+        target: dict[str, float],
+        limits: ZoneLimitsData,
+    ) -> tuple[dict[str, float], dict[str, float]]:
+        """Clamp a scalar or range target mapping to the given zone limits.
+
+        Return the mapping to deliver and the original values that changed,
+        keyed as ``requested_<field>`` for event payloads.
+        """
+        floor = limits["min_temperature"]
+        ceiling = limits["max_temperature"]
+        if floor is None and ceiling is None:
+            return dict(target), {}
+        device_minimum, device_maximum = self.get_temperature_limits(entity_id)
+        if floor is not None:
+            floor = max(device_minimum, min(device_maximum, floor))
+        if ceiling is not None:
+            ceiling = min(device_maximum, max(device_minimum, ceiling))
+        delivered: dict[str, float] = {}
+        requested: dict[str, float] = {}
+        for key, value in target.items():
+            bounded = float(value)
+            if floor is not None and bounded < floor - 0.000001:
+                bounded = floor
+            if ceiling is not None and bounded > ceiling + 0.000001:
+                bounded = ceiling
+            if abs(bounded - float(value)) > 0.000001:
+                requested[f"requested_{key}"] = float(value)
+            delivered[key] = bounded
+        return delivered, requested
+
+    def _clamp_event_to_zone_limits(
+        self,
+        event: ClimateEvent,
+    ) -> tuple[ClimateEvent, dict[str, float]]:
+        """Return the event as delivered under the zone limits plus what changed."""
+        if event.action == ACTION_TURN_OFF:
+            return event, {}
+        target = _event_target_mapping(event)
+        if not target:
+            return event, {}
+        delivered, requested = self._clamp_target_to_limits(
+            event.entity_id,
+            target,
+            self.get_zone_limits(event.entity_id),
+        )
+        if not requested:
+            return event, {}
+        return (
+            replace(
+                event,
+                temperature=delivered.get("temperature"),
+                target_temp_low=delivered.get(ATTR_TARGET_TEMP_LOW),
+                target_temp_high=delivered.get(ATTR_TARGET_TEMP_HIGH),
+            ),
+            requested,
+        )
+
+    def _clamped_scalar(self, entity_id: str, temperature: float) -> float:
+        """Clamp one restored scalar target to the zone limits."""
+        delivered, _requested = self._clamp_target_to_limits(
+            entity_id,
+            {"temperature": temperature},
+            self.get_zone_limits(entity_id),
+        )
+        return delivered["temperature"]
+
+    def _clamped_range(
+        self,
+        entity_id: str,
+        target_temp_low: float,
+        target_temp_high: float,
+    ) -> tuple[float, float]:
+        """Clamp one restored range target to the zone limits."""
+        delivered, _requested = self._clamp_target_to_limits(
+            entity_id,
+            {
+                ATTR_TARGET_TEMP_LOW: target_temp_low,
+                ATTR_TARGET_TEMP_HIGH: target_temp_high,
+            },
+            self.get_zone_limits(entity_id),
+        )
+        return delivered[ATTR_TARGET_TEMP_LOW], delivered[ATTR_TARGET_TEMP_HIGH]
+
     async def _async_apply_resolved_event_call(
         self,
         event: ClimateEvent,
@@ -5397,6 +5624,10 @@ class VelairScheduler:
         if event.temperature is None and not is_range:
             raise ValueError(f"Missing temperature target for {event.entity_id} schedule event")
 
+        # Zone limits are enforced here, immediately before the physical call.
+        # Room Assist keeps following the scheduled target so its runtime
+        # identity checks stay valid; its own output is bounded separately.
+        delivered, _limited = self._clamp_event_to_zone_limits(event)
         target_mode = hvac_mode or event.hvac_mode
         if is_range:
             self._climate_manager.validate_temperature_target(
@@ -5407,8 +5638,8 @@ class VelairScheduler:
             )
             await self._climate_manager.async_set_temperature_range(
                 event.entity_id,
-                event.target_temp_low,
-                event.target_temp_high,
+                delivered.target_temp_low,
+                delivered.target_temp_high,
                 ensure_on=True,
                 fan_mode=event.fan_mode,
                 hvac_mode=target_mode,
@@ -5420,7 +5651,7 @@ class VelairScheduler:
         else:
             await self._climate_manager.async_set_temperature(
                 event.entity_id,
-                event.temperature,
+                delivered.temperature,
                 ensure_on=True,
                 fan_mode=event.fan_mode,
                 hvac_mode=target_mode,
@@ -5484,32 +5715,42 @@ class VelairScheduler:
             )
             return
 
+        delivered, limited = self._clamp_event_to_zone_limits(event)
         is_range = (
-            event.target_temp_low is not None and event.target_temp_high is not None
+            delivered.target_temp_low is not None
+            and delivered.target_temp_high is not None
         )
         target_mode = hvac_mode or event.hvac_mode
         if is_range:
             await self._async_log_climate_temperature(
                 event.entity_id,
                 None,
-                target_temp_low=event.target_temp_low,
-                target_temp_high=event.target_temp_high,
+                target_temp_low=delivered.target_temp_low,
+                target_temp_high=delivered.target_temp_high,
                 hvac_mode=target_mode,
                 scheduled=True,
             )
         else:
             await self._async_log_climate_temperature(
                 event.entity_id,
-                event.temperature,
+                delivered.temperature,
                 hvac_mode=target_mode,
                 scheduled=True,
             )
         if not delivery_is_current():
             return
+        await self._async_publish_zone_limit_effects(
+            event.entity_id,
+            _event_target_mapping(delivered),
+            limited,
+        )
+        if not delivery_is_current():
+            return
         self._async_fire_climate_target_applied(
-            event,
+            delivered,
             hvac_mode=target_mode,
             source=source,
+            limited=limited,
         )
         self._mark_preconditioning_applied(event)
         self._start_preconditioning_session(
@@ -6023,6 +6264,9 @@ class VelairScheduler:
                 state.entity_id,
                 absolute_temperature(state.target_temp_high, source_unit, target_unit),
             )
+            target_low, target_high = self._clamped_range(
+                state.entity_id, target_low, target_high
+            )
             await self._climate_delivery.async_serialize(
                 state.entity_id,
                 lambda: self._climate_manager.async_set_temperature_range(
@@ -6035,9 +6279,14 @@ class VelairScheduler:
                 ),
             )
         elif state.target_temperature is not None:
-            target = self.normalize_target_temperature(
+            target = self._clamped_scalar(
                 state.entity_id,
-                absolute_temperature(state.target_temperature, source_unit, target_unit),
+                self.normalize_target_temperature(
+                    state.entity_id,
+                    absolute_temperature(
+                        state.target_temperature, source_unit, target_unit
+                    ),
+                ),
             )
             await self._climate_delivery.async_serialize(
                 state.entity_id,
@@ -6829,6 +7078,10 @@ class VelairScheduler:
         if state.limit_temperature is None:
             return
         limit = f"{state.limit_temperature:g} {unit}"
+        zone_limits = self.get_zone_limits(state.entity_id)
+        zone_bound = zone_limits[
+            "max_temperature" if state.limited_by == "maximum" else "min_temperature"
+        ]
         if await async_notify_room_assist_limit(
             self._hass,
             state.entity_id,
@@ -6836,6 +7089,10 @@ class VelairScheduler:
             requested=requested,
             applied=applied,
             limit=limit,
+            zone_limit=(
+                zone_bound is not None
+                and abs(state.limit_temperature - zone_bound) < 0.000001
+            ),
         ):
             self._room_sensor_assist_limit_notifications[state.entity_id] = fingerprint
             self._room_sensor_assist_notification_cleanup_done.add(state.entity_id)
@@ -7645,7 +7902,9 @@ class VelairScheduler:
             scheduled_target_guard = "heating_ceiling"
             desired_temperature = min(desired_temperature, target_temperature)
 
-        min_temperature, max_temperature = self.get_temperature_limits(entity_id)
+        min_temperature, max_temperature = self.get_effective_temperature_limits(
+            entity_id
+        )
         requested = (
             _room_sensor_assist_nearest_step_temperature(
                 desired_temperature,
@@ -7749,7 +8008,7 @@ class VelairScheduler:
         applied_low = holding_state.applied_target_temp_low
         applied_high = holding_state.applied_target_temp_high
         width = target_temp_high - target_temp_low
-        minimum, maximum = self.get_temperature_limits(entity_id)
+        minimum, maximum = self.get_effective_temperature_limits(entity_id)
         if not (
             minimum - 0.000001 <= applied_low <= applied_high <= maximum + 0.000001
             and abs((applied_high - applied_low) - width) < 0.000001
@@ -7800,7 +8059,7 @@ class VelairScheduler:
             )
 
         width = target_temp_high - target_temp_low
-        minimum, maximum = self.get_temperature_limits(entity_id)
+        minimum, maximum = self.get_effective_temperature_limits(entity_id)
         lower_shift = math.ceil(
             ((minimum - target_temp_low) / step) - 0.000001
         ) * step
@@ -8187,23 +8446,32 @@ class VelairScheduler:
                             state.target_temp_low is not None
                             and state.target_temp_high is not None
                         ):
+                            restore_low, restore_high = self._clamped_range(
+                                assisted_entity_id,
+                                state.target_temp_low,
+                                state.target_temp_high,
+                            )
                             await self._climate_delivery.async_serialize(
                                 assisted_entity_id,
                                 lambda: self._climate_manager.async_set_temperature_range(
                                     assisted_entity_id,
-                                    state.target_temp_low,
-                                    state.target_temp_high,
+                                    restore_low,
+                                    restore_high,
                                     ensure_on=False,
                                     hvac_mode=state.hvac_mode,
                                     **climate_options,
                                 ),
                             )
                         elif state.target_temperature is not None:
+                            restore_target = self._clamped_scalar(
+                                assisted_entity_id,
+                                state.target_temperature,
+                            )
                             await self._climate_delivery.async_serialize(
                                 assisted_entity_id,
                                 lambda: self._climate_manager.async_set_temperature(
                                     assisted_entity_id,
-                                    state.target_temperature,
+                                    restore_target,
                                     ensure_on=False,
                                     hvac_mode=state.hvac_mode,
                                     **climate_options,
@@ -9027,6 +9295,7 @@ class VelairScheduler:
         *,
         hvac_mode: str | None,
         source: str,
+        limited: dict[str, float] | None = None,
     ) -> None:
         """Fire an event when Velair applies a climate target."""
         data = {
@@ -9045,6 +9314,9 @@ class VelairScheduler:
         }
         if event.target_when is not None:
             data["target_when"] = event.target_when.isoformat()
+        if limited:
+            data["limited_by"] = "zone_limits"
+            data.update(limited)
 
         self._last_applied[event.entity_id] = {
             "source": source,
@@ -9444,6 +9716,113 @@ class VelairScheduler:
             self._message(english, spanish),
             entity_id=entity_id,
         )
+
+    async def _async_publish_zone_limit_effects(
+        self,
+        entity_id: str,
+        delivered: dict[str, float],
+        requested: dict[str, float],
+    ) -> None:
+        """Log a limited delivery and keep one notification per zone in sync."""
+        if requested:
+            await self._async_log_zone_limit(entity_id, delivered, requested)
+        await self._async_update_zone_limit_notification(
+            entity_id, delivered, requested
+        )
+
+    async def _async_log_zone_limit(
+        self,
+        entity_id: str,
+        delivered: dict[str, float],
+        requested: dict[str, float],
+    ) -> None:
+        """Write one logbook line when zone limits changed a delivered target."""
+        requested_target = self._format_temperature_target(
+            entity_id,
+            requested.get("requested_temperature", delivered.get("temperature")),
+            target_temp_low=requested.get(
+                "requested_target_temp_low", delivered.get(ATTR_TARGET_TEMP_LOW)
+            ),
+            target_temp_high=requested.get(
+                "requested_target_temp_high", delivered.get(ATTR_TARGET_TEMP_HIGH)
+            ),
+        )
+        applied_target = self._format_temperature_target(
+            entity_id,
+            delivered.get("temperature"),
+            target_temp_low=delivered.get(ATTR_TARGET_TEMP_LOW),
+            target_temp_high=delivered.get(ATTR_TARGET_TEMP_HIGH),
+        )
+        name = self._friendly_entity_name(entity_id)
+        await self._async_logbook(
+            self._message(
+                f"Limited {name} to {applied_target} by its zone limits "
+                f"(requested {requested_target})",
+                f"Limitado {name} a {applied_target} por sus límites de zona "
+                f"(solicitado {requested_target})",
+            ),
+            entity_id=entity_id,
+        )
+
+    async def _async_update_zone_limit_notification(
+        self,
+        entity_id: str,
+        delivered: dict[str, float],
+        requested: dict[str, float],
+    ) -> None:
+        """Keep at most one persistent notification per zone while limits clamp."""
+        if not requested:
+            if entity_id not in self._zone_limit_notifications_active:
+                return
+            if await async_dismiss_zone_limit_notification(self._hass, entity_id):
+                self._zone_limit_notifications_active.discard(entity_id)
+            return
+        limits = self.get_zone_limits(entity_id)
+        fingerprint = (
+            limits["min_temperature"],
+            limits["max_temperature"],
+            tuple(sorted(requested.items())),
+            tuple(sorted(delivered.items())),
+        )
+        if self._zone_limit_notifications.get(entity_id) == fingerprint:
+            # The same conflict was already announced once; do not repeat it
+            # every time the same block is delivered again.
+            return
+        unit_getter = getattr(self._climate_manager, "temperature_unit", None)
+        unit = unit_getter(entity_id) if unit_getter else CELSIUS
+        floor = limits["min_temperature"]
+        ceiling = limits["max_temperature"]
+        if floor is not None and ceiling is not None:
+            limits_label = f"{floor:g}–{ceiling:g} {unit}"
+        elif floor is not None:
+            limits_label = f"at least {floor:g} {unit}"
+        else:
+            limits_label = f"at most {ceiling:g} {unit}"
+        requested_label = self._format_temperature_target(
+            entity_id,
+            requested.get("requested_temperature", delivered.get("temperature")),
+            target_temp_low=requested.get(
+                "requested_target_temp_low", delivered.get(ATTR_TARGET_TEMP_LOW)
+            ),
+            target_temp_high=requested.get(
+                "requested_target_temp_high", delivered.get(ATTR_TARGET_TEMP_HIGH)
+            ),
+        )
+        applied_label = self._format_temperature_target(
+            entity_id,
+            delivered.get("temperature"),
+            target_temp_low=delivered.get(ATTR_TARGET_TEMP_LOW),
+            target_temp_high=delivered.get(ATTR_TARGET_TEMP_HIGH),
+        )
+        if await async_notify_zone_limit(
+            self._hass,
+            entity_id,
+            requested=requested_label,
+            applied=applied_label,
+            limits=limits_label,
+        ):
+            self._zone_limit_notifications[entity_id] = fingerprint
+            self._zone_limit_notifications_active.add(entity_id)
 
     async def _async_logbook(
         self,

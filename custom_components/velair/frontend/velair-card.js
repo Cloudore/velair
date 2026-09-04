@@ -6,7 +6,7 @@ var e = Object.defineProperty, t = (t, n) => {
 		enumerable: !0
 	});
 	return n || e(r, Symbol.toStringTag, { value: "Module" }), r;
-}, n = "20260904080437", r = globalThis, i = r.ShadowRoot && (r.ShadyCSS === void 0 || r.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, a = Symbol(), o = /* @__PURE__ */ new WeakMap(), s = class {
+}, n = "20260904083444", r = globalThis, i = r.ShadowRoot && (r.ShadyCSS === void 0 || r.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, a = Symbol(), o = /* @__PURE__ */ new WeakMap(), s = class {
 	constructor(e, t, n) {
 		if (this._$cssResult$ = !0, n !== a) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
 		this.cssText = e, this.t = t;
@@ -682,6 +682,16 @@ var k = [
 	externalChangeForDuration: "Für eine Dauer",
 	externalChangeUntilResumed: "Bis zur Fortsetzung",
 	externalChangePolicySaved: "Richtlinie für externe Änderungen gespeichert",
+	zoneLimits: "Temperaturgrenzen",
+	zoneLimitsDescription: "Velair sendet nie ein Ziel unter dem Minimum oder über dem Maximum. Zeitpläne, Profile, temporäre Anpassungen, Room Assist und die Aktion velair.set_temperature werden vor der Übermittlung begrenzt; Anpassungen außerhalb von Velair nicht. Lasse ein Feld leer, um keine Grenze zu setzen.",
+	zoneLimitsInfoAction: "Informationen zu Temperaturgrenzen",
+	zoneLimitMinimum: "Mindesttemperatur",
+	zoneLimitMaximum: "Höchsttemperatur",
+	zoneLimitNone: "Keine Grenze",
+	zoneLimitsSaved: "Temperaturgrenzen gespeichert",
+	diagnosticsZoneLimits: "Temperaturgrenzen",
+	diagnosticsLimitedByZoneLimits: "Durch Zonengrenzen begrenzt",
+	diagnosticsRequestedTarget: "Angefordert",
 	manualAdjustment: "Manuelle Anpassung",
 	velairControl: "Velair-Steuerung",
 	automaticScheduling: "Automatische Planung",
@@ -1667,6 +1677,16 @@ var k = [
 	externalChangeForDuration: "For a duration",
 	externalChangeUntilResumed: "Until resumed",
 	externalChangePolicySaved: "External change policy saved",
+	zoneLimits: "Temperature limits",
+	zoneLimitsDescription: "Velair never sends a target below the minimum or above the maximum. Schedules, Profiles, boosts, Room Assist, and the velair.set_temperature action are limited before delivery; adjustments made outside Velair are not. Leave a field empty for no limit.",
+	zoneLimitsInfoAction: "About temperature limits",
+	zoneLimitMinimum: "Minimum temperature",
+	zoneLimitMaximum: "Maximum temperature",
+	zoneLimitNone: "No limit",
+	zoneLimitsSaved: "Temperature limits saved",
+	diagnosticsZoneLimits: "Temperature limits",
+	diagnosticsLimitedByZoneLimits: "Limited by zone limits",
+	diagnosticsRequestedTarget: "Requested",
 	manualAdjustment: "Manual adjustment",
 	velairControl: "Velair control",
 	automaticScheduling: "Automatic scheduling",
@@ -2653,6 +2673,16 @@ var k = [
 	externalChangeForDuration: "Durante un tiempo",
 	externalChangeUntilResumed: "Hasta reanudar",
 	externalChangePolicySaved: "Política de cambios externos guardada",
+	zoneLimits: "Límites de temperatura",
+	zoneLimitsDescription: "Velair nunca envía un objetivo por debajo del mínimo ni por encima del máximo. Los horarios, los perfiles, los refuerzos, Room Assist y la acción velair.set_temperature se limitan antes del envío; los ajustes realizados fuera de Velair no. Deja un campo vacío para no aplicar límite.",
+	zoneLimitsInfoAction: "Acerca de los límites de temperatura",
+	zoneLimitMinimum: "Temperatura mínima",
+	zoneLimitMaximum: "Temperatura máxima",
+	zoneLimitNone: "Sin límite",
+	zoneLimitsSaved: "Límites de temperatura guardados",
+	diagnosticsZoneLimits: "Límites de temperatura",
+	diagnosticsLimitedByZoneLimits: "Limitado por los límites de zona",
+	diagnosticsRequestedTarget: "Solicitado",
 	manualAdjustment: "Ajuste manual",
 	velairControl: "Control de Velair",
 	automaticScheduling: "Planificación automática",
@@ -3640,6 +3670,16 @@ var k = [
 	externalChangeForDuration: "Pendant une durée",
 	externalChangeUntilResumed: "Jusqu'à la reprise",
 	externalChangePolicySaved: "Politique de modifications externes enregistrée",
+	zoneLimits: "Limites de température",
+	zoneLimitsDescription: "Velair n'envoie jamais de consigne inférieure au minimum ni supérieure au maximum. Les plannings, les profils, les forçages, Room Assist et l'action velair.set_temperature sont limités avant l'envoi ; les réglages effectués hors de Velair ne le sont pas. Laissez un champ vide pour ne pas appliquer de limite.",
+	zoneLimitsInfoAction: "À propos des limites de température",
+	zoneLimitMinimum: "Température minimale",
+	zoneLimitMaximum: "Température maximale",
+	zoneLimitNone: "Aucune limite",
+	zoneLimitsSaved: "Limites de température enregistrées",
+	diagnosticsZoneLimits: "Limites de température",
+	diagnosticsLimitedByZoneLimits: "Limité par les limites de zone",
+	diagnosticsRequestedTarget: "Demandé",
 	manualAdjustment: "Réglage manuel",
 	velairControl: "Contrôle Velair",
 	automaticScheduling: "Programmation automatique",
@@ -4625,6 +4665,16 @@ var k = [
 	externalChangeForDuration: "Per una durata",
 	externalChangeUntilResumed: "Fino alla ripresa",
 	externalChangePolicySaved: "Criterio di modifica esterna salvato",
+	zoneLimits: "Limiti di temperatura",
+	zoneLimitsDescription: "Velair non invia mai un obiettivo sotto il minimo o sopra il massimo. Programmazioni, profili, incrementi, Room Assist e l'azione velair.set_temperature vengono limitati prima dell'invio; le regolazioni effettuate fuori da Velair no. Lascia un campo vuoto per non applicare alcun limite.",
+	zoneLimitsInfoAction: "Informazioni sui limiti di temperatura",
+	zoneLimitMinimum: "Temperatura minima",
+	zoneLimitMaximum: "Temperatura massima",
+	zoneLimitNone: "Nessun limite",
+	zoneLimitsSaved: "Limiti di temperatura salvati",
+	diagnosticsZoneLimits: "Limiti di temperatura",
+	diagnosticsLimitedByZoneLimits: "Limitato dai limiti di zona",
+	diagnosticsRequestedTarget: "Richiesto",
 	manualAdjustment: "Regolazione manuale",
 	velairControl: "Controllo Velair",
 	automaticScheduling: "Programmazione automatica",
@@ -5612,6 +5662,16 @@ var k = [
 	externalChangeForDuration: "Voor een bepaalde tijd",
 	externalChangeUntilResumed: "Tot hervatten",
 	externalChangePolicySaved: "Beleid voor externe wijzigingen opgeslagen",
+	zoneLimits: "Temperatuurlimieten",
+	zoneLimitsDescription: "Velair stuurt nooit een doel onder het minimum of boven het maximum. Schema's, profielen, tijdelijke aanpassingen, Room Assist en de actie velair.set_temperature worden vóór verzending begrensd; aanpassingen buiten Velair niet. Laat een veld leeg voor geen limiet.",
+	zoneLimitsInfoAction: "Over temperatuurlimieten",
+	zoneLimitMinimum: "Minimumtemperatuur",
+	zoneLimitMaximum: "Maximumtemperatuur",
+	zoneLimitNone: "Geen limiet",
+	zoneLimitsSaved: "Temperatuurlimieten opgeslagen",
+	diagnosticsZoneLimits: "Temperatuurlimieten",
+	diagnosticsLimitedByZoneLimits: "Begrensd door zonelimieten",
+	diagnosticsRequestedTarget: "Gevraagd",
 	manualAdjustment: "Handmatige aanpassing",
 	velairControl: "Velair-bediening",
 	automaticScheduling: "Automatische planning",
@@ -6597,6 +6657,16 @@ var k = [
 	externalChangeForDuration: "Przez określony czas",
 	externalChangeUntilResumed: "Do czasu wznowienia",
 	externalChangePolicySaved: "Zapisano politykę zmian zewnętrznych",
+	zoneLimits: "Limity temperatury",
+	zoneLimitsDescription: "Velair nigdy nie wysyła wartości zadanej poniżej minimum ani powyżej maksimum. Harmonogramy, profile, wzmocnienia, Room Assist i akcja velair.set_temperature są ograniczane przed wysłaniem; zmiany wprowadzone poza Velair nie. Pozostaw pole puste, aby nie stosować limitu.",
+	zoneLimitsInfoAction: "Informacje o limitach temperatury",
+	zoneLimitMinimum: "Temperatura minimalna",
+	zoneLimitMaximum: "Temperatura maksymalna",
+	zoneLimitNone: "Brak limitu",
+	zoneLimitsSaved: "Zapisano limity temperatury",
+	diagnosticsZoneLimits: "Limity temperatury",
+	diagnosticsLimitedByZoneLimits: "Ograniczone limitami strefy",
+	diagnosticsRequestedTarget: "Żądana wartość",
 	manualAdjustment: "Regulacja ręczna",
 	velairControl: "Sterowanie Velair",
 	automaticScheduling: "Automatyczny harmonogram",
@@ -7583,6 +7653,16 @@ var k = [
 	externalChangeForDuration: "Por um período",
 	externalChangeUntilResumed: "Até ser retomado",
 	externalChangePolicySaved: "Política de alteração externa salva",
+	zoneLimits: "Limites de temperatura",
+	zoneLimitsDescription: "O Velair nunca envia um alvo abaixo do mínimo nem acima do máximo. Programações, perfis, reforços, Room Assist e a ação velair.set_temperature são limitados antes do envio; ajustes feitos fora do Velair não. Deixe um campo vazio para não aplicar limite.",
+	zoneLimitsInfoAction: "Sobre os limites de temperatura",
+	zoneLimitMinimum: "Temperatura mínima",
+	zoneLimitMaximum: "Temperatura máxima",
+	zoneLimitNone: "Sem limite",
+	zoneLimitsSaved: "Limites de temperatura salvos",
+	diagnosticsZoneLimits: "Limites de temperatura",
+	diagnosticsLimitedByZoneLimits: "Limitado pelos limites da zona",
+	diagnosticsRequestedTarget: "Solicitado",
 	manualAdjustment: "Ajuste manual",
 	velairControl: "Controle Velair",
 	automaticScheduling: "Agendamento automático",
@@ -8569,6 +8649,16 @@ var k = [
 	externalChangeForDuration: "Por um período",
 	externalChangeUntilResumed: "Até ser retomado",
 	externalChangePolicySaved: "Política de alteração externa guardada",
+	zoneLimits: "Limites de temperatura",
+	zoneLimitsDescription: "O Velair nunca envia um alvo abaixo do mínimo nem acima do máximo. Horários, perfis, reforços, Room Assist e a ação velair.set_temperature são limitados antes do envio; os ajustes feitos fora do Velair não. Deixe um campo vazio para não aplicar limite.",
+	zoneLimitsInfoAction: "Sobre os limites de temperatura",
+	zoneLimitMinimum: "Temperatura mínima",
+	zoneLimitMaximum: "Temperatura máxima",
+	zoneLimitNone: "Sem limite",
+	zoneLimitsSaved: "Limites de temperatura guardados",
+	diagnosticsZoneLimits: "Limites de temperatura",
+	diagnosticsLimitedByZoneLimits: "Limitado pelos limites da zona",
+	diagnosticsRequestedTarget: "Pedido",
 	manualAdjustment: "Ajuste manual",
 	velairControl: "Comando Velair",
 	automaticScheduling: "Agendamento automático",
@@ -9556,6 +9646,16 @@ var k = [
 	externalChangeForDuration: "На заданное время",
 	externalChangeUntilResumed: "До возобновления",
 	externalChangePolicySaved: "Политика внешних изменений сохранена",
+	zoneLimits: "Ограничения температуры",
+	zoneLimitsDescription: "Velair никогда не отправляет уставку ниже минимума или выше максимума. Расписания, профили, форсированные режимы, Room Assist и действие velair.set_temperature ограничиваются перед отправкой; изменения, сделанные вне Velair, — нет. Оставьте поле пустым, чтобы не задавать ограничение.",
+	zoneLimitsInfoAction: "Об ограничениях температуры",
+	zoneLimitMinimum: "Минимальная температура",
+	zoneLimitMaximum: "Максимальная температура",
+	zoneLimitNone: "Без ограничения",
+	zoneLimitsSaved: "Ограничения температуры сохранены",
+	diagnosticsZoneLimits: "Ограничения температуры",
+	diagnosticsLimitedByZoneLimits: "Ограничено пределами зоны",
+	diagnosticsRequestedTarget: "Запрошено",
 	manualAdjustment: "Ручная настройка",
 	velairControl: "Управление Velair",
 	automaticScheduling: "Автоматическое расписание",
@@ -10541,6 +10641,16 @@ var k = [
 	externalChangeForDuration: "",
 	externalChangeUntilResumed: "",
 	externalChangePolicySaved: "",
+	zoneLimits: "",
+	zoneLimitsDescription: "",
+	zoneLimitsInfoAction: "",
+	zoneLimitMinimum: "",
+	zoneLimitMaximum: "",
+	zoneLimitNone: "",
+	zoneLimitsSaved: "",
+	diagnosticsZoneLimits: "",
+	diagnosticsLimitedByZoneLimits: "",
+	diagnosticsRequestedTarget: "",
 	manualAdjustment: "",
 	velairControl: "",
 	automaticScheduling: "",
@@ -17237,6 +17347,65 @@ var Pn = l`
   box-shadow: 0 0 0 1px var(--primary-color);
 }
 
+.settings-zone-limits {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+  position: relative;
+}
+
+.settings-zone-limit-controls { flex-wrap: wrap; }
+
+.settings-zone-limit {
+  align-items: center;
+  border: 1px solid var(--divider-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 1 190px;
+  gap: 4px;
+  height: 34px;
+  min-width: 150px;
+  overflow: hidden;
+  padding-inline-start: 8px;
+}
+
+.settings-zone-limit-label {
+  color: var(--secondary-text-color);
+  flex: 0 0 auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.settings-zone-limit input {
+  background: var(--card-background-color);
+  border: 0;
+  border-radius: 0;
+  box-sizing: border-box;
+  box-shadow: none;
+  flex: 1 1 auto;
+  font-size: 12px;
+  height: 100%;
+  margin: 0;
+  min-width: 0;
+  outline: 0;
+  padding-inline: 4px 2px;
+  width: 100%;
+}
+
+.settings-zone-limit:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.settings-zone-limit-unit {
+  color: var(--secondary-text-color);
+  font-size: 11px;
+  padding-inline-end: 7px;
+}
+
 .settings-policy-duration span {
   color: var(--secondary-text-color);
   font-size: 11px;
@@ -17385,7 +17554,8 @@ var Pn = l`
 
 @media (pointer: coarse) {
   .settings-policy-controls > .select-wrap,
-  .settings-policy-duration { height: 40px; }
+  .settings-policy-duration,
+  .settings-zone-limit { height: 40px; }
 }
 
 @media (max-width: 480px) {
@@ -17395,6 +17565,8 @@ var Pn = l`
   .settings-policy-controls { width: 100%; }
   .settings-policy-controls > .select-wrap { flex: 1 1 160px; height: 40px; max-width: 170px; width: auto; }
   .settings-policy-duration { flex: 0 1 105px; height: 40px; }
+  .settings-zone-limits { align-items: stretch; flex-direction: column; gap: 4px; }
+  .settings-zone-limit { flex: 1 1 auto; height: 40px; }
 }
 `, Kn = l`
 .templates-view {
@@ -20058,6 +20230,13 @@ var Pn = l`
 			comfort: t
 		});
 	}
+	updateZoneLimits(e, t) {
+		return this.hass.connection.sendMessagePromise({
+			type: "velair/update_zone_limits",
+			entity_id: e,
+			limits: t
+		});
+	}
 	resetZonePreconditioningLearning(e, t) {
 		return this.hass.connection.sendMessagePromise({
 			type: "velair/reset_zone_preconditioning_learning",
@@ -21069,7 +21248,21 @@ async function Zi(e, t, n) {
 		}
 	}
 }
-async function Qi(e, t, n, r) {
+async function Qi(e, t, n) {
+	let r = e._api();
+	if (r) {
+		e._settingsSaving = !0, e._error = void 0, e._saveMessage = void 0;
+		try {
+			let i = await r.updateZoneLimits(t, n);
+			e._applyScheduleData(i), e._showSuccess(e._t("zoneLimitsSaved"));
+		} catch (t) {
+			e._error = t instanceof Error ? t.message : e._t("unableSaveSettings");
+		} finally {
+			e._settingsSaving = !1;
+		}
+	}
+}
+async function $i(e, t, n, r) {
 	let i = e._api();
 	if (i && window.confirm(e._t("confirmResetPreconditioningLearning", { direction: r }))) {
 		e._settingsSaving = !0, e._error = void 0, e._saveMessage = void 0;
@@ -21083,7 +21276,7 @@ async function Qi(e, t, n, r) {
 		}
 	}
 }
-async function $i(e, t) {
+async function ea(e, t) {
 	let n = e._api();
 	if (n && window.confirm(e._t("confirmResetPreconditioningSettings"))) {
 		e._settingsSaving = !0, e._error = void 0, e._saveMessage = void 0;
@@ -21097,29 +21290,29 @@ async function $i(e, t) {
 		}
 	}
 }
-function ea(e, t, n) {
+function ta(e, t, n) {
 	let r = e._orderedZoneIds(e._data?.configured_entities ?? []), i = r.indexOf(t), a = i + n;
 	if (i < 0 || a < 0 || a >= r.length) return;
 	let o = [...r];
 	[o[i], o[a]] = [o[a], o[i]], e._updateSettingsZoneOrder(o);
 }
-function ta(e, t, n) {
+function na(e, t, n) {
 	e._draggedSettingsEntity = t, n.dataTransfer?.setData("text/plain", t), n.dataTransfer && (n.dataTransfer.effectAllowed = "move");
 }
-function na(e) {
+function ra(e) {
 	e.preventDefault(), e.dataTransfer && (e.dataTransfer.dropEffect = "move");
 }
-function ra(e, t, n) {
+function ia(e, t, n) {
 	n.preventDefault();
 	let r = n.dataTransfer?.getData("text/plain") || e._draggedSettingsEntity;
 	if (e._draggedSettingsEntity = void 0, !r || r === t) return;
 	let i = e._orderedZoneIds(e._data?.configured_entities ?? []).filter((e) => e !== r), a = i.indexOf(t);
 	a < 0 || (i.splice(a, 0, r), e._updateSettingsZoneOrder(i));
 }
-function ia(e) {
+function aa(e) {
 	e._draggedSettingsEntity = void 0;
 }
-function aa(e, t) {
+function oa(e, t) {
 	let n = new Set(e._data?.configured_entities ?? []), r = t.filter((e) => n.has(e));
 	e._saveSettings({ zone_order: r });
 }
@@ -21128,23 +21321,23 @@ function aa(e, t) {
 function B(e) {
 	return e;
 }
-function oa(e, t, n, r) {
+function sa(e, t, n, r) {
 	e._draggedTimelineIndex = t, r.dataTransfer?.setData("text/plain", JSON.stringify({
 		index: t,
 		source: n
 	})), r.dataTransfer && (r.dataTransfer.effectAllowed = "move");
 }
-function sa(e) {
+function ca(e) {
 	e.preventDefault(), e.dataTransfer && (e.dataTransfer.dropEffect = "move");
 }
-function ca(e, t, n = "schedule") {
+function la(e, t, n = "schedule") {
 	t.preventDefault();
-	let { index: r, source: i } = la(e, t, n);
+	let { index: r, source: i } = ua(e, t, n);
 	if (e._draggedTimelineIndex = void 0, !Number.isInteger(r) || !e._blocksForSource(i)[r]) return;
-	let a = t.currentTarget, o = _a(e, t.clientX, a);
+	let a = t.currentTarget, o = va(e, t.clientX, a);
 	e._setDraftBlockStart(r, o, { sort: !0 }, i);
 }
-function la(e, t, n) {
+function ua(e, t, n) {
 	let r = t.dataTransfer?.getData("text/plain");
 	if (r) try {
 		let e = JSON.parse(r);
@@ -21164,10 +21357,10 @@ function la(e, t, n) {
 		source: n
 	};
 }
-function ua(e) {
+function da(e) {
 	e._draggedTimelineIndex = void 0;
 }
-function da(e, t, n, r, i) {
+function fa(e, t, n, r, i) {
 	i.preventDefault(), i.stopPropagation();
 	let a = i.currentTarget.closest(".timeline-track");
 	a instanceof HTMLElement && (e._timelineResize = {
@@ -21175,21 +21368,21 @@ function da(e, t, n, r, i) {
 		index: t,
 		source: r,
 		track: a
-	}, e.classList.add("timeline-resizing"), ya(e, "ew-resize"), window.addEventListener("pointermove", e._handleTimelineResizeMove), window.addEventListener("pointerup", e._handleTimelineResizeEnd, { once: !0 }), e._resizeTimelineBlock(t, n, va(i.clientX, a), r));
+	}, e.classList.add("timeline-resizing"), ba(e, "ew-resize"), window.addEventListener("pointermove", e._handleTimelineResizeMove), window.addEventListener("pointerup", e._handleTimelineResizeEnd, { once: !0 }), e._resizeTimelineBlock(t, n, ya(i.clientX, a), r));
 }
-function fa(e, t) {
+function pa(e, t) {
 	if (!e._timelineResize) return;
 	t.preventDefault();
 	let { edge: n, index: r, source: i, track: a } = e._timelineResize;
-	e._resizeTimelineBlock(r, n, va(t.clientX, a), i);
+	e._resizeTimelineBlock(r, n, ya(t.clientX, a), i);
 }
-function pa(e) {
+function ma(e) {
 	window.removeEventListener("pointermove", e._handleTimelineResizeMove);
 	let t = e._timelineResize?.source ?? "schedule";
-	e.classList.remove("timeline-resizing"), e._timelineResize = void 0, ba(e), e._sortDraftBlocksByStart(t);
+	e.classList.remove("timeline-resizing"), e._timelineResize = void 0, xa(e), e._sortDraftBlocksByStart(t);
 }
-function ma(e, t, n, r, i = "schedule") {
-	let a = ga(e, i), o = a.findIndex((e) => e.index === t), s = a[o];
+function ha(e, t, n, r, i = "schedule") {
+	let a = _a(e, i), o = a.findIndex((e) => e.index === t), s = a[o];
 	if (!s) return;
 	if (n === "start") {
 		let n = a[o - 1]?.startMinute, c = typeof n == "number" ? n + 15 : 0, l = s.endMinute - 15;
@@ -21201,31 +21394,31 @@ function ma(e, t, n, r, i = "schedule") {
 	let l = a[o + 2]?.startMinute, u = s.startMinute + 15, d = typeof l == "number" ? l - 15 : 1425;
 	e._setDraftBlockStart(c.index, Qn(er(r, u, d)), {}, i);
 }
-function ha(e, t = "schedule") {
+function ga(e, t = "schedule") {
 	e._setBlocksForSource(t, Fr(e._blocksForSource(t)));
 }
-function ga(e, t = "schedule") {
+function _a(e, t = "schedule") {
 	return kr(e._blocksForSource(t));
 }
-function _a(e, t, n) {
-	return Qn(va(t, n));
+function va(e, t, n) {
+	return Qn(ya(t, n));
 }
-function va(e, t) {
+function ya(e, t) {
 	let n = t.getBoundingClientRect();
 	return Lr(e, n.left, n.width);
 }
-function ya(e, t) {
+function ba(e, t) {
 	document.body && (e._previousBodyCursor === void 0 && (e._previousBodyCursor = document.body.style.cursor), e._previousDocumentCursor === void 0 && (e._previousDocumentCursor = document.documentElement.style.cursor), document.body.style.cursor = t, document.documentElement.style.cursor = t);
 }
-function ba(e) {
+function xa(e) {
 	!document.body || e._previousBodyCursor === void 0 || (document.body.style.cursor = e._previousBodyCursor, document.documentElement.style.cursor = e._previousDocumentCursor ?? "", e._previousBodyCursor = void 0, e._previousDocumentCursor = void 0);
 }
 //#endregion
 //#region src/velair/controllers/schedule-actions.ts
-function xa(e) {
+function Sa(e) {
 	return e;
 }
-async function Sa(e) {
+async function Ca(e) {
 	let t = e._api();
 	if (!t || !e._selectedEntity || e._saving) return;
 	let n = e._normalizeDraftBlocks();
@@ -21248,7 +21441,7 @@ async function Sa(e) {
 		e._saving = !1;
 	}
 }
-async function Ca(e) {
+async function wa(e) {
 	let t = e._api();
 	if (!t || !e._selectedEntity || e._copying || e._copyTargets.size === 0) return;
 	let n = e._normalizeDraftBlocks();
@@ -21273,7 +21466,7 @@ async function Ca(e) {
 		e._copying = !1;
 	}
 }
-async function wa(e) {
+async function Ta(e) {
 	let t = e._api();
 	if (!t || !e._selectedEntity || e._applyingZones || e._zoneTargets.size === 0) return;
 	let n = e._normalizeDraftBlocks();
@@ -21301,7 +21494,7 @@ async function wa(e) {
 		e._applyingZones = !1;
 	}
 }
-function Ta(e, t = "schedule") {
+function Ea(e, t = "schedule") {
 	return pi(e._blocksForSource(t), {
 		duplicateStartError: (t) => e._t("duplicateStart", { start: t }),
 		invalidStartError: (t) => e._t("invalidStart", { start: t }),
@@ -21309,7 +21502,7 @@ function Ta(e, t = "schedule") {
 		temperatureError: (n) => e._temperatureError(n, t)
 	});
 }
-function Ea(e, t, n) {
+function Da(e, t, n) {
 	let [r, i] = e._entityTemperatureLimits(n);
 	return gi(mi(t, r, i), {
 		fanModes: e._entityFanModeOptions(n),
@@ -21319,7 +21512,7 @@ function Ea(e, t, n) {
 		swingModes: e._entitySwingModeOptions(n)
 	});
 }
-function Da(e, t, n) {
+function Oa(e, t, n) {
 	let r = e.hass?.states?.[n], i = t.find((e) => (e.target_temp_low !== void 0 || e.target_temp_high !== void 0) && e.hvac_mode !== void 0 && e.hvac_mode !== "heat_cool");
 	if (i?.hvac_mode) return e._t("unsupportedModeForClimate", {
 		entity: e._friendlyEntityName(n),
@@ -21348,7 +21541,7 @@ function Da(e, t, n) {
 function V(e) {
 	return e;
 }
-async function Oa(e) {
+async function ka(e) {
 	let t = e._api();
 	if (!(!t || e._loading)) {
 		e._loading = !0, e._error = void 0;
@@ -21362,7 +21555,7 @@ async function Oa(e) {
 		}
 	}
 }
-async function ka(e) {
+async function Aa(e) {
 	let t = e._api();
 	if (!(!t || e._unsubscribeUpdates || e._subscribing)) {
 		e._subscribing = !0;
@@ -21381,7 +21574,7 @@ async function ka(e) {
 		}
 	}
 }
-function Aa(e, t, n = {}) {
+function ja(e, t, n = {}) {
 	let r = !e._data;
 	e._data = t, e._hasExternalConfig || (e._config = {
 		first_weekday: t.settings.first_weekday,
@@ -21392,26 +21585,26 @@ function Aa(e, t, n = {}) {
 	let o = e._scheduleTemplates().find((t) => t.key === e._selectedTemplateKey);
 	o ? (n.forceDraft || !e._templateDirty || e._templateDraftKey !== o.key) && e._resetTemplateDraft(o) : e._resetTemplateDraft(), e._syncPauseTick(), (n.forceDraft || !e._dirty) && e._resetDraftBlocks();
 }
-function ja(e) {
+function Ma(e) {
 	e._draftBlocks = ci((e._selectedEntity ? e._data?.zones[e._selectedEntity] : void 0)?.schedule?.[e._selectedWeekday] ?? [], e._temperatureUnit(e._selectedEntity)), e._dirty = !1, e._dirtyEntityId = void 0;
 }
-function Ma(e, t) {
+function Na(e, t) {
 	return t === e._selectedEntity ? !0 : e._dirty && !e._confirmDiscardChanges() ? !1 : (e._selectedEntity = t, e._saveMessage = void 0, e._copyTargets = /* @__PURE__ */ new Set(), e._zoneTargets = /* @__PURE__ */ new Set(), e._resetDraftBlocks(), !0);
 }
-function Na(e, t) {
+function Pa(e, t) {
 	return k.includes(t) ? t === e._selectedWeekday ? !0 : e._dirty && !e._confirmDiscardChanges() ? !1 : (e._selectedWeekday = t, e._saveMessage = void 0, e._copyTargets = /* @__PURE__ */ new Set(), e._zoneTargets = /* @__PURE__ */ new Set(), e._resetDraftBlocks(), !0) : !1;
 }
-function Pa(e, t) {
+function Fa(e, t) {
 	return t === "template" ? e._templateDraftBlocks : e._draftBlocks;
 }
-function Fa(e, t, n) {
+function Ia(e, t, n) {
 	if (t === "template") {
 		e._templateDraftBlocks = n;
 		return;
 	}
 	e._draftBlocks = n;
 }
-function Ia(e, t) {
+function La(e, t) {
 	if (t === "template") {
 		e._templateDirty = !0;
 		return;
@@ -21420,7 +21613,7 @@ function Ia(e, t) {
 }
 //#endregion
 //#region src/velair/domain/entity-diagnostics.ts
-function La(e, t, n) {
+function Ra(e, t, n) {
 	let r = [], i = "ok";
 	if (!t) return {
 		messageKeys: ["entityDiagnosticMissing"],
@@ -21435,7 +21628,7 @@ function La(e, t, n) {
 }
 //#endregion
 //#region src/velair/domain/formatters.ts
-function Ra(e) {
+function za(e) {
 	return {
 		de: "de-DE",
 		en: "en",
@@ -21449,7 +21642,7 @@ function Ra(e) {
 		ru: "ru-RU"
 	}[e] ?? "en";
 }
-function za(e) {
+function Ba(e) {
 	let t = String(e ?? "").toLowerCase(), n = t === "12" ? !0 : t === "24" ? !1 : void 0;
 	return {
 		hour: "numeric",
@@ -21457,17 +21650,17 @@ function za(e) {
 		...n === void 0 ? {} : { hour12: n }
 	};
 }
-function Ba(e, t, n) {
-	let r = new Date(e);
-	return Number.isNaN(r.getTime()) ? e : r.toLocaleString(t, {
-		...za(n),
-		weekday: "short"
-	});
-}
 function Va(e, t, n) {
 	let r = new Date(e);
 	return Number.isNaN(r.getTime()) ? e : r.toLocaleString(t, {
-		...za(n),
+		...Ba(n),
+		weekday: "short"
+	});
+}
+function Ha(e, t, n) {
+	let r = new Date(e);
+	return Number.isNaN(r.getTime()) ? e : r.toLocaleString(t, {
+		...Ba(n),
 		day: "2-digit",
 		month: "2-digit",
 		second: "2-digit",
@@ -21475,13 +21668,13 @@ function Va(e, t, n) {
 		year: "numeric"
 	});
 }
-function Ha(e, t, n) {
+function Ua(e, t, n) {
 	let r = /^(\d{1,2}):(\d{2})$/.exec(e);
 	if (!r) return e;
 	let i = Number(r[1]), a = Number(r[2]);
-	return i < 0 || i > 23 || a < 0 || a > 59 ? e : new Date(2e3, 0, 1, i, a).toLocaleTimeString(t, za(n));
+	return i < 0 || i > 23 || a < 0 || a > 59 ? e : new Date(2e3, 0, 1, i, a).toLocaleTimeString(t, Ba(n));
 }
-function Ua(e) {
+function Wa(e) {
 	let t = Math.max(0, Math.ceil(e / 1e3));
 	if (t < 60) return `${t} s`;
 	let n = Math.floor(t / 60);
@@ -21489,16 +21682,16 @@ function Ua(e) {
 	let r = Math.floor(n / 60), i = n % 60;
 	return i ? `${r} h ${i} min` : `${r} h`;
 }
-function Wa(e, t) {
+function Ga(e, t) {
 	return `${e.toFixed(e % 1 == 0 ? 0 : 1)} ${t}`;
 }
-function Ga(e, t) {
+function Ka(e, t) {
 	return e ?? t ?? "°C";
 }
-function Ka(e, t, n) {
+function qa(e, t, n) {
 	return e.action === "turn_off" ? t.off : e.temperature == null ? e.target_temp_low != null && e.target_temp_high != null ? `${n(Number(e.target_temp_low), e.entity_id).replace(/\s+[^\s]+$/, "")}–${n(Number(e.target_temp_high), e.entity_id)}` : t.setTemperature : n(Number(e.temperature), e.entity_id);
 }
-function qa(e, t, n) {
+function Ja(e, t, n) {
 	return e.hvac_mode ? n(e.hvac_mode) : e.action === "turn_off" ? n("off") : t.keepMode;
 }
 //#endregion
@@ -21506,124 +21699,124 @@ function qa(e, t, n) {
 function H(e) {
 	return e;
 }
-function Ja(e, t = "schedule", n = e._selectedEntity) {
+function Ya(e, t = "schedule", n = e._selectedEntity) {
 	return t === "template" ? e._templateTemperatureLimits() : e._entityTemperatureLimits(n);
 }
-function Ya(e, t) {
+function Xa(e, t) {
 	return At(t ? e.hass?.states?.[t] : void 0, e._temperatureUnit(t));
 }
-function Xa(e) {
+function Za(e) {
 	return $t((e._data?.configured_entities ?? []).map((t) => e._entityTemperatureLimits(t)));
 }
-function Za(e, t = "schedule", n = e._selectedEntity) {
+function Qa(e, t = "schedule", n = e._selectedEntity) {
 	return t === "template" ? en((e._data?.configured_entities ?? []).map((t) => e._entityTemperatureStep(t))) : e._entityTemperatureStep(n);
 }
-function Qa(e, t) {
+function $a(e, t) {
 	return jt(t ? e.hass?.states?.[t] : void 0);
 }
-function $a(e, t) {
+function eo(e, t) {
 	return !!e.hass?.states?.[t];
 }
-function eo(e, t) {
+function to(e, t) {
 	return e.hass?.states?.[t]?.attributes?.friendly_name ?? t;
 }
-function to(e, t) {
+function no(e, t) {
 	return Nt(e.hass?.states?.[t]);
 }
-function no(e, t = "schedule") {
+function ro(e, t = "schedule") {
 	if (t === "template") {
 		let t = e._data?.configured_entities ?? [];
 		return e._uniqueModes(t.flatMap((t) => e._climateSupportedModes(t)));
 	}
 	return e._uniqueModes(e._selectedEntity ? e._climateSupportedModes(e._selectedEntity) : []);
 }
-function ro(e, t = "schedule") {
-	return To(e, t, Rt);
+function io(e, t = "schedule") {
+	return Eo(e, t, Rt);
 }
-function io(e, t) {
-	return ho(Rt(e.hass?.states?.[t]));
+function ao(e, t) {
+	return go(Rt(e.hass?.states?.[t]));
 }
-function ao(e, t = "schedule") {
-	return To(e, t, zt);
+function oo(e, t = "schedule") {
+	return Eo(e, t, zt);
 }
-function oo(e, t) {
-	return ho(zt(e.hass?.states?.[t]));
+function so(e, t) {
+	return go(zt(e.hass?.states?.[t]));
 }
-function so(e, t = "schedule") {
-	return To(e, t, Bt);
+function co(e, t = "schedule") {
+	return Eo(e, t, Bt);
 }
-function co(e, t) {
-	return ho(Bt(e.hass?.states?.[t]));
+function lo(e, t) {
+	return go(Bt(e.hass?.states?.[t]));
 }
-function lo(e, t = "schedule") {
-	return To(e, t, Vt);
+function uo(e, t = "schedule") {
+	return Eo(e, t, Vt);
 }
-function uo(e, t) {
-	return ho(Vt(e.hass?.states?.[t]));
+function fo(e, t) {
+	return go(Vt(e.hass?.states?.[t]));
 }
-function fo(e, t = "schedule") {
+function po(e, t = "schedule") {
 	if (t === "template") {
 		let t = (e._data?.configured_entities ?? []).map((t) => Ht(e.hass?.states?.[t])).filter((e) => !!e);
 		return t.length ? [Math.min(...t.map((e) => e[0])), Math.max(...t.map((e) => e[1]))] : void 0;
 	}
 	return e._selectedEntity ? Ht(e.hass?.states?.[e._selectedEntity]) : void 0;
 }
-function po(e, t) {
+function mo(e, t) {
 	return Ht(e.hass?.states?.[t]);
 }
-function mo(e) {
+function ho(e) {
 	return Ut(e);
 }
-function ho(e) {
+function go(e) {
 	return [...new Set(e)].sort((e, t) => e.localeCompare(t));
 }
-function go(e, t) {
-	let n = La(t, e.hass?.states?.[t], e._climateSupportedModes(t)), r = n.messageKeys.map((t) => e._t(t));
+function _o(e, t) {
+	let n = Ra(t, e.hass?.states?.[t], e._climateSupportedModes(t)), r = n.messageKeys.map((t) => e._t(t));
 	return {
 		messages: r,
 		status: n.status,
 		tooltip: r.length ? r.join(" · ") : e._t("entityDiagnosticOk")
 	};
 }
-function _o(e, t) {
+function vo(e, t) {
 	return Wt(e.hass?.states?.[t]).map((t) => ({
 		icon: t.icon,
 		label: e._t(t.labelKey)
 	}));
 }
-function vo(e, t) {
-	return Ba(t, e._dateLocale(), e.hass?.locale?.time_format);
-}
 function yo(e, t) {
-	return Ha(t, e._dateLocale(), e.hass?.locale?.time_format);
+	return Va(t, e._dateLocale(), e.hass?.locale?.time_format);
 }
-function bo(e) {
-	return Ra(e._language());
+function bo(e, t) {
+	return Ua(t, e._dateLocale(), e.hass?.locale?.time_format);
 }
-function xo(e, t, n) {
-	return Wa(t, e._temperatureUnit(n));
+function xo(e) {
+	return za(e._language());
 }
-function So(e, t) {
-	return Ka(t, {
+function So(e, t, n) {
+	return Ga(t, e._temperatureUnit(n));
+}
+function Co(e, t) {
+	return qa(t, {
 		off: e._t("off"),
 		setTemperature: e._t("setTemperature")
 	}, (t, n) => e._formatTemperature(t, n));
 }
-function Co(e, t) {
-	return qa(t, { keepMode: e._t("keepMode") }, (t) => e._modeLabel(t));
-}
 function wo(e, t) {
-	return e._data?.temperature_unit ?? Ga(void 0, e.hass?.config?.unit_system?.temperature);
+	return Ja(t, { keepMode: e._t("keepMode") }, (t) => e._modeLabel(t));
 }
-function To(e, t, n) {
-	return ho(t === "template" ? (e._data?.configured_entities ?? []).flatMap((t) => n(e.hass?.states?.[t])) : e._selectedEntity ? n(e.hass?.states?.[e._selectedEntity]) : []);
+function To(e, t) {
+	return e._data?.temperature_unit ?? Ka(void 0, e.hass?.config?.unit_system?.temperature);
+}
+function Eo(e, t, n) {
+	return go(t === "template" ? (e._data?.configured_entities ?? []).flatMap((t) => n(e.hass?.states?.[t])) : e._selectedEntity ? n(e.hass?.states?.[e._selectedEntity]) : []);
 }
 //#endregion
 //#region src/velair/controllers/template-actions.ts
 function U(e) {
 	return e;
 }
-function Eo(e, t) {
+function Do(e, t) {
 	e._selectedTemplateKey = t;
 	let n = e._scheduleTemplates().find((e) => e.key === t);
 	if (e._templateDraftKey !== t && (e._resetTemplateDraft(n), e._templateApplyOpen = !1, e._templateApplyTargets = /* @__PURE__ */ new Set()), e._templateNameDraftKey === t) {
@@ -21632,7 +21825,7 @@ function Eo(e, t) {
 	}
 	e._templateNameDraftKey = t, e._templateNameDraft = n ? e._templateLabel(n) : "", e._saveMessage = void 0;
 }
-function Do(e, t) {
+function Oo(e, t) {
 	let n = e._selectedTemplateKey;
 	if (e._selectedTemplateKey = t, e._saveMessage = void 0, t) {
 		if (!e._applySelectedTemplate()) {
@@ -21642,14 +21835,14 @@ function Do(e, t) {
 		e._selectedTemplateKey = "";
 	}
 }
-function Oo(e, t) {
-	e._templateDraftKey = t?.key ?? "", e._templateDraftBlocks = t ? Ho(t.blocks) : [], e._templateDirty = !1;
-}
 function ko(e, t) {
+	e._templateDraftKey = t?.key ?? "", e._templateDraftBlocks = t ? Uo(t.blocks) : [], e._templateDirty = !1;
+}
+function Ao(e, t) {
 	let n = ["template-list-wrap"];
 	return t > 5 && n.push("scrollable"), e._templateListCanScrollUp && n.push("can-scroll-up"), e._templateListCanScrollDown && n.push("can-scroll-down"), n.join(" ");
 }
-function Ao(e) {
+function jo(e) {
 	let t = e.renderRoot.querySelector(".template-list");
 	if (!(t instanceof HTMLElement)) {
 		e._setTemplateListScrollIndicators(!1, !1);
@@ -21658,16 +21851,16 @@ function Ao(e) {
 	let n = t.scrollHeight > t.clientHeight + 1, r = n && t.scrollTop > 1, i = n && t.scrollTop + t.clientHeight < t.scrollHeight - 1;
 	e._setTemplateListScrollIndicators(r, i);
 }
-function jo(e, t, n) {
+function Mo(e, t, n) {
 	e._templateListCanScrollUp !== t && (e._templateListCanScrollUp = t), e._templateListCanScrollDown !== n && (e._templateListCanScrollDown = n);
 }
-function Mo(e, t) {
+function No(e, t) {
 	return e._templateNameDraftKey === t.key ? e._templateNameDraft : e._templateLabel(t);
 }
-function No(e, t, n) {
+function Po(e, t, n) {
 	e._templateNameDraftKey = t, e._templateNameDraft = n, e._templateDirty = !0, e._saveMessage = void 0;
 }
-async function Po(e) {
+async function Fo(e) {
 	let t = e._api();
 	if (!t || e._templateAction) return;
 	let n = e._newTemplateKey(), r = e._uniqueTemplateName(e._t("newTemplate"));
@@ -21681,7 +21874,7 @@ async function Po(e) {
 		e._templateAction = void 0;
 	}
 }
-async function Fo(e, t) {
+async function Io(e, t) {
 	let n = e._api();
 	if (!n || e._templateAction) return;
 	let r = e._templateNameInputValue(t).trim();
@@ -21704,19 +21897,19 @@ async function Fo(e, t) {
 		e._templateAction = void 0;
 	}
 }
-function Io(e, t) {
+function Lo(e, t) {
 	return yr(t, e._scheduleTemplates());
 }
-function Lo(e) {
+function Ro(e) {
 	e._templateApplyOpen = !e._templateApplyOpen, e._saveMessage = void 0;
 }
-function Ro(e, t) {
+function zo(e, t) {
 	return xr(e, t);
 }
-function zo(e, t, n, r) {
+function Bo(e, t, n, r) {
 	!k.includes(n) || !(e._data?.configured_entities ?? []).includes(t) || (e._templateApplyTargets = Sr(e._templateApplyTargets, t, n, r), e._saveMessage = void 0);
 }
-async function Bo(e, t) {
+async function Vo(e, t) {
 	let n = e._api();
 	if (!n || e._applyingTemplateTargets || e._templateApplyTargets.size === 0) return;
 	let r = e._normalizeDraftBlocks("template");
@@ -21745,7 +21938,7 @@ async function Bo(e, t) {
 		}
 	}
 }
-function Vo(e) {
+function Ho(e) {
 	let t = e._scheduleTemplates().find((t) => t.key === e._selectedTemplateKey);
 	if (!t) return !1;
 	if (e._selectedEntity) {
@@ -21755,9 +21948,9 @@ function Vo(e) {
 	return e._draftBlocks.length && !window.confirm(e._t("confirmTemplate", {
 		template: e._templateLabel(t),
 		weekday: e._weekdayName(e._selectedWeekday)
-	})) ? !1 : (e._draftBlocks = Ho(t.blocks), e._markDirty(), e._saveMessage = void 0, !0);
+	})) ? !1 : (e._draftBlocks = Uo(t.blocks), e._markDirty(), e._saveMessage = void 0, !0);
 }
-function Ho(e) {
+function Uo(e) {
 	return e.map((e) => {
 		let t = {
 			action: e.action,
@@ -21767,7 +21960,7 @@ function Ho(e) {
 		return e.target_temp_low !== void 0 || e.target_temp_high !== void 0 ? (t.target_temp_low = e.target_temp_low, t.target_temp_high = e.target_temp_high) : t.temperature = e.temperature, e.fan_mode && (t.fan_mode = e.fan_mode), e.preset_mode && (t.preset_mode = e.preset_mode), e.swing_mode && (t.swing_mode = e.swing_mode), e.swing_horizontal_mode && (t.swing_horizontal_mode = e.swing_horizontal_mode), String(e.humidity ?? "").trim() && (t.humidity = e.humidity), t;
 	});
 }
-async function Uo(e, t) {
+async function Wo(e, t) {
 	let n = e._api();
 	if (!n || e._templateAction) return;
 	let r = e._scheduleTemplates().find((t) => t.key === e._selectedTemplateKey);
@@ -21789,10 +21982,10 @@ async function Uo(e, t) {
 		e._templateAction = void 0;
 	}
 }
-function Wo() {
+function Go() {
 	return br();
 }
-async function Go(e) {
+async function Ko(e) {
 	let t = e._api();
 	if (!t || e._templateAction) return;
 	let n = e._scheduleTemplates().find((t) => t.key === e._selectedTemplateKey);
@@ -21810,13 +22003,13 @@ async function Go(e) {
 }
 //#endregion
 //#region src/velair/host-types.ts
-function Ko(e) {
+function qo(e) {
 	return e;
 }
 //#endregion
 //#region src/velair/domain/schedule-compatibility.ts
-var qo = 1e-4;
-function Jo(e, t, n) {
+var Jo = 1e-4;
+function Yo(e, t, n) {
 	let r = 0;
 	for (let [i, a] of Object.entries(e)) {
 		let e = n(i);
@@ -21826,23 +22019,23 @@ function Jo(e, t, n) {
 			n.temperature,
 			n.target_temp_low,
 			n.target_temp_high
-		].filter((e) => typeof e == "number" && Number.isFinite(e)).some((t) => t < o || t > s || Math.abs(t / e - Math.round(t / e)) > qo) && (r += 1);
+		].filter((e) => typeof e == "number" && Number.isFinite(e)).some((t) => t < o || t > s || Math.abs(t / e - Math.round(t / e)) > Jo) && (r += 1);
 	}
 	return r;
 }
 //#endregion
 //#region node_modules/lit-html/directive.js
-var Yo = {
+var Xo = {
 	ATTRIBUTE: 1,
 	CHILD: 2,
 	PROPERTY: 3,
 	BOOLEAN_ATTRIBUTE: 4,
 	EVENT: 5,
 	ELEMENT: 6
-}, Xo = (e) => (...t) => ({
+}, Zo = (e) => (...t) => ({
 	_$litDirective$: e,
 	values: t
-}), Zo = class {
+}), Qo = class {
 	constructor(e) {}
 	get _$AU() {
 		return this._$AM._$AU;
@@ -21856,9 +22049,9 @@ var Yo = {
 	update(e, t) {
 		return this.render(...t);
 	}
-}, { I: Qo } = Le, $o = (e) => e, es = () => document.createComment(""), ts = (e, t, n) => {
+}, { I: $o } = Le, es = (e) => e, ts = () => document.createComment(""), ns = (e, t, n) => {
 	let r = e._$AA.parentNode, i = t === void 0 ? e._$AB : t._$AA;
-	if (n === void 0) n = new Qo(r.insertBefore(es(), i), r.insertBefore(es(), i), e, e.options);
+	if (n === void 0) n = new $o(r.insertBefore(ts(), i), r.insertBefore(ts(), i), e, e.options);
 	else {
 		let t = n._$AB.nextSibling, a = n._$AM, o = a !== e;
 		if (o) {
@@ -21868,21 +22061,21 @@ var Yo = {
 		if (t !== i || o) {
 			let e = n._$AA;
 			for (; e !== t;) {
-				let t = $o(e).nextSibling;
-				$o(r).insertBefore(e, i), e = t;
+				let t = es(e).nextSibling;
+				es(r).insertBefore(e, i), e = t;
 			}
 		}
 	}
 	return n;
-}, ns = (e, t, n = e) => (e._$AI(t, n), e), rs = {}, is = (e, t = rs) => e._$AH = t, as = (e) => e._$AH, os = (e) => {
+}, rs = (e, t, n = e) => (e._$AI(t, n), e), is = {}, as = (e, t = is) => e._$AH = t, os = (e) => e._$AH, ss = (e) => {
 	e._$AR(), e._$AA.remove();
-}, ss = (e, t, n) => {
+}, cs = (e, t, n) => {
 	let r = /* @__PURE__ */ new Map();
 	for (let i = t; i <= n; i++) r.set(e[i], i);
 	return r;
-}, cs = Xo(class extends Zo {
+}, ls = Zo(class extends Qo {
 	constructor(e) {
-		if (super(e), e.type !== Yo.CHILD) throw Error("repeat() can only be used in text expressions");
+		if (super(e), e.type !== Xo.CHILD) throw Error("repeat() can only be used in text expressions");
 	}
 	dt(e, t, n) {
 		let r;
@@ -21898,52 +22091,52 @@ var Yo = {
 		return this.dt(e, t, n).values;
 	}
 	update(e, [t, n, r]) {
-		let i = as(e), { values: a, keys: o } = this.dt(t, n, r);
+		let i = os(e), { values: a, keys: o } = this.dt(t, n, r);
 		if (!Array.isArray(i)) return this.ut = o, a;
 		let s = this.ut ??= [], c = [], l, u, d = 0, f = i.length - 1, p = 0, m = a.length - 1;
 		for (; d <= f && p <= m;) if (i[d] === null) d++;
 		else if (i[f] === null) f--;
-		else if (s[d] === o[p]) c[p] = ns(i[d], a[p]), d++, p++;
-		else if (s[f] === o[m]) c[m] = ns(i[f], a[m]), f--, m--;
-		else if (s[d] === o[m]) c[m] = ns(i[d], a[m]), ts(e, c[m + 1], i[d]), d++, m--;
-		else if (s[f] === o[p]) c[p] = ns(i[f], a[p]), ts(e, i[d], i[f]), f--, p++;
-		else if (l === void 0 && (l = ss(o, p, m), u = ss(s, d, f)), l.has(s[d])) if (l.has(s[f])) {
+		else if (s[d] === o[p]) c[p] = rs(i[d], a[p]), d++, p++;
+		else if (s[f] === o[m]) c[m] = rs(i[f], a[m]), f--, m--;
+		else if (s[d] === o[m]) c[m] = rs(i[d], a[m]), ns(e, c[m + 1], i[d]), d++, m--;
+		else if (s[f] === o[p]) c[p] = rs(i[f], a[p]), ns(e, i[d], i[f]), f--, p++;
+		else if (l === void 0 && (l = cs(o, p, m), u = cs(s, d, f)), l.has(s[d])) if (l.has(s[f])) {
 			let t = u.get(o[p]), n = t === void 0 ? null : i[t];
 			if (n === null) {
-				let t = ts(e, i[d]);
-				ns(t, a[p]), c[p] = t;
-			} else c[p] = ns(n, a[p]), ts(e, i[d], n), i[t] = null;
+				let t = ns(e, i[d]);
+				rs(t, a[p]), c[p] = t;
+			} else c[p] = rs(n, a[p]), ns(e, i[d], n), i[t] = null;
 			p++;
-		} else os(i[f]), f--;
-		else os(i[d]), d++;
+		} else ss(i[f]), f--;
+		else ss(i[d]), d++;
 		for (; p <= m;) {
-			let t = ts(e, c[m + 1]);
-			ns(t, a[p]), c[p++] = t;
+			let t = ns(e, c[m + 1]);
+			rs(t, a[p]), c[p++] = t;
 		}
 		for (; d <= f;) {
 			let e = i[d++];
-			e !== null && os(e);
+			e !== null && ss(e);
 		}
-		return this.ut = o, is(e, c), Ce;
+		return this.ut = o, as(e, c), Ce;
 	}
 });
 //#endregion
 //#region src/velair/views/notice-view.ts
-function ls(e) {
+function us(e) {
 	return T`
     <div class="notice-stack contextual" aria-live="polite" aria-relevant="additions text">
-      ${cs(e, (e) => e.id, (e) => ds(void 0, e, !0))}
+      ${ls(e, (e) => e.id, (e) => fs(void 0, e, !0))}
     </div>
   `;
 }
-function us(e, t) {
+function ds(e, t) {
 	return t.length ? T`
     <div class="notice-stack floating">
-      ${cs(t, (e) => e.id, (t) => ds(e, t, !1))}
+      ${ls(t, (e) => e.id, (t) => fs(e, t, !1))}
     </div>
   ` : E;
 }
-function ds(e, t, n) {
+function fs(e, t, n) {
 	return T`
     <div class=${`notice-row ${t.phase ?? "active"}`} data-notice-id=${t.id}>
       <div
@@ -21967,14 +22160,14 @@ function ds(e, t, n) {
 }
 //#endregion
 //#region src/velair/views/operation-status-view.ts
-var fs = "velair-operation-status-dismissed", ps;
-function ms(e) {
-	ps = e, window.dispatchEvent(new CustomEvent(fs, { detail: e }));
+var ps = "velair-operation-status-dismissed", ms;
+function hs(e) {
+	ms = e, window.dispatchEvent(new CustomEvent(ps, { detail: e }));
 }
-function hs(e, t, n = Date.now()) {
-	return e.id === t || e.id === ps ? !1 : e.state === "completed" && e.finished_at && Number.isFinite(Date.parse(e.finished_at)) ? n - Date.parse(e.finished_at) < Xe : !0;
+function gs(e, t, n = Date.now()) {
+	return e.id === t || e.id === ms ? !1 : e.state === "completed" && e.finished_at && Number.isFinite(Date.parse(e.finished_at)) ? n - Date.parse(e.finished_at) < Xe : !0;
 }
-function gs(e, t) {
+function _s(e, t) {
 	let n = Math.max(0, t.total), r = Math.max(0, Math.min(t.completed, n)), i = n > 0 ? Math.round(r / n * 100) : 100, a = t.state === "completed_with_errors" || t.state === "failed";
 	return T`
     <section
@@ -21985,11 +22178,11 @@ function gs(e, t) {
       data-operation-id=${t.id}
     >
       <div class="operation-status-icon" aria-hidden="true">
-        ${t.state === "running" ? T`<span class="operation-status-spinner"></span>` : T`<ha-icon icon=${bs(t.state)}></ha-icon>`}
+        ${t.state === "running" ? T`<span class="operation-status-spinner"></span>` : T`<ha-icon icon=${xs(t.state)}></ha-icon>`}
       </div>
       <div class="operation-status-copy">
-        <strong>${_s(e, t)}</strong>
-        <span>${vs(e, t, r, n)}</span>
+        <strong>${vs(e, t)}</strong>
+        <span>${ys(e, t, r, n)}</span>
       </div>
       <div class="operation-status-actions">
         ${n > 0 ? T`<span class="operation-status-count" aria-hidden="true">${r}/${n}</span>` : E}
@@ -22019,11 +22212,11 @@ function gs(e, t) {
     </section>
   `;
 }
-function _s(e, t) {
-	let n = ys(e, t), r = t.state === "running" ? "Running" : t.state === "completed" ? "Completed" : t.state === "completed_with_errors" ? "Partial" : "Failed";
+function vs(e, t) {
+	let n = bs(e, t), r = t.state === "running" ? "Running" : t.state === "completed" ? "Completed" : t.state === "completed_with_errors" ? "Partial" : "Failed";
 	return !t.target_id || t.target_id === "default" ? e._t(`operationDefault${r}`) : e._t(t.kind === "mode_change" ? `operationMode${r}` : `operationProfile${r}`, { target: n });
 }
-function vs(e, t, n, r) {
+function ys(e, t, n, r) {
 	let i = [r > 0 ? e._t("operationProgress", {
 		completed: n,
 		total: r
@@ -22037,21 +22230,21 @@ function vs(e, t, n, r) {
 	}
 	return t.state === "failed" && i.push(t.error_code === "cancelled" ? e._t("operationCancelled") : t.error_message || e._t("operationFailedHelp")), i.join(" · ");
 }
-function ys(e, t) {
+function bs(e, t) {
 	return t.kind === "mode_change" ? t.target_id === "default" ? e._t("modeDefault") : t.target_id === "manual" ? e._t("modeManual") : e._data?.modes?.find((e) => e.key === t.target_id)?.name ?? t.target_id ?? e._t("modeLabel") : e._data?.profiles?.find((e) => e.key === t.target_id)?.name ?? t.target_id ?? e._t("profiles");
 }
-function bs(e) {
+function xs(e) {
 	return e === "completed" ? "mdi:check-circle" : e === "completed_with_errors" ? "mdi:alert-circle" : "mdi:close-circle";
 }
 //#endregion
 //#region src/velair/domain/comfort.ts
-function xs(e, t) {
+function Ss(e, t) {
 	return {
-		...Ss(t),
+		...Cs(t),
 		...e
 	};
 }
-function Ss(e) {
+function Cs(e) {
 	let t = e.toUpperCase().includes("F");
 	return {
 		enabled: !1,
@@ -22068,7 +22261,7 @@ function Ss(e) {
 		stale_after_minutes: 120
 	};
 }
-function Cs(e, t, n) {
+function ws(e, t, n) {
 	let r = e?.states ?? {}, i = Object.entries(r).filter(([e, r]) => {
 		if (e === t) return !0;
 		if (!e.startsWith("sensor.")) return !1;
@@ -22083,32 +22276,32 @@ function Cs(e, t, n) {
 		label: t
 	}), i;
 }
-function ws(e) {
+function Ts(e) {
 	return e?.availability === "current" && typeof e.value == "number" && typeof e.min == "number" && typeof e.max == "number";
 }
-function Ts(e, t, n) {
+function Es(e, t, n) {
 	let r = Math.max(n - t, .1), i = t - r, a = n + r, o = (e - i) / (a - i) * 100;
 	return Math.max(4, Math.min(96, o));
 }
-function Es(e, t, n) {
+function Ds(e, t, n) {
 	let r = Math.min(400, t * .5), i = Math.max(n * 1.25, r + 1), a = (e - r) / (i - r) * 100;
 	return Math.max(4, Math.min(96, a));
 }
 //#endregion
 //#region src/velair/views/comfort-view.ts
-var Ds = "__humidity_not_monitored__", Os = {
+var Os = "__humidity_not_monitored__", ks = {
 	showConfiguration: !0,
 	showTemperature: !0,
 	showHumidity: !0,
 	showCo2: !0
-}, ks = {
+}, As = {
 	comfortTemperatureRange: "comfortTemperatureRangeHelp",
 	comfortHumidityRange: "comfortHumidityRangeHelp",
 	comfortCo2Limits: "comfortCo2LimitsHelp",
 	comfortStaleAfter: "comfortStaleAfterHelp"
 };
-function As(e, t, n = {}) {
-	let r = js(n);
+function js(e, t, n = {}) {
+	let r = Ms(n);
 	return T`
     <section class="comfort-view">
       <header class="comfort-intro">
@@ -22118,18 +22311,18 @@ function As(e, t, n = {}) {
           <small>${e._t("comfortIntroDetail")}</small>
         </span>
       </header>
-      ${t.length ? t.map((t) => Ms(e, t, r)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
+      ${t.length ? t.map((t) => Ns(e, t, r)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
     </section>
   `;
 }
-function js(e) {
+function Ms(e) {
 	return {
-		...Os,
+		...ks,
 		...e
 	};
 }
-function Ms(e, t, n) {
-	let r = e._entityExists(t), i = xs(e._data?.zones[t]?.comfort, e._temperatureUnit(t)), a = e._data?.comfort?.[t], o = r && e._expandedComfortZones.has(t), s = `comfort-zone-content-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}`, c = r ? e._t(o ? "comfortCollapseClimate" : "comfortExpandClimate", { climate: e._friendlyEntityName(t) }) : e._t("comfortUnavailable");
+function Ns(e, t, n) {
+	let r = e._entityExists(t), i = Ss(e._data?.zones[t]?.comfort, e._temperatureUnit(t)), a = e._data?.comfort?.[t], o = r && e._expandedComfortZones.has(t), s = `comfort-zone-content-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}`, c = r ? e._t(o ? "comfortCollapseClimate" : "comfortExpandClimate", { climate: e._friendlyEntityName(t) }) : e._t("comfortUnavailable");
 	return T`
     <section class=${`comfort-zone ${i.enabled ? "enabled" : "disabled"} ${o ? "expanded" : "collapsed"}`}>
       <header class="comfort-zone-heading" @click=${(n) => {
@@ -22160,7 +22353,7 @@ function Ms(e, t, n) {
           </span>
         </button>
         <div class="comfort-zone-actions" @click=${(e) => e.stopPropagation()}>
-          ${i.enabled ? Bs(e, a) : E}
+          ${i.enabled ? Vs(e, a) : E}
           <ha-switch
             .checked=${i.enabled}
             ?disabled=${e._settingsSaving || !r}
@@ -22173,14 +22366,14 @@ function Ms(e, t, n) {
       </header>
       ${r && o ? T`
             <div id=${s} class="comfort-zone-content">
-              ${i.enabled ? Ps(e, t, a, n) : Ns(e)}
-              ${n.showConfiguration ? Vs(e, t, i) : E}
+              ${i.enabled ? Fs(e, t, a, n) : Ps(e)}
+              ${n.showConfiguration ? Hs(e, t, i) : E}
             </div>
           ` : E}
     </section>
   `;
 }
-function Ns(e) {
+function Ps(e) {
 	return T`
     <section class="comfort-assessment-card idle">
       <ha-icon icon="mdi:power-standby"></ha-icon>
@@ -22188,24 +22381,24 @@ function Ns(e) {
     </section>
   `;
 }
-function Ps(e, t, n, r = Os) {
+function Fs(e, t, n, r = ks) {
 	return n?.enabled ? T`
     <section class="comfort-assessment-card">
       <div class="comfort-assessment-heading">
         <span>
-          <ha-icon icon=${$s(n.condition)}></ha-icon>
-          <strong>${Qs(e, n)}</strong>
+          <ha-icon icon=${ec(n.condition)}></ha-icon>
+          <strong>${$s(e, n)}</strong>
         </span>
-        ${Zs(e, n.air_quality)}
+        ${Qs(e, n.air_quality)}
       </div>
-      ${Fs(e, t, n, r)}
+      ${Is(e, t, n, r)}
     </section>
-  ` : Ns(e);
+  ` : Ps(e);
 }
-function Fs(e, t, n, r) {
-	let i = r.showTemperature ? n.temperature : void 0, a = r.showHumidity ? n.humidity : void 0, o = ws(i), s = ws(a), c = r.showTemperature || r.showHumidity, l = r.showCo2 && Is(n.co2), u, d = !0;
+function Is(e, t, n, r) {
+	let i = r.showTemperature ? n.temperature : void 0, a = r.showHumidity ? n.humidity : void 0, o = Ts(i), s = Ts(a), c = r.showTemperature || r.showHumidity, l = r.showCo2 && Ls(n.co2), u, d = !0;
 	if (o && s) {
-		let n = Ts(i.value, i.min, i.max), r = 100 - Ts(a.value, a.min, a.max), o = [
+		let n = Es(i.value, i.min, i.max), r = 100 - Es(a.value, a.min, a.max), o = [
 			"comfort-map-marker",
 			r < 30 ? "label-below" : "",
 			n < 18 ? "label-left" : "",
@@ -22262,24 +22455,24 @@ function Fs(e, t, n, r) {
         </div>
       </div>
     `;
-	} else o ? u = Ls(e, t, i, "comfortTemperature") : s ? u = Ls(e, t, a, "comfortHumidity") : c ? u = T`
+	} else o ? u = Rs(e, t, i, "comfortTemperature") : s ? u = Rs(e, t, a, "comfortHumidity") : c ? u = T`
       <div class="comfort-no-readings">
         <ha-icon icon=${n.data_quality === "stale" ? "mdi:clock-alert-outline" : "mdi:sensor-off"}></ha-icon>
-        <span>${Qs(e, n)}</span>
+        <span>${$s(e, n)}</span>
       </div>
     ` : (u = E, d = !1);
 	return !d && !l ? E : T`
     <div class="comfort-visuals">
       ${u}
-      ${l ? Rs(e, n.co2) : E}
+      ${l ? zs(e, n.co2) : E}
     </div>
   `;
 }
-function Is(e) {
+function Ls(e) {
 	return e?.availability === "current" && typeof e.value == "number" && typeof e.attention == "number" && typeof e.max == "number";
 }
-function Ls(e, t, n, r) {
-	let i = Ts(n.value, n.min, n.max), a = n.metric === "temperature" ? e._formatTemperature(n.value, t) : `${Math.round(n.value)}%`, o = n.metric === "temperature" ? e._formatTemperature(n.min, t) : `${Math.round(n.min)}%`, s = n.metric === "temperature" ? e._formatTemperature(n.max, t) : `${Math.round(n.max)}%`;
+function Rs(e, t, n, r) {
+	let i = Es(n.value, n.min, n.max), a = n.metric === "temperature" ? e._formatTemperature(n.value, t) : `${Math.round(n.value)}%`, o = n.metric === "temperature" ? e._formatTemperature(n.min, t) : `${Math.round(n.min)}%`, s = n.metric === "temperature" ? e._formatTemperature(n.max, t) : `${Math.round(n.max)}%`;
 	return T`
     <div class=${`comfort-range-scale metric-${n.metric}`}>
       <header>
@@ -22296,9 +22489,9 @@ function Ls(e, t, n, r) {
     </div>
   `;
 }
-function Rs(e, t) {
+function zs(e, t) {
 	if (t?.availability !== "current" || typeof t.value != "number" || typeof t.attention != "number" || typeof t.max != "number") return E;
-	let n = Es(t.value, t.attention, t.max), r = Es(t.attention, t.attention, t.max), i = Es(t.max, t.attention, t.max);
+	let n = Ds(t.value, t.attention, t.max), r = Ds(t.attention, t.attention, t.max), i = Ds(t.max, t.attention, t.max);
 	return T`
     <div class="comfort-co2-scale">
       <header>
@@ -22319,47 +22512,47 @@ function Rs(e, t) {
     </div>
   `;
 }
-function zs(e, t) {
+function Bs(e, t) {
 	if (!t?.enabled || t.data_quality === "complete") return E;
-	let n = t.data_issues.length ? t.data_issues.map((t) => e._t(rc(t))).join(" · ") : e._t(nc(t.data_quality));
+	let n = t.data_issues.length ? t.data_issues.map((t) => e._t(ic(t))).join(" · ") : e._t(rc(t.data_quality));
 	return T`
     <span
       class="comfort-data-warning"
       tabindex="0"
       title=${n}
-      aria-label=${e._t(nc(t.data_quality))}
+      aria-label=${e._t(rc(t.data_quality))}
     >
       <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
       <span class="comfort-help-tooltip" role="tooltip">${n}</span>
     </span>
   `;
 }
-function Bs(e, t) {
+function Vs(e, t) {
 	return T`
     <span class="comfort-assessment-summary">
       <span class="comfort-assessment-line">
-        ${Xs(e, t)}
-        ${t ? Zs(e, t.air_quality) : E}
-        ${zs(e, t)}
+        ${Zs(e, t)}
+        ${t ? Qs(e, t.air_quality) : E}
+        ${Bs(e, t)}
       </span>
     </span>
   `;
 }
-function Vs(e, t, n) {
-	let [r, i] = gr(e._temperatureUnit(t)), a = Ws(e, t, n, "temperature_entity_id", "temperature"), o = Ws(e, t, n, "humidity_entity_id", "humidity"), s = Ws(e, t, n, "co2_entity_id", "co2");
+function Hs(e, t, n) {
+	let [r, i] = gr(e._temperatureUnit(t)), a = Gs(e, t, n, "temperature_entity_id", "temperature"), o = Gs(e, t, n, "humidity_entity_id", "humidity"), s = Gs(e, t, n, "co2_entity_id", "co2");
 	return T`
     <section class="comfort-config-section">
       <h3><ha-icon icon="mdi:clock-check-outline"></ha-icon>${e._t("comfortDataFreshness")}</h3>
       <div class="comfort-config-rows">
-        ${qs(e, t, "comfortStaleAfter", "stale_after_minutes", n.stale_after_minutes, 5, 1440, 5, e._t("minutesShort"))}
+        ${Js(e, t, "comfortStaleAfter", "stale_after_minutes", n.stale_after_minutes, 5, 1440, 5, e._t("minutesShort"))}
       </div>
     </section>
-    ${Hs(e, "comfortTemperature", "mdi:thermometer", Us(e, t, n, "temperature_entity_id", "temperature", "comfortTemperatureSensor"), a ? Ks(e, t, "comfortTemperatureRange", "temperature_min", n.temperature_min, "temperature_max", n.temperature_max, r, i, .5, e._temperatureUnit(t), "comfortMinimum", "comfortMaximum") : E)}
-    ${Hs(e, "comfortHumidity", "mdi:water-percent", Us(e, t, n, "humidity_entity_id", "humidity", "comfortHumiditySensor"), o ? Ks(e, t, "comfortHumidityRange", "humidity_min", n.humidity_min, "humidity_max", n.humidity_max, 0, 100, 1, "%", "comfortMinimum", "comfortMaximum") : E)}
-    ${Hs(e, "comfortCo2", "mdi:molecule-co2", Us(e, t, n, "co2_entity_id", "co2", "comfortCo2Sensor"), s ? Ks(e, t, "comfortCo2Limits", "co2_attention", n.co2_attention, "co2_poor", n.co2_poor, 400, 1e4, 50, "ppm", "comfortCo2Attention", "comfortCo2Poor") : E)}
+    ${Us(e, "comfortTemperature", "mdi:thermometer", Ws(e, t, n, "temperature_entity_id", "temperature", "comfortTemperatureSensor"), a ? qs(e, t, "comfortTemperatureRange", "temperature_min", n.temperature_min, "temperature_max", n.temperature_max, r, i, .5, e._temperatureUnit(t), "comfortMinimum", "comfortMaximum") : E)}
+    ${Us(e, "comfortHumidity", "mdi:water-percent", Ws(e, t, n, "humidity_entity_id", "humidity", "comfortHumiditySensor"), o ? qs(e, t, "comfortHumidityRange", "humidity_min", n.humidity_min, "humidity_max", n.humidity_max, 0, 100, 1, "%", "comfortMinimum", "comfortMaximum") : E)}
+    ${Us(e, "comfortCo2", "mdi:molecule-co2", Ws(e, t, n, "co2_entity_id", "co2", "comfortCo2Sensor"), s ? qs(e, t, "comfortCo2Limits", "co2_attention", n.co2_attention, "co2_poor", n.co2_poor, 400, 1e4, 50, "ppm", "comfortCo2Attention", "comfortCo2Poor") : E)}
   `;
 }
-function Hs(e, t, n, r, i) {
+function Us(e, t, n, r, i) {
 	return T`
     <section class="comfort-config-section comfort-metric-config-section">
       <h3><ha-icon icon=${n}></ha-icon>${e._t(t)}</h3>
@@ -22370,11 +22563,11 @@ function Hs(e, t, n, r, i) {
     </section>
   `;
 }
-function Us(e, t, n, r, i, a) {
-	let o = n[r] ?? "", s = i === "humidity" && !n.humidity_enabled ? Ds : o, c = Cs(e.hass, o, i), l = Gs(e, t, n, r, i), u = i === "co2" ? "comfortDoNotMonitor" : "comfortSelectSensor";
+function Ws(e, t, n, r, i, a) {
+	let o = n[r] ?? "", s = i === "humidity" && !n.humidity_enabled ? Os : o, c = ws(e.hass, o, i), l = Ks(e, t, n, r, i), u = i === "co2" ? "comfortDoNotMonitor" : "comfortSelectSensor";
 	return T`
     <label class="comfort-config-row comfort-picker-row">
-      ${Ys(e, a)}
+      ${Xs(e, a)}
       <span class="select-wrap comfort-select-wrap">
         <span class="comfort-select-control">
           <select
@@ -22384,7 +22577,7 @@ function Us(e, t, n, r, i, a) {
           @change=${(n) => {
 		let a = n.currentTarget.value.trim();
 		if (i === "humidity") {
-			if (a === Ds) {
+			if (a === Os) {
 				e._saveZoneComfort(t, { humidity_enabled: !1 });
 				return;
 			}
@@ -22402,8 +22595,8 @@ function Us(e, t, n, r, i, a) {
           </option>
           ${i === "humidity" ? T`
                 <option
-                  value=${Ds}
-                  ?selected=${s === Ds}
+                  value=${Os}
+                  ?selected=${s === Os}
                 >
                   ${e._t("comfortDoNotMonitorHumidity")}
                 </option>
@@ -22420,7 +22613,7 @@ function Us(e, t, n, r, i, a) {
     </label>
   `;
 }
-function Ws(e, t, n, r, i) {
+function Gs(e, t, n, r, i) {
 	if (i === "humidity" && !n.humidity_enabled) return !1;
 	if (n[r]?.trim() || i === "temperature") return !0;
 	if (i === "humidity") {
@@ -22429,7 +22622,7 @@ function Ws(e, t, n, r, i) {
 	}
 	return !1;
 }
-function Gs(e, t, n, r, i) {
+function Ks(e, t, n, r, i) {
 	if (i === "humidity" && !n.humidity_enabled) return e._t("comfortNotMonitored");
 	let a = n[r]?.trim();
 	if (a) return a;
@@ -22443,40 +22636,40 @@ function Gs(e, t, n, r, i) {
 	}
 	return e._t("comfortNotMonitored");
 }
-function Ks(e, t, n, r, i, a, o, s, c, l, u, d, f) {
+function qs(e, t, n, r, i, a, o, s, c, l, u, d, f) {
 	return T`
     <label class="comfort-config-row comfort-threshold-row">
-      ${Ys(e, n)}
+      ${Xs(e, n)}
       <span class="comfort-number-pair">
         <span class="comfort-number-field">
           <small>${e._t(d)}</small>
-          ${Js(e, t, r, i, s, c, l)}
+          ${Ys(e, t, r, i, s, c, l)}
         </span>
         <span class="comfort-number-separator">–</span>
         <span class="comfort-number-field">
           <small>${e._t(f)}</small>
-          ${Js(e, t, a, o, s, c, l)}
+          ${Ys(e, t, a, o, s, c, l)}
         </span>
         <span class="comfort-number-unit">${u}</span>
       </span>
     </label>
   `;
 }
-function qs(e, t, n, r, i, a, o, s, c) {
+function Js(e, t, n, r, i, a, o, s, c) {
 	return T`
     <label class="comfort-config-row">
-      ${Ys(e, n)}
+      ${Xs(e, n)}
       <span class="comfort-number-single">
         <span class="comfort-number-field comfort-number-field-single">
           <small aria-hidden="true">&nbsp;</small>
-          ${Js(e, t, r, i, a, o, s)}
+          ${Ys(e, t, r, i, a, o, s)}
         </span>
         <span class="comfort-number-single-unit">${c}</span>
       </span>
     </label>
   `;
 }
-function Js(e, t, n, r, i, a, o) {
+function Ys(e, t, n, r, i, a, o) {
 	return T`
     <input
       type="number"
@@ -22492,8 +22685,8 @@ function Js(e, t, n, r, i, a, o) {
     />
   `;
 }
-function Ys(e, t) {
-	let n = ks[t], r = n ? e._t(n) : "";
+function Xs(e, t) {
+	let n = As[t], r = n ? e._t(n) : "";
 	return T`
     <span class="label comfort-config-label">
       <span>${e._t(t)}</span>
@@ -22506,24 +22699,24 @@ function Ys(e, t) {
     </span>
   `;
 }
-function Xs(e, t) {
+function Zs(e, t) {
 	return T`
     <span class=${`comfort-condition-pill condition-${t?.condition ?? "monitoring_off"}`}>
-      ${t ? Qs(e, t) : e._t("comfortConditionMonitoringOff")}
-    </span>
-  `;
-}
-function Zs(e, t) {
-	return t === "not_monitored" ? E : T`
-    <span class=${`comfort-air-pill air-${t}`}>
-      ${e._t(tc(t))}
+      ${t ? $s(e, t) : e._t("comfortConditionMonitoringOff")}
     </span>
   `;
 }
 function Qs(e, t) {
-	return t.condition === "no_readings" && t.data_quality === "stale" ? e._t("comfortConditionReadingsOutdated") : e._t(ec(t.condition));
+	return t === "not_monitored" ? E : T`
+    <span class=${`comfort-air-pill air-${t}`}>
+      ${e._t(nc(t))}
+    </span>
+  `;
 }
-function $s(e) {
+function $s(e, t) {
+	return t.condition === "no_readings" && t.data_quality === "stale" ? e._t("comfortConditionReadingsOutdated") : e._t(tc(t.condition));
+}
+function ec(e) {
 	return {
 		cold: "mdi:snowflake-thermometer",
 		cold_and_dry: "mdi:snowflake",
@@ -22540,7 +22733,7 @@ function $s(e) {
 		temperature_comfortable: "mdi:thermometer-check"
 	}[e];
 }
-function ec(e) {
+function tc(e) {
 	return {
 		cold: "comfortConditionCold",
 		cold_and_dry: "comfortConditionColdAndDry",
@@ -22557,7 +22750,7 @@ function ec(e) {
 		temperature_comfortable: "comfortConditionTemperatureComfortable"
 	}[e];
 }
-function tc(e) {
+function nc(e) {
 	return {
 		elevated: "comfortAirQualityElevated",
 		good: "comfortAirQualityGood",
@@ -22565,14 +22758,14 @@ function tc(e) {
 		unavailable: "comfortAirQualityUnavailable"
 	}[e];
 }
-function nc(e) {
+function rc(e) {
 	return {
 		partial: "comfortDataPartial",
 		stale: "comfortDataStale",
 		unavailable: "comfortDataUnavailable"
 	}[e];
 }
-function rc(e) {
+function ic(e) {
 	return {
 		co2_missing: "comfortDataIssueCo2Missing",
 		co2_stale: "comfortDataIssueCo2Stale",
@@ -22584,7 +22777,7 @@ function rc(e) {
 }
 //#endregion
 //#region src/velair/domain/climate-profiles.ts
-function ic(e) {
+function ac(e) {
 	if (!e) return {
 		name: "",
 		icon: "mdi:account-outline",
@@ -22600,25 +22793,25 @@ function ic(e) {
 		...structuredClone(e),
 		color: e.color || W(e.key),
 		zones: t,
-		rememberedSchedules: Object.fromEntries(Object.entries(t).filter(([, e]) => e.behavior === "schedule").map(([e, t]) => [e, dc(t.schedule)]))
+		rememberedSchedules: Object.fromEntries(Object.entries(t).filter(([, e]) => e.behavior === "schedule").map(([e, t]) => [e, fc(t.schedule)]))
 	};
 }
-function ac(e) {
+function oc(e) {
 	let t = new Map((e?.profiles ?? []).map((e) => [e.key, e]));
 	return (e?.global?.active_profile_ids ?? []).map((e) => t.get(e)).filter((e) => !!e);
 }
-function oc(e, t) {
-	let n = ac(e).find((e) => t in e.zones), r = n?.zones[t];
+function sc(e, t) {
+	let n = oc(e).find((e) => t in e.zones), r = n?.zones[t];
 	if (!(!n || !r || r.behavior === "normal")) return {
 		profile: n,
 		zone: r
 	};
 }
-function sc(e, t) {
-	let n = oc(e, t);
+function cc(e, t) {
+	let n = sc(e, t);
 	if (n?.zone.behavior !== "pause") return n?.zone.behavior === "schedule" ? n.zone.schedule : e?.zones[t]?.schedule;
 }
-var cc = [
+var lc = [
 	"#3949ab",
 	"#00897b",
 	"#7b1fa2",
@@ -22633,16 +22826,16 @@ function W(e, t) {
 	if (!e) return "#546e7a";
 	let n = 0;
 	for (let t of e) n = (n << 5) - n + t.charCodeAt(0) | 0;
-	return cc[Math.abs(n) % cc.length];
+	return lc[Math.abs(n) % lc.length];
 }
-function lc(e) {
+function uc(e) {
 	return e?.behavior ?? "normal";
 }
-function uc(e, t, n) {
+function dc(e, t, n) {
 	let r = { ...e.zones }, i = { ...e.rememberedSchedules }, a = r[t];
-	return a?.behavior === "schedule" && (i[t] = dc(a.schedule)), n === "normal" ? delete r[t] : n === "schedule" ? r[t] = {
+	return a?.behavior === "schedule" && (i[t] = fc(a.schedule)), n === "normal" ? delete r[t] : n === "schedule" ? r[t] = {
 		behavior: n,
-		schedule: dc(a?.behavior === "schedule" ? a.schedule : i[t])
+		schedule: fc(a?.behavior === "schedule" ? a.schedule : i[t])
 	} : r[t] = {
 		behavior: n,
 		action: "none"
@@ -22652,25 +22845,25 @@ function uc(e, t, n) {
 		rememberedSchedules: i
 	};
 }
-function dc(e) {
+function fc(e) {
 	return Object.fromEntries(k.map((t) => [t, structuredClone(e?.[t] ?? [])]));
 }
-function fc(e, t, n) {
-	let r = dc(e);
+function pc(e, t, n) {
+	let r = fc(e);
 	for (let i of n) i !== t && i in r && (r[i] = structuredClone(e[t] ?? []));
 	return r;
 }
-function pc(e, t, n, r) {
+function mc(e, t, n, r) {
 	let i = e.zones[t];
 	if (i?.behavior !== "schedule" || !k.includes(n)) return e;
 	let a = { ...e.zones }, o = { ...e.rememberedSchedules };
 	for (let e of r) {
 		if (e === t) continue;
-		let r = a[e], s = dc(r?.behavior === "schedule" ? r.schedule : o[e]);
+		let r = a[e], s = fc(r?.behavior === "schedule" ? r.schedule : o[e]);
 		s[n] = structuredClone(i.schedule[n] ?? []), a[e] = {
 			behavior: "schedule",
 			schedule: s
-		}, o[e] = dc(s);
+		}, o[e] = fc(s);
 	}
 	return {
 		...e,
@@ -22678,7 +22871,7 @@ function pc(e, t, n, r) {
 		rememberedSchedules: o
 	};
 }
-function mc(e) {
+function hc(e) {
 	let t = new Set(e.map((e) => e.start)), n = [
 		"08:00",
 		"18:00",
@@ -22695,14 +22888,14 @@ function mc(e) {
 	}
 	return "00:00";
 }
-function hc(e, t) {
+function gc(e, t) {
 	let n = new Set(t.map((e) => e.name));
 	if (!n.has(e)) return e;
 	let r = 2;
 	for (; n.has(`${e} ${r}`);) r += 1;
 	return `${e} ${r}`;
 }
-function gc(e) {
+function _c(e) {
 	if (!e.name.trim()) return "name";
 	if (e.icon?.trim() && !/^mdi:[a-z0-9]+(?:-[a-z0-9]+)*$/.test(e.icon.trim())) return "icon";
 	if (e.color && !/^#[0-9a-f]{6}$/i.test(e.color)) return "color";
@@ -22712,10 +22905,10 @@ function gc(e) {
 		for (let r of t.schedule[e] ?? []) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(r.start) || n.has(r.start) || (n.add(r.start), r.action !== "turn_off" && !(L(r) ? Number.isFinite(Number(r.target_temp_low)) && Number.isFinite(Number(r.target_temp_high)) && Number(r.target_temp_low) <= Number(r.target_temp_high) : Number.isFinite(Number(r.temperature))))) return "schedule";
 	}
 }
-function _c(e) {
+function vc(e) {
 	let t = Object.fromEntries(Object.entries(e.zones).filter(([, e]) => e.behavior !== "normal").map(([e, t]) => [e, t.behavior === "schedule" ? {
 		behavior: "schedule",
-		schedule: Object.fromEntries(k.map((e) => [e, (t.schedule[e] ?? []).map(vc)]))
+		schedule: Object.fromEntries(k.map((e) => [e, (t.schedule[e] ?? []).map(yc)]))
 	} : t]));
 	return {
 		...e.key ? { key: e.key } : {},
@@ -22726,7 +22919,7 @@ function _c(e) {
 		zones: t
 	};
 }
-function vc(e) {
+function yc(e) {
 	return (e.action || "set_temperature") === "turn_off" ? {
 		start: e.start,
 		action: qe
@@ -22747,7 +22940,7 @@ function vc(e) {
 }
 //#endregion
 //#region src/velair/controllers/overview-data.ts
-var yc = new Set([
+var bc = new Set([
 	"heating",
 	"cooling",
 	"drying",
@@ -22757,26 +22950,26 @@ var yc = new Set([
 	"preheating",
 	"defrosting"
 ]);
-function bc(e) {
+function xc(e) {
 	return e;
 }
-function xc(e, t, n) {
+function Sc(e, t, n) {
 	let r = n?.override ?? e._data?.active_overrides?.[t];
 	return wr(r) ? r : void 0;
 }
-function Sc(e) {
+function Cc(e) {
 	return e._data ? e._orderedZoneIds(e._data.configured_entities).filter((t) => {
 		let n = e._data?.zones[t];
-		return !!xc(e, t, n);
+		return !!Sc(e, t, n);
 	}) : [];
 }
-function Cc(e, t, n) {
+function wc(e, t, n) {
 	if (Tr(n?.override)) return {
 		...n?.override ?? {},
 		pause_count: n?.pauses?.length ?? 1
 	};
 }
-function wc(e, t, n) {
+function Tc(e, t, n) {
 	let r = Number(n.temperature), i = Number(n.target_temp_low), a = Number(n.target_temp_high), o = F(n.until), s = typeof n.hvac_mode == "string" ? n.hvac_mode : "", c = [];
 	if (Number.isFinite(r)) c.push(e._formatTemperature(r, t));
 	else if (Number.isFinite(i) && Number.isFinite(a)) {
@@ -22785,10 +22978,10 @@ function wc(e, t, n) {
 	}
 	return s && c.push(e._modeLabel(s)), o && c.push(`${e._t("boostUntil")}: ${e._formatRemaining(Math.max(0, o - Date.now()))}`), c.join(" - ") || e._t("boostActive");
 }
-function Tc(e, t) {
+function Ec(e, t) {
 	return t === "raise_only" ? e._t("holdConstraintRaiseOnly") : t === "lower_only" ? e._t("holdConstraintLowerOnly") : e._t("holdConstraintAbsolute");
 }
-function Ec(e, t, n) {
+function Dc(e, t, n) {
 	if (n.action !== "hold") return;
 	let r = [], i = Number(n.temperature), a = Number(n.target_temp_low), o = Number(n.target_temp_high);
 	if (Number.isFinite(i)) r.push(e._formatTemperature(i, t));
@@ -22796,28 +22989,28 @@ function Ec(e, t, n) {
 		let n = e._formatTemperature(a, t).replace(/\s+[^\s]+$/, "");
 		r.push(`${n}–${e._formatTemperature(o, t)}`);
 	}
-	return r.push(Tc(e, n.constraint)), typeof n.hvac_mode == "string" && n.hvac_mode && r.push(e._modeLabel(n.hvac_mode)), typeof n.label == "string" && n.label && r.push(n.label), r.join(" - ");
+	return r.push(Ec(e, n.constraint)), typeof n.hvac_mode == "string" && n.hvac_mode && r.push(e._modeLabel(n.hvac_mode)), typeof n.label == "string" && n.label && r.push(n.label), r.join(" - ");
 }
-function Dc(e, t, n) {
-	let r = F(t.started_at), i = F(t.until), a = [], o = n ? Ec(e, n, t) : void 0;
+function Oc(e, t, n) {
+	let r = F(t.started_at), i = F(t.until), a = [], o = n ? Dc(e, n, t) : void 0;
 	o && a.push(o);
 	let s = Number(t.pause_count);
 	return Number.isFinite(s) && s > 1 && a.push(`${e._t("pauseReasons")}: ${s}`), r && a.push(`${e._t("pauseFrom")}: ${e._formatDateTime(new Date(r).toISOString())}`), i ? (a.push(`${e._t("pauseTo")}: ${e._formatDateTime(new Date(i).toISOString())}`), a.push(`${e._t("pauseRemaining")}: ${e._formatRemaining(Math.max(0, i - Date.now()))}`), a.join(" - ")) : (a.push(e._t("pauseIndefinite")), a.join(" - "));
 }
-function Oc(e) {
+function kc(e) {
 	if (!e._data) return [];
 	if (e._data.next_events.length) return e._data.next_events;
-	let t = e._orderedZoneIds(e._data.configured_entities).map((t) => kc(e, t, e._data?.zones[t])).filter((e) => !!e).sort((e, t) => new Date(e.when).getTime() - new Date(t.when).getTime());
+	let t = e._orderedZoneIds(e._data.configured_entities).map((t) => Ac(e, t, e._data?.zones[t])).filter((e) => !!e).sort((e, t) => new Date(e.when).getTime() - new Date(t.when).getTime());
 	return t.length ? t : e._data.next_events;
 }
-function kc(e, t, n) {
-	let r = sc(e._data, t);
+function Ac(e, t, n) {
+	let r = cc(e._data, t);
 	if (!(!n || !r)) return tr(t, {
 		...n,
 		schedule: r
-	}, xc(e, t, n));
+	}, Sc(e, t, n));
 }
-function Ac(e, t = /* @__PURE__ */ new Date()) {
+function jc(e, t = /* @__PURE__ */ new Date()) {
 	let n = e?.config?.time_zone;
 	if (n) try {
 		let e = new Intl.DateTimeFormat("en-US", {
@@ -22836,14 +23029,14 @@ function Ac(e, t = /* @__PURE__ */ new Date()) {
 	} catch {}
 	return or(t);
 }
-function jc(e, t) {
+function Mc(e, t) {
 	let n = e.hass?.states?.[t]?.attributes?.hvac_action;
-	return typeof n == "string" && yc.has(n) ? n : void 0;
+	return typeof n == "string" && bc.has(n) ? n : void 0;
 }
 //#endregion
 //#region src/velair/domain/room-assist.ts
-function Mc(e, t) {
-	let n = Rc(e.deadband_low, e.deadband_high);
+function Nc(e, t) {
+	let n = zc(e.deadband_low, e.deadband_high);
 	if (n && n.low <= n.high) return n;
 	if (!Number.isFinite(t) || t < 0) return;
 	let r = G(e);
@@ -22851,59 +23044,59 @@ function Mc(e, t) {
 		low: r.low - t,
 		high: r.high + t
 	};
-	let i = zc(e.target_temperature);
+	let i = Bc(e.target_temperature);
 	return i === void 0 ? void 0 : {
 		low: i - t,
 		high: i + t
 	};
 }
-function Nc(e, t) {
+function Pc(e, t) {
 	return t === "cool" ? -Math.abs(e) : Math.abs(e);
 }
-function Pc(e) {
+function Fc(e) {
 	if (typeof e.applied_offset == "number" && Number.isFinite(e.applied_offset)) return e.applied_offset;
-	if (typeof e.assist_delta == "number" && Number.isFinite(e.assist_delta)) return Nc(e.assist_delta, e.direction);
+	if (typeof e.assist_delta == "number" && Number.isFinite(e.assist_delta)) return Pc(e.assist_delta, e.direction);
 }
 function G(e) {
-	return Rc(e.target_temp_low, e.target_temp_high);
-}
-function Fc(e) {
-	let t = Rc(e.applied_target_temp_low, e.applied_target_temp_high), n = Rc(e.climate_target_temp_low, e.climate_target_temp_high);
-	return e.status === "assisting" || e.status === "holding" ? t ?? n : n ?? t;
+	return zc(e.target_temp_low, e.target_temp_high);
 }
 function Ic(e) {
-	return zc(e.range_shift);
+	let t = zc(e.applied_target_temp_low, e.applied_target_temp_high), n = zc(e.climate_target_temp_low, e.climate_target_temp_high);
+	return e.status === "assisting" || e.status === "holding" ? t ?? n : n ?? t;
 }
 function Lc(e) {
-	return zc(e.target_temperature) !== void 0 || G(e) !== void 0;
+	return Bc(e.range_shift);
 }
-function Rc(e, t) {
-	let n = zc(e), r = zc(t);
+function Rc(e) {
+	return Bc(e.target_temperature) !== void 0 || G(e) !== void 0;
+}
+function zc(e, t) {
+	let n = Bc(e), r = Bc(t);
 	return n !== void 0 && r !== void 0 ? {
 		low: n,
 		high: r
 	} : void 0;
 }
-function zc(e) {
+function Bc(e) {
 	return typeof e == "number" && Number.isFinite(e) ? e : void 0;
 }
 //#endregion
 //#region src/velair/views/inline-help.ts
-var Bc = /* @__PURE__ */ new WeakMap(), Vc = 300;
-function Hc(e) {
+var Vc = /* @__PURE__ */ new WeakMap(), Hc = 300;
+function Uc(e) {
 	return e.parentElement?.querySelector(".inline-help-tooltip") ?? null;
 }
-function Uc(e) {
-	let t = Bc.get(e);
-	t !== void 0 && window.clearTimeout(t), Bc.delete(e);
-}
 function Wc(e) {
-	Uc(e), e.classList.remove("visible"), delete e.dataset.openCause;
+	let t = Vc.get(e);
+	t !== void 0 && window.clearTimeout(t), Vc.delete(e);
 }
 function Gc(e) {
-	e.dataset.openCause !== "click" && (Uc(e), Bc.set(e, window.setTimeout(() => Wc(e), Vc)));
+	Wc(e), e.classList.remove("visible"), delete e.dataset.openCause;
 }
-function Kc(e, t) {
+function Kc(e) {
+	e.dataset.openCause !== "click" && (Wc(e), Vc.set(e, window.setTimeout(() => Gc(e), Hc)));
+}
+function qc(e, t) {
 	if (window.matchMedia?.("(max-width: 480px)").matches) {
 		t.style.removeProperty("left"), t.style.removeProperty("top");
 		return;
@@ -22911,22 +23104,22 @@ function Kc(e, t) {
 	let n = e.getBoundingClientRect(), r = t.getBoundingClientRect(), i = Math.max(12, window.innerWidth - r.width - 12), a = Math.min(Math.max(n.left, 12), i), o = n.bottom + 6, s = n.top - r.height - 6, c = Math.max(12, window.innerHeight - r.height - 12), l = o + r.height <= window.innerHeight - 12 ? o : s >= 12 ? s : Math.min(Math.max(o, 12), c);
 	t.style.left = `${Math.round(a)}px`, t.style.top = `${Math.round(l)}px`;
 }
-function qc(e, t) {
-	let n = Hc(e);
-	n && (Uc(n), n.dataset.openCause = t, n.classList.add("visible"), Kc(e, n));
+function Jc(e, t) {
+	let n = Uc(e);
+	n && (Wc(n), n.dataset.openCause = t, n.classList.add("visible"), qc(e, n));
 }
-function Jc(e) {
+function Yc(e) {
 	e.preventDefault(), e.stopPropagation();
-	let t = e.currentTarget, n = Hc(t);
+	let t = e.currentTarget, n = Uc(t);
 	if (n) {
 		if (n.classList.contains("visible") && n.dataset.openCause === "click") {
-			Wc(n);
+			Gc(n);
 			return;
 		}
-		qc(t, "click");
+		Jc(t, "click");
 	}
 }
-function Yc(e, t, n, r = {}) {
+function Xc(e, t, n, r = {}) {
 	return T`
     <span class="inline-help-wrapper">
       <button
@@ -22934,21 +23127,21 @@ function Yc(e, t, n, r = {}) {
         class=${r.compact ? "inline-help compact" : "inline-help"}
         aria-label=${t}
         aria-describedby=${e}
-        @focus=${(e) => qc(e.currentTarget, "focus")}
+        @focus=${(e) => Jc(e.currentTarget, "focus")}
         @focusout=${(e) => {
-		let t = Hc(e.currentTarget);
-		t && t.dataset.openCause !== "click" && Wc(t);
+		let t = Uc(e.currentTarget);
+		t && t.dataset.openCause !== "click" && Gc(t);
 	}}
-        @pointerenter=${(e) => qc(e.currentTarget, "hover")}
+        @pointerenter=${(e) => Jc(e.currentTarget, "hover")}
         @pointerleave=${(e) => {
-		let t = Hc(e.currentTarget);
-		t && Gc(t);
+		let t = Uc(e.currentTarget);
+		t && Kc(t);
 	}}
-        @click=${Jc}
+        @click=${Yc}
         @keydown=${(e) => {
 		if (e.key !== "Escape") return;
-		let t = Hc(e.currentTarget);
-		t && (e.preventDefault(), Wc(t));
+		let t = Uc(e.currentTarget);
+		t && (e.preventDefault(), Gc(t));
 	}}
       >
         <ha-icon icon="mdi:information-outline"></ha-icon>
@@ -22957,15 +23150,15 @@ function Yc(e, t, n, r = {}) {
         id=${e}
         class="inline-help-tooltip"
         role="tooltip"
-        @pointerenter=${(e) => Uc(e.currentTarget)}
-        @pointerleave=${(e) => Gc(e.currentTarget)}
+        @pointerenter=${(e) => Wc(e.currentTarget)}
+        @pointerleave=${(e) => Kc(e.currentTarget)}
       >${n}</span>
     </span>
   `;
 }
 //#endregion
 //#region src/velair/views/overview-view.ts
-function Xc(e) {
+function Zc(e) {
 	let t = e._pauseExpirationMs();
 	return t && t > Date.now() ? {
 		detail: e._t("overviewStatusPausedDetail"),
@@ -22984,9 +23177,9 @@ function Xc(e) {
 		state: "running"
 	};
 }
-function Zc(e, t) {
+function Qc(e, t) {
 	if (!e._data) return E;
-	let n = Xc(e), r = t.filter((t) => e._data?.zones[t]?.execution?.type === "external").length;
+	let n = Zc(e), r = t.filter((t) => e._data?.zones[t]?.execution?.type === "external").length;
 	return T`
     <section class="overview-summary">
       <div class=${`overview-status-card status-${n.state}`}>
@@ -22998,10 +23191,10 @@ function Zc(e, t) {
               <strong>${n.label}</strong>
             </span>
           </div>
-          ${Vl(e)}
+          ${Hl(e)}
           <span class="overview-scheduler-detail">${n.detail}</span>
         </div>
-        ${Hl(e)}
+        ${Ul(e)}
         ${r ? T`
           <div class="notice external-execution-notice overview-external-summary" role="status">
             <ha-icon icon="mdi:information-outline"></ha-icon>
@@ -23012,51 +23205,51 @@ function Zc(e, t) {
     </section>
   `;
 }
-function Qc(e, t) {
+function $c(e, t) {
 	if (!e._data) return E;
-	let n = bc(e), r = t ? new Set(t) : void 0, i = Sc(n).filter((t) => (!r || r.has(t)) && e._data?.zones[t]?.execution?.type !== "external");
+	let n = xc(e), r = t ? new Set(t) : void 0, i = Cc(n).filter((t) => (!r || r.has(t)) && e._data?.zones[t]?.execution?.type !== "external");
 	return T`
     <section class="overview-boost-panel">
       ${i.length ? T`
-            ${Ll(e._t("activeBoosts"), "mdi:lightning-bolt")}
+            ${Rl(e._t("activeBoosts"), "mdi:lightning-bolt")}
             <div class="event-list overview-boost-list">
               ${i.map((t) => {
-		let r = xc(n, t, e._data?.zones[t]);
+		let r = Sc(n, t, e._data?.zones[t]);
 		return T`
                   <div class="event">
                     <div>
                       <strong class="overview-climate-name">${e._friendlyEntityName(t)}</strong>
                     </div>
-                    ${r ? $c(e, t, r) : T`<span>${e._t("boostActive")}</span>`}
+                    ${r ? el(e, t, r) : T`<span>${e._t("boostActive")}</span>`}
                   </div>
                 `;
 	})}
             </div>
-          ` : Bl(e._t("activeBoosts"), "mdi:lightning-bolt", e._t("noActiveBoosts"))}
+          ` : Vl(e._t("activeBoosts"), "mdi:lightning-bolt", e._t("noActiveBoosts"))}
     </section>
   `;
 }
-function $c(e, t, n) {
+function el(e, t, n) {
 	let r = Number(n.temperature), i = Number(n.target_temp_low), a = Number(n.target_temp_high), o = typeof n.until == "string" ? new Date(n.until).getTime() : void 0, s = typeof n.hvac_mode == "string" ? n.hvac_mode : "";
 	return T`
     <div class="event-details">
       <span class="event-time">${o && !Number.isNaN(o) ? `${e._formatDateTime(new Date(o).toISOString())} (${e._formatRemaining(Math.max(0, o - Date.now()))})` : e._t("boostActive")}</span>
-      <strong class="event-target">${Number.isFinite(r) ? e._formatTemperature(r, t) : Number.isFinite(i) && Number.isFinite(a) ? Nl(e, i, a, t) : "-"}</strong>
+      <strong class="event-target">${Number.isFinite(r) ? e._formatTemperature(r, t) : Number.isFinite(i) && Number.isFinite(a) ? Pl(e, i, a, t) : "-"}</strong>
       <span class="event-mode">${s ? e._modeLabel(s) : e._t("keepMode")}</span>
     </div>
   `;
 }
-function el(e, t) {
+function tl(e, t) {
 	return !e._data || !t.length ? E : T`
     <section class="overview-zones">
-      ${Ll(e._t("overviewZones"), "mdi:thermostat")}
+      ${Rl(e._t("overviewZones"), "mdi:thermostat")}
       <div class="overview-zone-cards">
-        ${t.map((t) => nl(e, t))}
+        ${t.map((t) => rl(e, t))}
       </div>
     </section>
   `;
 }
-var tl = {
+var nl = {
 	externally_managed: {
 		icon: "mdi:calendar-export",
 		key: "overviewZoneExternal"
@@ -23090,39 +23283,39 @@ var tl = {
 		key: "overviewZoneManual"
 	}
 };
-function nl(e, t) {
+function rl(e, t) {
 	let n = e._data?.zone_runtime?.[t], r = n != null, i = n ?? { state: "idle" }, a = e._data?.zones[t]?.execution?.type === "external", o = a && i.state !== "externally_managed" ? {
 		...i,
 		state: "externally_managed"
-	} : i, s = e.hass?.states?.[t], c = s && s.state !== "off" && s.state !== "unknown" && s.state !== "unavailable", l = K(i.room_temperature) ?? (r ? void 0 : K(s?.attributes?.current_temperature)), u = K(i.target_temperature) ?? (!r && c ? K(s.attributes?.temperature) : void 0), d = K(i.target_temp_low) ?? (!r && c ? K(s.attributes?.target_temp_low) : void 0), f = K(i.target_temp_high) ?? (!r && c ? K(s.attributes?.target_temp_high) : void 0), p = d !== void 0 && f !== void 0 ? Nl(e, d, f, t) : void 0, m = K(i.applied_temperature), h = o.control_mode === "manual" ? al(e, o) : void 0, g = o.manual_adjustment_allowed !== !1, _ = g ? "" : ol(e, o.manual_adjustment_unavailable_reason), v = e._data?.room_sensor_assist?.[t], y = e._data?.comfort?.[t], b = e._data?.external_execution?.zones[t], x = e._data?.external_execution?.systems.find((e) => e.provider === b?.provider), S = a ? {
+	} : i, s = e.hass?.states?.[t], c = s && s.state !== "off" && s.state !== "unknown" && s.state !== "unavailable", l = K(i.room_temperature) ?? (r ? void 0 : K(s?.attributes?.current_temperature)), u = K(i.target_temperature) ?? (!r && c ? K(s.attributes?.temperature) : void 0), d = K(i.target_temp_low) ?? (!r && c ? K(s.attributes?.target_temp_low) : void 0), f = K(i.target_temp_high) ?? (!r && c ? K(s.attributes?.target_temp_high) : void 0), p = d !== void 0 && f !== void 0 ? Pl(e, d, f, t) : void 0, m = K(i.applied_temperature), h = o.control_mode === "manual" ? ol(e, o) : void 0, g = o.manual_adjustment_allowed !== !1, _ = g ? "" : sl(e, o.manual_adjustment_unavailable_reason), v = e._data?.room_sensor_assist?.[t], y = e._data?.comfort?.[t], b = e._data?.external_execution?.zones[t], x = e._data?.external_execution?.systems.find((e) => e.provider === b?.provider), S = a ? {
 		...o,
 		state: "scheduled"
-	} : o, C = !!(v && (v.status === "assisting" || v.status === "holding") && ll(v)), ee = l !== void 0 || u !== void 0 || p !== void 0 || m !== void 0 && u !== void 0 && Math.abs(m - u) >= .05;
+	} : o, C = !!(v && (v.status === "assisting" || v.status === "holding") && ul(v)), ee = l !== void 0 || u !== void 0 || p !== void 0 || m !== void 0 && u !== void 0 && Math.abs(m - u) >= .05;
 	return T`
     <article class=${`overview-zone-card state-${o.state}`}>
       <div class="overview-zone-card-heading">
         <div class="overview-zone-card-name">
           <strong>${e._friendlyEntityName(t)}</strong><span>${t}</span>
         </div>
-        ${a ? E : il(e, t, o, h, g, _)}
-        ${cl(e, t, S, tl[S.state])}
+        ${a ? E : al(e, t, o, h, g, _)}
+        ${ll(e, t, S, nl[S.state])}
         <div class="overview-zone-signals">
-          ${sl(e, t)}
-          ${a && b ? rl(e, t, x?.name ?? b.provider ?? e._t("externalProviderUnavailable"), b) : E}
-          ${a ? E : ml(e, v)}
-          ${a ? E : _l(e, y)}
+          ${cl(e, t)}
+          ${a && b ? il(e, t, x?.name ?? b.provider ?? e._t("externalProviderUnavailable"), b) : E}
+          ${a ? E : hl(e, v)}
+          ${a ? E : vl(e, y)}
         </div>
       </div>
       ${C || ee ? T`<div class="overview-zone-details">
-        ${C ? ul(e, t, v) : T`<div class="overview-zone-metrics">
-          ${l === void 0 ? E : gl(e._t("overviewZoneRoom"), l, e, t)}
-          ${u === void 0 ? p === void 0 ? E : Ml(e._t("overviewZoneTarget"), p) : gl(e._t("overviewZoneTarget"), u, e, t)}
-          ${m !== void 0 && u !== void 0 && Math.abs(m - u) >= .05 ? gl(e._t("overviewZoneApplied"), m, e, t) : E}
+        ${C ? dl(e, t, v) : T`<div class="overview-zone-metrics">
+          ${l === void 0 ? E : _l(e._t("overviewZoneRoom"), l, e, t)}
+          ${u === void 0 ? p === void 0 ? E : Nl(e._t("overviewZoneTarget"), p) : _l(e._t("overviewZoneTarget"), u, e, t)}
+          ${m !== void 0 && u !== void 0 && Math.abs(m - u) >= .05 ? _l(e._t("overviewZoneApplied"), m, e, t) : E}
         </div>`}
       </div>` : E}
     </article>`;
 }
-function rl(e, t, n, r) {
+function il(e, t, n, r) {
 	let i = r.publication, a = r.available ? i?.state === "publishing" ? {
 		icon: "mdi:cloud-sync-outline",
 		key: "overviewExternalStatusPublishing",
@@ -23165,10 +23358,10 @@ function rl(e, t, n, r) {
       role="img"
       title=${o}
     ><ha-icon icon=${a.icon} aria-hidden="true"></ha-icon></span>
-    ${Yc(u, e._t("overviewExternalInfoAction", { provider: n }), s.join(" "), { compact: !0 })}
+    ${Xc(u, e._t("overviewExternalInfoAction", { provider: n }), s.join(" "), { compact: !0 })}
   </section>`;
 }
-function il(e, t, n, r, i, a) {
+function al(e, t, n, r, i, a) {
 	let o = n.control_mode === "manual" ? "manual" : "automatic", s = !!e._manualControlActions?.[t], c = n.manual_adjustment_unavailable_reason === "temperature_migration", l = o === "automatic" && !i, u = o === "manual" && c, d = `manual-control-reason-${t.replace(/[^a-z0-9_-]/gi, "-")}`;
 	return T`
     <div class="overview-manual-control">
@@ -23208,7 +23401,7 @@ function il(e, t, n, r, i, a) {
     </div>
   `;
 }
-function al(e, t) {
+function ol(e, t) {
 	let n = t.manual_control;
 	if (n?.policy === "until_next_block") return n.until ? e._t("manualSessionNextBlockAt", { time: e._formatDateTime(n.until) }) : e._t("manualSessionNoNextBlock");
 	if (n?.policy === "for_duration") {
@@ -23220,7 +23413,7 @@ function al(e, t) {
 	}
 	return e._t("manualSessionUntilResumed");
 }
-function ol(e, t) {
+function sl(e, t) {
 	return e._t({
 		unavailable: "manualUnavailableClimate",
 		disabled: "manualUnavailableDisabled",
@@ -23232,8 +23425,8 @@ function ol(e, t) {
 		external_execution: "externalActionsInactive"
 	}[t ?? "unavailable"]);
 }
-function sl(e, t) {
-	let n = oc(e._data, t);
+function cl(e, t) {
+	let n = sc(e._data, t);
 	if (!n) return E;
 	let r = W(n.profile.key, n.profile.color), i = n.profile.icon || "mdi:account-outline";
 	return T`
@@ -23250,13 +23443,13 @@ function sl(e, t) {
     </div>
   `;
 }
-function cl(e, t, n, r) {
+function ll(e, t, n, r) {
 	let i = "";
 	if (n.state === "paused" && (i = n.until ? e._t("overviewZoneResumes", { time: e._formatDateTime(n.until) }) : e._t("overviewZoneUntilResumed")), n.state === "boost" && n.until && (i = e._t("overviewZoneUntil", { time: e._formatDateTime(n.until) })), n.state === "preconditioning" && n.target_when && (i = e._t("overviewZoneReadyAt", { time: e._formatDateTime(n.target_when) })), n.state === "scheduled") {
 		let n = e._data?.next_events?.find((e) => e.entity_id === t);
 		i = n?.when ? e._t("overviewZoneNextAt", { time: e._formatDateTime(n.when) }) : "";
 	}
-	let a = e._t(r.key), o = n.state === "externally_managed" ? void 0 : jc(bc(e), t), s = o ? hl[o] : void 0, c = o === "idle" ? r.icon : s?.icon ?? r.icon, l = o ? bc(e)._hvacActionLabel(o) : a, u = [...o ? [a] : [], ...n.hvac_mode ? [e._modeLabel(n.hvac_mode)] : []].join(" · "), d = [
+	let a = e._t(r.key), o = n.state === "externally_managed" ? void 0 : Mc(xc(e), t), s = o ? gl[o] : void 0, c = o === "idle" ? r.icon : s?.icon ?? r.icon, l = o ? xc(e)._hvacActionLabel(o) : a, u = [...o ? [a] : [], ...n.hvac_mode ? [e._modeLabel(n.hvac_mode)] : []].join(" · "), d = [
 		l,
 		u,
 		i
@@ -23279,7 +23472,7 @@ function cl(e, t, n, r) {
     </span>
   </section>`;
 }
-function ll(e) {
+function ul(e) {
 	return [
 		e.room_temperature,
 		e.climate_temperature,
@@ -23297,32 +23490,32 @@ function ll(e) {
 		e.range_shift
 	].some((e) => K(e) !== void 0);
 }
-function ul(e, t, n) {
-	let r = G(n), i = Fc(n), a = n.status === "assisting" || n.status === "holding" ? K(n.applied_temperature) ?? K(n.climate_target_temperature) : K(n.climate_target_temperature) ?? K(n.applied_temperature), o = Ic(n), s = r ? o : Pc(n);
+function dl(e, t, n) {
+	let r = G(n), i = Ic(n), a = n.status === "assisting" || n.status === "holding" ? K(n.applied_temperature) ?? K(n.climate_target_temperature) : K(n.climate_target_temperature) ?? K(n.applied_temperature), o = Lc(n), s = r ? o : Fc(n);
 	return T`<div class="overview-assist-flow" aria-label=${e._t("overviewZoneRoomAssistThermalFlow")}>
-    ${dl(e._t("overviewZoneTemperature"), [fl(e, t, "overviewZoneClimate", n.climate_temperature), fl(e, t, "overviewZoneSensor", n.room_temperature)])}
-    ${dl(e._t("overviewZoneSetpoint"), [i ? jl(e, t, "overviewZoneAppliedRange", i.low, i.high) : fl(e, t, "overviewZoneClimate", a), r ? jl(e, t, "overviewZoneScheduledRange", r.low, r.high) : fl(e, t, "overviewZoneScheduledSetpoint", n.target_temperature)])}
-    ${s === void 0 ? E : T`<span class="overview-assist-offset"><small>${e._t(o === void 0 ? "overviewZoneOffset" : "overviewZoneRangeShift")}</small><strong>${pl(e, t, s)}</strong></span>`}
+    ${fl(e._t("overviewZoneTemperature"), [pl(e, t, "overviewZoneClimate", n.climate_temperature), pl(e, t, "overviewZoneSensor", n.room_temperature)])}
+    ${fl(e._t("overviewZoneSetpoint"), [i ? Ml(e, t, "overviewZoneAppliedRange", i.low, i.high) : pl(e, t, "overviewZoneClimate", a), r ? Ml(e, t, "overviewZoneScheduledRange", r.low, r.high) : pl(e, t, "overviewZoneScheduledSetpoint", n.target_temperature)])}
+    ${s === void 0 ? E : T`<span class="overview-assist-offset"><small>${e._t(o === void 0 ? "overviewZoneOffset" : "overviewZoneRangeShift")}</small><strong>${ml(e, t, s)}</strong></span>`}
   </div>`;
 }
-function dl(e, t) {
+function fl(e, t) {
 	let n = t.filter((e) => e !== E);
 	return n.length ? T`<section class="overview-assist-group"><small>${e}</small><div>${n}</div></section>` : E;
 }
-function fl(e, t, n, r) {
+function pl(e, t, n, r) {
 	let i = K(r);
 	return i === void 0 ? E : T`<span class="overview-assist-metric"><small>${e._t(n)}</small><strong>${e._formatTemperature(i, t)}</strong></span>`;
 }
-function pl(e, t, n) {
+function ml(e, t, n) {
 	let r = e._formatTemperature(Math.abs(n), t);
 	return n > 0 ? `+${r}` : n < 0 ? `-${r}` : r;
 }
-function ml(e, t) {
+function hl(e, t) {
 	if (!t || !["assisting", "holding"].includes(t.status)) return E;
 	let n = e._t(t.scheduled_target_guard ? "overviewZoneRoomAssistGuarded" : t.hysteresis_phase === "towards_lower" ? "overviewZoneRoomAssistTowardsLower" : t.hysteresis_phase === "towards_upper" ? "overviewZoneRoomAssistTowardsUpper" : t.status === "holding" ? "overviewZoneRoomAssistHolding" : "overviewZoneRoomAssistActive");
-	return vl("room-assist", "mdi:thermometer-auto", e._t("roomSensorAssistBadge"), n);
+	return yl("room-assist", "mdi:thermometer-auto", e._t("roomSensorAssistBadge"), n);
 }
-var hl = {
+var gl = {
 	heating: { icon: "mdi:fire" },
 	cooling: { icon: "mdi:snowflake" },
 	drying: { icon: "mdi:water-percent" },
@@ -23341,10 +23534,10 @@ var hl = {
 function K(e) {
 	return typeof e == "number" && Number.isFinite(e) ? e : void 0;
 }
-function gl(e, t, n, r) {
+function _l(e, t, n, r) {
 	return T`<span class="overview-zone-metric"><small>${e}</small><strong>${n._formatTemperature(t, r)}</strong></span>`;
 }
-function _l(e, t) {
+function vl(e, t) {
 	if (!t?.enabled) return E;
 	let n = t.data_quality !== "complete" && t.condition !== "no_readings", r = {
 		comfortable: "comfortConditionComfortable",
@@ -23370,25 +23563,25 @@ function _l(e, t) {
 		"humidity_comfortable"
 	].includes(t.condition), o = t.condition === "no_readings" ? "error" : a ? "warning" : "normal", s = t.air_quality === "poor" ? "error" : t.air_quality === "elevated" || t.air_quality === "unavailable" ? "warning" : "normal";
 	return T`
-    ${vl("comfort-environment", "mdi:home-thermometer-outline", e._t("overviewZoneComfortLabel"), e._t(r[t.condition] ?? "comfortConditionNoReadings"), o)}
-    ${t.air_quality === "not_monitored" ? E : vl("comfort-air", "mdi:molecule-co2", e._t("overviewZoneAirLabel"), e._t(i[t.air_quality]), s)}
-    ${n ? vl("comfort-data", "mdi:alert-circle-outline", e._t("overviewZoneDataLabel"), e._t("overviewZoneSensorIssue"), "warning") : E}
+    ${yl("comfort-environment", "mdi:home-thermometer-outline", e._t("overviewZoneComfortLabel"), e._t(r[t.condition] ?? "comfortConditionNoReadings"), o)}
+    ${t.air_quality === "not_monitored" ? E : yl("comfort-air", "mdi:molecule-co2", e._t("overviewZoneAirLabel"), e._t(i[t.air_quality]), s)}
+    ${n ? yl("comfort-data", "mdi:alert-circle-outline", e._t("overviewZoneDataLabel"), e._t("overviewZoneSensorIssue"), "warning") : E}
   `;
 }
-function vl(e, t, n, r, i = "normal") {
+function yl(e, t, n, r, i = "normal") {
 	return T`<span class=${`overview-zone-signal ${e} ${i}`} aria-label=${`${n}: ${r}`} title=${`${n}: ${r}`}><ha-icon icon=${t}></ha-icon><span><small>${n}:</small><strong>${r}</strong></span></span>`;
 }
-function yl(e, t) {
+function bl(e, t) {
 	if (!e._data || !t.length) return E;
-	let n = e._currentTimelineNow(), r = Dr(n, e.hass?.config?.time_zone), i = Ac(e.hass, n);
+	let n = e._currentTimelineNow(), r = Dr(n, e.hass?.config?.time_zone), i = jc(e.hass, n);
 	return T`
     <section class="overview-timeline-panel">
-      ${Ll(e._t("todayTimeline"), "mdi:timeline-clock-outline")}
+      ${Rl(e._t("todayTimeline"), "mdi:timeline-clock-outline")}
       <div class="overview-timeline-scroll">
         <div class="overview-timeline-layout">
           <div class="overview-timeline-names">
             <div class="overview-timeline-axis-spacer"></div>
-            ${t.map((t) => xl(e, t))}
+            ${t.map((t) => Sl(e, t))}
           </div>
           <div class="overview-timeline-rows" style=${`--overview-now-left: ${r.left}%;`}>
             <div class="overview-timeline-axis">
@@ -23404,8 +23597,8 @@ function yl(e, t) {
             <div class="overview-timeline-now-line" aria-label=${e._t("currentTime", { time: r.label })}></div>
             ${t.map((t) => {
 		e._data?.zones[t];
-		let n = sc(e._data, t);
-		return bl(e, t, n?.[i] ?? [], n, i);
+		let n = cc(e._data, t);
+		return xl(e, t, n?.[i] ?? [], n, i);
 	})}
           </div>
         </div>
@@ -23413,19 +23606,19 @@ function yl(e, t) {
     </section>
   `;
 }
-function bl(e, t, n, r, i = Ac()) {
-	let a = Ar(n), o = r ? jr(r, i) : void 0, s = bc(e), c = e._data?.zones[t], l = c?.execution?.type === "external", u = l ? void 0 : xc(s, t, c), d = l ? void 0 : Cc(s, t, c), f = l ? void 0 : d ?? Sl(e), p = !!(d && e._data?.zone_runtime?.[t]?.control_mode === "manual"), m = u ? Nr(u, e._currentTimelineNow()) : void 0, h = f ? Pr(f, e._currentTimelineNow()) : void 0;
+function xl(e, t, n, r, i = jc()) {
+	let a = Ar(n), o = r ? jr(r, i) : void 0, s = xc(e), c = e._data?.zones[t], l = c?.execution?.type === "external", u = l ? void 0 : Sc(s, t, c), d = l ? void 0 : wc(s, t, c), f = l ? void 0 : d ?? Cl(e), p = !!(d && e._data?.zone_runtime?.[t]?.control_mode === "manual"), m = u ? Nr(u, e._currentTimelineNow()) : void 0, h = f ? Pr(f, e._currentTimelineNow()) : void 0;
 	return T`
     <div class=${h?.indefinite ? "overview-timeline-track paused-indefinite" : "overview-timeline-track"}>
       ${a.length || o || m || h ? T`
-            ${o ? Al(e, t, o) : E}
-            ${a.map((n) => Cl(e, t, n))}
+            ${o ? jl(e, t, o) : E}
+            ${a.map((n) => wl(e, t, n))}
           ` : T`<span class="overview-timeline-empty">${e._t("noBlocks")}</span>`}
-      ${m && u ? wl(e, t, m, u) : E}
-      ${h && f ? Tl(e, t, h, f, p) : E}
+      ${m && u ? Tl(e, t, m, u) : E}
+      ${h && f ? El(e, t, h, f, p) : E}
       ${e._overviewTimelineDetail && e._overviewTimelineDetailEntityId === t ? T`
             <div
-              class=${`overview-timeline-tap-detail ${Fl(e._overviewTimelineDetailAnchor ?? 50)}`}
+              class=${`overview-timeline-tap-detail ${Il(e._overviewTimelineDetailAnchor ?? 50)}`}
               role="status"
               style=${`--overview-detail-left: ${e._overviewTimelineDetailAnchor ?? 50}%;`}
             >
@@ -23443,8 +23636,8 @@ function bl(e, t, n, r, i = Ac()) {
     </div>
   `;
 }
-function xl(e, t) {
-	let n = bc(e), r = e._data?.zones[t], i = r?.execution?.type === "external", a = i ? void 0 : xc(n, t, r), o = i ? void 0 : Cc(n, t, r), s = i ? void 0 : o ?? Sl(e), c = !!(o && e._data?.zone_runtime?.[t]?.control_mode === "manual"), l = oc(e._data, t), u = !!(l && !a && !s), d = e._friendlyEntityName(t), f = s ? Dc(n, s, t) : "", p = l ? `${e._t("profileOverviewLabel")}: ${l.profile.name}` : "", m = s ? [
+function Sl(e, t) {
+	let n = xc(e), r = e._data?.zones[t], i = r?.execution?.type === "external", a = i ? void 0 : Sc(n, t, r), o = i ? void 0 : wc(n, t, r), s = i ? void 0 : o ?? Cl(e), c = !!(o && e._data?.zone_runtime?.[t]?.control_mode === "manual"), l = sc(e._data, t), u = !!(l && !a && !s), d = e._friendlyEntityName(t), f = s ? Oc(n, s, t) : "", p = l ? `${e._t("profileOverviewLabel")}: ${l.profile.name}` : "", m = s ? [
 		e._t("pauseActive"),
 		c ? e._t("manualAdjustment") : "",
 		f
@@ -23464,15 +23657,15 @@ function xl(e, t) {
     </div>
   `;
 }
-function Sl(e) {
+function Cl(e) {
 	if (e._data?.global?.mode === "paused") return {
 		type: "pause",
 		started_at: e._data.global.paused_started_at,
 		until: e._data.global.paused_until
 	};
 }
-function Cl(e, t, n) {
-	let r = Ol(e, t, n.block), i = El(e, t, n.block), a = Dl(e, t, n.block);
+function wl(e, t, n) {
+	let r = kl(e, t, n.block), i = Dl(e, t, n.block), a = Ol(e, t, n.block);
 	return T`
     <button
       class=${[
@@ -23494,8 +23687,8 @@ function Cl(e, t, n) {
     </button>
   `;
 }
-function wl(e, t, n, r) {
-	let i = Rr({ hvac_mode: n.block.hvac_mode ?? e.hass?.states?.[t]?.state }), a = `${e._t("boostActive")} - ${e._formatScheduleTime(n.block.start)} - ${e._formatScheduleTime(Pl(n.endMinute))} - ${wc(bc(e), t, r)}`;
+function Tl(e, t, n, r) {
+	let i = Rr({ hvac_mode: n.block.hvac_mode ?? e.hass?.states?.[t]?.state }), a = `${e._t("boostActive")} - ${e._formatScheduleTime(n.block.start)} - ${e._formatScheduleTime(Fl(n.endMinute))} - ${Tc(xc(e), t, r)}`;
 	return T`
     <button
       class=${`overview-timeline-boost mode-${i}`}
@@ -23507,16 +23700,16 @@ function wl(e, t, n, r) {
     >
       <span class="overview-timeline-block-main">
         <ha-icon icon="mdi:lightning-bolt"></ha-icon>
-        ${Number.isFinite(n.block.temperature) ? T`<span>${e._formatTemperature(Number(n.block.temperature), t)}</span>` : Number.isFinite(n.block.target_temp_low) && Number.isFinite(n.block.target_temp_high) ? T`<span>${Nl(e, Number(n.block.target_temp_low), Number(n.block.target_temp_high), t)}</span>` : E}
+        ${Number.isFinite(n.block.temperature) ? T`<span>${e._formatTemperature(Number(n.block.temperature), t)}</span>` : Number.isFinite(n.block.target_temp_low) && Number.isFinite(n.block.target_temp_high) ? T`<span>${Pl(e, Number(n.block.target_temp_low), Number(n.block.target_temp_high), t)}</span>` : E}
       </span>
     </button>
   `;
 }
-function Tl(e, t, n, r, i = !1) {
+function El(e, t, n, r, i = !1) {
 	let a = [
 		e._t("pauseActive"),
 		i ? e._t("manualAdjustment") : "",
-		Dc(bc(e), r, t)
+		Oc(xc(e), r, t)
 	].filter(Boolean).join(" - ");
 	return T`
     <button
@@ -23537,21 +23730,21 @@ function Tl(e, t, n, r, i = !1) {
     </button>
   `;
 }
-function El(e, t, n) {
-	return e._formatEventAction(kl(t, n));
-}
 function Dl(e, t, n) {
-	return n.action === "turn_off" || n.hvac_mode === "off" ? "" : e._formatEventMode(kl(t, n));
+	return e._formatEventAction(Al(t, n));
 }
 function Ol(e, t, n) {
-	let r = El(e, t, n), i = Dl(e, t, n);
+	return n.action === "turn_off" || n.hvac_mode === "off" ? "" : e._formatEventMode(Al(t, n));
+}
+function kl(e, t, n) {
+	let r = Dl(e, t, n), i = Ol(e, t, n);
 	return [
 		e._formatScheduleTime(n.start),
 		r,
 		i
 	].filter(Boolean).join(" - ");
 }
-function kl(e, t) {
+function Al(e, t) {
 	return {
 		action: t.action,
 		entity_id: e,
@@ -23560,12 +23753,12 @@ function kl(e, t) {
 		temperature: t.temperature ?? null,
 		target_temp_low: t.target_temp_low ?? null,
 		target_temp_high: t.target_temp_high ?? null,
-		weekday: Ac(),
+		weekday: jc(),
 		when: (/* @__PURE__ */ new Date()).toISOString()
 	};
 }
-function Al(e, t, n) {
-	let r = El(e, t, n.block), i = Dl(e, t, n.block), a = e._t("timelineContinuesFrom", {
+function jl(e, t, n) {
+	let r = Dl(e, t, n.block), i = Ol(e, t, n.block), a = e._t("timelineContinuesFrom", {
 		day: e._shortWeekdayName(n.sourceWeekday),
 		time: e._formatScheduleTime(n.block.start)
 	}), o = [
@@ -23596,38 +23789,38 @@ function Al(e, t, n) {
     </button>
   `;
 }
-function jl(e, t, n, r, i) {
-	return T`<span class="overview-assist-metric"><small>${e._t(n)}</small><strong>${Nl(e, r, i, t)}</strong></span>`;
+function Ml(e, t, n, r, i) {
+	return T`<span class="overview-assist-metric"><small>${e._t(n)}</small><strong>${Pl(e, r, i, t)}</strong></span>`;
 }
-function Ml(e, t) {
+function Nl(e, t) {
 	return T`<span class="overview-zone-metric"><small>${e}</small><strong>${t}</strong></span>`;
 }
-function Nl(e, t, n, r) {
+function Pl(e, t, n, r) {
 	return `${e._formatTemperature(t, r).replace(/\s+[^\s]+$/, "")}–${e._formatTemperature(n, r)}`;
 }
-function Pl(e) {
+function Fl(e) {
 	let t = Math.max(0, Math.min(1440, e)), n = Math.floor(t / 60), r = t % 60;
 	return `${String(n).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
-function Fl(e) {
+function Il(e) {
 	return e >= 72 ? "align-end" : e <= 28 ? "align-start" : "align-center";
 }
-function Il(e, t) {
-	let n = t ? new Set(t) : void 0, r = Oc(bc(e)).filter((e) => !n || n.has(e.entity_id)), i = r.some((e) => e.target_when && e.target_when !== e.when);
+function Ll(e, t) {
+	let n = t ? new Set(t) : void 0, r = kc(xc(e)).filter((e) => !n || n.has(e.entity_id)), i = r.some((e) => e.target_when && e.target_when !== e.when);
 	return r.length ? T`
     <section class="next">
-      ${Ll(e._t(r.length === 1 ? "nextEvent" : "nextEvents"), "mdi:calendar-clock")}
+      ${Rl(e._t(r.length === 1 ? "nextEvent" : "nextEvents"), "mdi:calendar-clock")}
       <div class=${`event-list ${i ? "has-preconditioning" : ""}`}>
-        ${r.map((t) => Rl(e, t))}
+        ${r.map((t) => zl(e, t))}
       </div>
     </section>
   ` : T`
       <section class="next">
-        ${Bl(e._t("nextEvent"), "mdi:calendar-clock", e._t("noUpcomingEvent"))}
+        ${Vl(e._t("nextEvent"), "mdi:calendar-clock", e._t("noUpcomingEvent"))}
       </section>
     `;
 }
-function Ll(e, t) {
+function Rl(e, t) {
 	return T`
     <div class="overview-section-title section-heading">
       <ha-icon icon=${t}></ha-icon>
@@ -23635,17 +23828,17 @@ function Ll(e, t) {
     </div>
   `;
 }
-function Rl(e, t) {
+function zl(e, t) {
 	return T`
     <div class="event">
       <div class="event-identity">
         <strong class="overview-climate-name">${e._friendlyEntityName(t.entity_id)}</strong>
       </div>
-      ${zl(e, t)}
+      ${Bl(e, t)}
     </div>
   `;
 }
-function zl(e, t) {
+function Bl(e, t) {
 	let n = !!(t.target_when && t.target_when !== t.when), r = e._changedNextEventIds?.has(t.entity_id) ? `next-event-updated update-${e._nextEventChangeRevision % 2 == 0 ? "even" : "odd"}` : "";
 	return T`
     <div class=${`event-details ${n ? "preconditioned" : ""}`}>
@@ -23677,7 +23870,7 @@ function zl(e, t) {
     </div>
   `;
 }
-function Bl(e, t, n) {
+function Vl(e, t, n) {
 	return T`
     <div class="overview-empty-state">
       <ha-icon icon=${t}></ha-icon>
@@ -23688,7 +23881,7 @@ function Bl(e, t, n) {
     </div>
   `;
 }
-function Vl(e) {
+function Hl(e) {
 	let t = e._canResumeScheduler();
 	return T`
     <div class="overview-controls">
@@ -23740,7 +23933,7 @@ function Vl(e) {
     </div>
   `;
 }
-function Hl(e) {
+function Ul(e) {
 	let t = e._pauseExpirationMs();
 	if (!t || t <= Date.now()) return E;
 	let n = Math.max(0, t - Date.now()), r = e._pauseProgressPercent(t);
@@ -23757,13 +23950,13 @@ function Hl(e) {
 }
 //#endregion
 //#region src/velair/domain/preconditioning.ts
-function Ul(e, t) {
+function Wl(e, t) {
 	let n = e?.config?.unit_system?.temperature, r = e?.states ?? {}, i = Object.entries(r).filter(([e, r]) => {
 		if (!e.startsWith("sensor.")) return !1;
 		let i = r.attributes ?? {};
 		return i.device_class === "temperature" || n !== void 0 && i.unit_of_measurement === n || e === t;
 	}).map(([e, t]) => {
-		let n = t.attributes?.friendly_name ?? e, r = t.attributes?.unit_of_measurement ?? "", i = Gl(t.state, r);
+		let n = t.attributes?.friendly_name ?? e, r = t.attributes?.unit_of_measurement ?? "", i = Kl(t.state, r);
 		return {
 			entityId: e,
 			label: i ? `${n} (${i})` : `${n} (${e})`
@@ -23774,7 +23967,7 @@ function Ul(e, t) {
 		label: t
 	}), i;
 }
-function Wl(e, t) {
+function Gl(e, t) {
 	return {
 		enabled: !!e?.enabled,
 		max_lead_minutes: Number(e?.max_lead_minutes ?? 1440),
@@ -23796,12 +23989,12 @@ function Wl(e, t) {
 		room_sensor_assist_debounce_seconds: Number(e?.room_sensor_assist_debounce_seconds ?? 20)
 	};
 }
-function Gl(e, t) {
+function Kl(e, t) {
 	return e === void 0 || e === "unknown" || e === "unavailable" || Number.isNaN(Number(e)) ? "" : `${e}${t ? ` ${t}` : ""}`;
 }
 //#endregion
 //#region src/velair/views/preconditioning-view.ts
-var Kl = {
+var ql = {
 	preconditioningAdaptivePercentile: "preconditioningAdaptivePercentileHelp",
 	preconditioningComfortPercentile: "preconditioningComfortPercentileHelp",
 	preconditioningFallbackMinutesPerDegree: "preconditioningFallbackMinutesPerDegreeHelp",
@@ -23815,7 +24008,7 @@ var Kl = {
 	preconditioningSimilarSamples: "preconditioningSimilarSamplesHelp",
 	preconditioningUseOutdoorTemperature: "preconditioningUseOutdoorTemperatureHelp"
 };
-function ql(e, t) {
+function Jl(e, t) {
 	return T`
     <section class="preconditioning-view">
       <header class="preconditioning-intro">
@@ -23825,11 +24018,11 @@ function ql(e, t) {
           <small>${e._t("preconditioningIntroDetail")}</small>
         </span>
       </header>
-      ${t.length ? t.map((t) => Jl(e, t)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
+      ${t.length ? t.map((t) => Yl(e, t)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
     </section>
   `;
 }
-function Jl(e, t) {
+function Yl(e, t) {
 	if (e._data?.zones[t]?.execution?.type === "external") return T`
       <section class="preconditioning-zone disabled collapsed">
         <header class="preconditioning-zone-heading">
@@ -23841,7 +24034,7 @@ function Jl(e, t) {
         </header>
       </section>
     `;
-	let n = e._entityExists(t), r = e._temperatureUnit?.(t) ?? "°C", i = Wl(e._data?.zones[t]?.preconditioning, r), a = e._data?.preconditioning_learning?.[t], o = n && e._expandedPreconditioningZones.has(t), s = `preconditioning-zone-content-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}`, c = n ? e._t(o ? "preconditioningCollapseClimate" : "preconditioningExpandClimate", { climate: e._friendlyEntityName(t) }) : e._t("preconditioningUnavailable");
+	let n = e._entityExists(t), r = e._temperatureUnit?.(t) ?? "°C", i = Gl(e._data?.zones[t]?.preconditioning, r), a = e._data?.preconditioning_learning?.[t], o = n && e._expandedPreconditioningZones.has(t), s = `preconditioning-zone-content-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}`, c = n ? e._t(o ? "preconditioningCollapseClimate" : "preconditioningExpandClimate", { climate: e._friendlyEntityName(t) }) : e._t("preconditioningUnavailable");
 	return T`
     <section class=${`preconditioning-zone ${i.enabled ? "enabled" : "disabled"} ${o ? "expanded" : "collapsed"}`}>
       <header class="preconditioning-zone-heading" @click=${(r) => {
@@ -23900,41 +24093,41 @@ function Jl(e, t) {
       </header>
       ${n && o ? T`
             <div id=${s} class="preconditioning-zone-content">
-              ${Yl(e, t, i)}
-              ${i.enabled ? Zl(e, t, a) : E}
+              ${Xl(e, t, i)}
+              ${i.enabled ? Ql(e, t, a) : E}
             </div>
           ` : E}
     </section>
   `;
 }
-function Yl(e, t, n) {
+function Xl(e, t, n) {
 	let r = e._temperatureUnit?.(t) ?? "°C", i = hr(r);
 	return T`
     <div class="preconditioning-config-sections">
-      ${Xl(e, "preconditioningTiming", "mdi:timer-outline", T`
+      ${Zl(e, "preconditioningTiming", "mdi:timer-outline", T`
           ${q(e, t, "preconditioningMinStart", n.min_start_minutes, "min_start_minutes", 0, 1440, 5)}
           ${q(e, t, "preconditioningMaxLead", n.max_lead_minutes, "max_lead_minutes", 0, 1440, 15)}
           ${q(e, t, "preconditioningMinimumDelta", n.minimum_delta_temperature, "minimum_delta_temperature", 0, mr(r, 5), .1, "", { labelUnit: r })}
           ${q(e, t, "preconditioningFallbackMinutesPerDegree", n.fallback_minutes_per_degree, "fallback_minutes_per_degree", i[0], i[1], .1, "", { labelUnit: `${e._t("minutesShort")}/${r}` })}
         `)}
-      ${Xl(e, "preconditioningModel", "mdi:tune-variant", T`
+      ${Zl(e, "preconditioningModel", "mdi:tune-variant", T`
           ${q(e, t, "preconditioningComfortPercentile", n.comfort_percentile, "comfort_percentile", 50, 95, 5)}
-          ${hu(e, t, "preconditioningAdaptivePercentile", n.adaptive_percentile_enabled, "adaptive_percentile_enabled")}
+          ${gu(e, t, "preconditioningAdaptivePercentile", n.adaptive_percentile_enabled, "adaptive_percentile_enabled")}
           ${q(e, t, "preconditioningSimilarSamples", n.similar_sample_count, "similar_sample_count", 5, 100, 5)}
         `)}
-      ${Xl(e, "preconditioningHistory", "mdi:history", T`
+      ${Zl(e, "preconditioningHistory", "mdi:history", T`
           ${q(e, t, "preconditioningHistorySize", n.learning_history_size, "learning_history_size", 10, 500, 10)}
           ${q(e, t, "preconditioningPartialExpiry", n.partial_expiry_days, "partial_expiry_days", 1, 365, 1)}
           ${q(e, t, "preconditioningRecencyDecay", n.recency_decay_days, "recency_decay_days", 1, 365, 1)}
         `)}
-      ${Xl(e, "preconditioningOutdoorContext", "mdi:weather-partly-cloudy", T`
-          ${hu(e, t, "preconditioningUseOutdoorTemperature", n.use_outdoor_temperature, "use_outdoor_temperature")}
-          ${gu(e, t, "preconditioningOutdoorTemperatureEntity", n.outdoor_temperature_entity_id ?? "", "outdoor_temperature_entity_id", { inactive: !n.use_outdoor_temperature })}
+      ${Zl(e, "preconditioningOutdoorContext", "mdi:weather-partly-cloudy", T`
+          ${gu(e, t, "preconditioningUseOutdoorTemperature", n.use_outdoor_temperature, "use_outdoor_temperature")}
+          ${_u(e, t, "preconditioningOutdoorTemperatureEntity", n.outdoor_temperature_entity_id ?? "", "outdoor_temperature_entity_id", { inactive: !n.use_outdoor_temperature })}
         `)}
     </div>
   `;
 }
-function Xl(e, t, n, r) {
+function Zl(e, t, n, r) {
 	return T`
     <section class="preconditioning-config-section">
       <h3><ha-icon icon=${n}></ha-icon>${e._t(t)}</h3>
@@ -23942,9 +24135,9 @@ function Xl(e, t, n, r) {
     </section>
   `;
 }
-function Zl(e, t, n) {
+function Ql(e, t, n) {
 	if (!n) return E;
-	let r = [n.heat.status === "unsupported" ? void 0 : Ql(e, t, "heat", n.heat), n.cool.status === "unsupported" ? void 0 : Ql(e, t, "cool", n.cool)].filter(Boolean);
+	let r = [n.heat.status === "unsupported" ? void 0 : $l(e, t, "heat", n.heat), n.cool.status === "unsupported" ? void 0 : $l(e, t, "cool", n.cool)].filter(Boolean);
 	return T`
     <div class=${`preconditioning-learning ${n.status}`}>
       <h3 class="preconditioning-learning-heading">
@@ -23957,8 +24150,8 @@ function Zl(e, t, n) {
     </div>
   `;
 }
-function Ql(e, t, n, r) {
-	let i = e._t(n === "heat" ? "preconditioningHeat" : "preconditioningCool"), a = e._t(mu(r.status)), o = r.total_samples, s = r.model_source === "history", c = e._t(s ? "preconditioningModelHistory" : "preconditioningModelInitial"), l = r.sample_count >= r.required_samples ? String(r.sample_count) : e._t("preconditioningDirectionSamples", {
+function $l(e, t, n, r) {
+	let i = e._t(n === "heat" ? "preconditioningHeat" : "preconditioningCool"), a = e._t(hu(r.status)), o = r.total_samples, s = r.model_source === "history", c = e._t(s ? "preconditioningModelHistory" : "preconditioningModelInitial"), l = r.sample_count >= r.required_samples ? String(r.sample_count) : e._t("preconditioningDirectionSamples", {
 		count: r.sample_count,
 		required: r.required_samples
 	});
@@ -23982,30 +24175,30 @@ function Ql(e, t, n, r) {
       </div>
       <div class="preconditioning-learning-status-card">
         <div class="preconditioning-learning-summary">
-          ${du(e._t("preconditioningDirectionStatus"), a, r.status === "ready" ? "mdi:check-circle" : "mdi:progress-clock", r.status)}
-          ${du(e._t("preconditioningModelSource"), c, s ? "mdi:chart-timeline-variant" : "mdi:calculator-variant-outline", s ? "history" : "initial")}
+          ${fu(e._t("preconditioningDirectionStatus"), a, r.status === "ready" ? "mdi:check-circle" : "mdi:progress-clock", r.status)}
+          ${fu(e._t("preconditioningModelSource"), c, s ? "mdi:chart-timeline-variant" : "mdi:calculator-variant-outline", s ? "history" : "initial")}
         </div>
         <div class="preconditioning-sample-card">
           <div class="preconditioning-sample-chips">
-            ${fu("complete", e._t("preconditioningReachedEvents"), l)}
-            ${fu("partial", e._t("preconditioningPartialEvents"), String(r.partial_sample_count ?? 0))}
-            ${fu("invalid", e._t("preconditioningInvalidEvents"), String(r.invalid_sample_count ?? 0))}
+            ${pu("complete", e._t("preconditioningReachedEvents"), l)}
+            ${pu("partial", e._t("preconditioningPartialEvents"), String(r.partial_sample_count ?? 0))}
+            ${pu("invalid", e._t("preconditioningInvalidEvents"), String(r.invalid_sample_count ?? 0))}
           </div>
         </div>
       </div>
-      ${$l(e, t, n)}
+      ${eu(e, t, n)}
     </div>
   `;
 }
-function $l(e, t, n) {
-	let r = ou(e, t, n);
+function eu(e, t, n) {
+	let r = su(e, t, n);
 	if (!r) {
 		let r = e._t(n === "heat" ? "preconditioningHeat" : "preconditioningCool");
 		return T`
       <section class="preconditioning-prediction empty">
         <div class="preconditioning-prediction-heading">
           <span>${e._t("preconditioningNextBlock")}</span>
-          ${tu(e, t, n)}
+          ${nu(e, t, n)}
         </div>
         <div class="preconditioning-prediction-empty">
           <ha-icon icon="mdi:calendar-search"></ha-icon>
@@ -24014,12 +24207,12 @@ function $l(e, t, n) {
       </section>
     `;
 	}
-	let i = r.target_when && r.target_when !== r.when ? r.target_when : r.when, a = uu(r.when, i), o = a > 0, s = o ? e._t("preconditioningLeadTime", { minutes: a }) : e._t("preconditioningNormalStart");
+	let i = r.target_when && r.target_when !== r.when ? r.target_when : r.when, a = du(r.when, i), o = a > 0, s = o ? e._t("preconditioningLeadTime", { minutes: a }) : e._t("preconditioningNormalStart");
 	return T`
     <section class=${`preconditioning-prediction ${n} ${o ? "early" : "normal"}`}>
       <div class="preconditioning-prediction-heading">
         <span>${e._t("preconditioningNextBlock")}</span>
-        ${tu(e, t, n)}
+        ${nu(e, t, n)}
       </div>
       <div class=${`preconditioning-block-preview ${o ? "with-prestart" : "normal-start"}`}>
         ${o ? T`
@@ -24033,16 +24226,16 @@ function $l(e, t, n) {
           <small>${e._t("preconditioningTargetBy")}</small>
           <strong>${e._formatDateTime(i)}</strong>
           <span>${e._formatEventAction(r)}</span>
-          ${eu(e, r, n)}
+          ${tu(e, r, n)}
           <span>${e._formatEventMode(r)}</span>
         </div>
       </div>
-      ${r.preconditioning_diagnostics ? nu(e, r.preconditioning_diagnostics) : E}
+      ${r.preconditioning_diagnostics ? ru(e, r.preconditioning_diagnostics) : E}
     </section>
   `;
 }
-function eu(e, t, n) {
-	if (!cu(t)) return E;
+function tu(e, t, n) {
+	if (!lu(t)) return E;
 	let r = t.preconditioning_diagnostics?.boundary_temperature, i = typeof r == "number" ? r : n === "heat" ? t.target_temp_low : t.target_temp_high;
 	return typeof i == "number" ? T`
     <small class="preconditioning-range-boundary">
@@ -24050,16 +24243,16 @@ function eu(e, t, n) {
     </small>
   ` : E;
 }
-function tu(e, t, n) {
+function nu(e, t, n) {
 	let r = e._t("preconditioningLivePredictionHelp"), i = t.replace(/[^a-z0-9_-]/gi, "-");
 	return T`
     <span class="preconditioning-live-label">
       <span>${e._t("preconditioningLivePrediction")}</span>
-      ${Yc(`preconditioning-${i}-${n}-live-prediction-help`, r, r)}
+      ${Xc(`preconditioning-${i}-${n}-live-prediction-help`, r, r)}
     </span>
   `;
 }
-function nu(e, t) {
+function ru(e, t) {
 	return T`
     <details class="preconditioning-calculation-details">
       <summary>
@@ -24068,31 +24261,31 @@ function nu(e, t) {
       </summary>
       <div class="preconditioning-calculation-grid">
         <div class="preconditioning-calculation-row context">
-          ${iu(e._t("preconditioningCalculationSamples"), e._t("preconditioningCalculationSampleCounts", {
+          ${au(e._t("preconditioningCalculationSamples"), e._t("preconditioningCalculationSampleCounts", {
 		reached: t.complete_sample_count,
 		partial: t.partial_sample_count,
 		invalid: t.invalid_sample_count
 	}), "samples")}
-          ${iu(e._t("preconditioningSimilarSamples"), String(t.similar_sample_count), "compact")}
-          ${iu(e._t("preconditioningComfortPercentileLabel"), `${t.comfort_percentile}%`, "compact")}
+          ${au(e._t("preconditioningSimilarSamples"), String(t.similar_sample_count), "compact")}
+          ${au(e._t("preconditioningComfortPercentileLabel"), `${t.comfort_percentile}%`, "compact")}
         </div>
         <div class="preconditioning-calculation-row estimates">
-          ${iu(e._t("preconditioningCalculationReachedEstimate"), au(e, t.complete_estimate_minutes))}
-          ${iu(e._t("preconditioningCalculationPartialFloor"), au(e, t.partial_floor_minutes))}
+          ${au(e._t("preconditioningCalculationReachedEstimate"), ou(e, t.complete_estimate_minutes))}
+          ${au(e._t("preconditioningCalculationPartialFloor"), ou(e, t.partial_floor_minutes))}
         </div>
-        <div class=${`preconditioning-calculation-row result ${ru(t) ? "without-rounded" : "with-rounded"}`}>
-          ${iu(e._t("preconditioningCalculationCombined"), au(e, t.combined_estimate_minutes))}
-          ${ru(t) ? E : iu(e._t("preconditioningCalculationRounded"), au(e, t.rounded_estimate_minutes))}
-          ${iu(e._t("preconditioningCalculationFinalLead"), au(e, t.final_lead_minutes), "final")}
+        <div class=${`preconditioning-calculation-row result ${iu(t) ? "without-rounded" : "with-rounded"}`}>
+          ${au(e._t("preconditioningCalculationCombined"), ou(e, t.combined_estimate_minutes))}
+          ${iu(t) ? E : au(e._t("preconditioningCalculationRounded"), ou(e, t.rounded_estimate_minutes))}
+          ${au(e._t("preconditioningCalculationFinalLead"), ou(e, t.final_lead_minutes), "final")}
         </div>
       </div>
     </details>
   `;
 }
-function ru(e) {
+function iu(e) {
 	return Math.round(e.combined_estimate_minutes * 10) / 10 === e.rounded_estimate_minutes;
 }
-function iu(e, t, n = "") {
+function au(e, t, n = "") {
 	return T`
     <span class=${`preconditioning-calculation-item ${n}`}>
       <small
@@ -24108,30 +24301,30 @@ function iu(e, t, n = "") {
     </span>
   `;
 }
-function au(e, t) {
+function ou(e, t) {
 	if (typeof t != "number" || !Number.isFinite(t)) return "-";
 	let n = Math.round(t * 10) / 10;
 	return e._t("preconditioningFallbackLead", { minutes: n });
 }
-function ou(e, t, n) {
-	return (e._data?.next_events ?? []).find((e) => e.entity_id === t && lu(e) === n && su(e));
-}
-function su(e) {
-	return typeof e.temperature == "number" || cu(e);
+function su(e, t, n) {
+	return (e._data?.next_events ?? []).find((e) => e.entity_id === t && uu(e) === n && cu(e));
 }
 function cu(e) {
-	return typeof e.target_temp_low == "number" && typeof e.target_temp_high == "number";
+	return typeof e.temperature == "number" || lu(e);
 }
 function lu(e) {
+	return typeof e.target_temp_low == "number" && typeof e.target_temp_high == "number";
+}
+function uu(e) {
 	let t = e.preconditioning_diagnostics?.direction;
 	if (t === "heat" || t === "cool") return t;
 	if (e.hvac_mode === "heat" || e.hvac_mode === "cool") return e.hvac_mode;
 }
-function uu(e, t) {
+function du(e, t) {
 	let n = new Date(e).getTime(), r = new Date(t).getTime();
 	return Number.isNaN(n) || Number.isNaN(r) || r <= n ? 0 : Math.round((r - n) / 6e4);
 }
-function du(e, t, n, r) {
+function fu(e, t, n, r) {
 	return T`
     <div class=${`preconditioning-learning-indicator ${r}`}>
       <ha-icon icon=${n}></ha-icon>
@@ -24142,7 +24335,7 @@ function du(e, t, n, r) {
     </div>
   `;
 }
-function fu(e, t, n) {
+function pu(e, t, n) {
 	return T`
     <span class=${`preconditioning-sample-chip ${e}`}>
       <span>${t}:</span>
@@ -24150,25 +24343,25 @@ function fu(e, t, n) {
     </span>
   `;
 }
-function pu(e, t, n, r = "") {
-	let i = Kl[n], a = i ? e._t(i) : "", o = t.replace(/[^a-z0-9_-]/gi, "-");
+function mu(e, t, n, r = "") {
+	let i = ql[n], a = i ? e._t(i) : "", o = t.replace(/[^a-z0-9_-]/gi, "-");
 	return T`
     <span class="label preconditioning-config-label">
       <span>${e._t(n)}${r ? ` (${r})` : ""}</span>
       ${i ? T`
-            ${Yc(`preconditioning-${o}-${String(n)}-help`, a, a)}
+            ${Xc(`preconditioning-${o}-${String(n)}-help`, a, a)}
           ` : E}
     </span>
   `;
 }
-function mu(e) {
+function hu(e) {
 	return e === "ready" ? "preconditioningLearningReady" : e === "disabled" ? "preconditioningLearningDisabled" : "preconditioningLearning";
 }
 function q(e, t, n, r, i, a, o, s, c = "", l = {}) {
 	let u = e._settingsSaving || !!l.inactive;
 	return T`
     <label class=${`preconditioning-config-row ${l.inactive ? "inactive" : ""}`}>
-      ${pu(e, t, n, l.labelUnit)}
+      ${mu(e, t, n, l.labelUnit)}
       <span class="preconditioning-number-input"><input
         type="number"
         min=${String(a)}
@@ -24185,11 +24378,11 @@ function q(e, t, n, r, i, a, o, s, c = "", l = {}) {
     </label>
   `;
 }
-function hu(e, t, n, r, i, a = {}) {
+function gu(e, t, n, r, i, a = {}) {
 	let o = e._settingsSaving || !!a.inactive;
 	return T`
     <label class=${`preconditioning-config-row preconditioning-toggle-row ${a.inactive ? "inactive" : ""}`}>
-      ${pu(e, t, n)}
+      ${mu(e, t, n)}
       <ha-switch
         .checked=${r}
         ?disabled=${o}
@@ -24198,11 +24391,11 @@ function hu(e, t, n, r, i, a = {}) {
     </label>
   `;
 }
-function gu(e, t, n, r, i, a = {}) {
-	let o = e._settingsSaving || !!a.inactive, s = a.inactive ? "" : r, c = Ul(e.hass, r);
+function _u(e, t, n, r, i, a = {}) {
+	let o = e._settingsSaving || !!a.inactive, s = a.inactive ? "" : r, c = Wl(e.hass, r);
 	return T`
     <label class=${`preconditioning-config-row preconditioning-sensor-row ${a.inactive ? "inactive" : ""}`}>
-      ${pu(e, t, n)}
+      ${mu(e, t, n)}
       <span class="select-wrap">
         <select
           .value=${s}
@@ -24229,7 +24422,7 @@ function gu(e, t, n, r, i, a = {}) {
 }
 //#endregion
 //#region node_modules/lit-html/directives/keyed.js
-var _u = Xo(class extends Zo {
+var vu = Zo(class extends Qo {
 	constructor() {
 		super(...arguments), this.key = E;
 	}
@@ -24237,35 +24430,35 @@ var _u = Xo(class extends Zo {
 		return this.key = e, t;
 	}
 	update(e, [t, n]) {
-		return t !== this.key && (is(e), this.key = t), n;
+		return t !== this.key && (as(e), this.key = t), n;
 	}
 });
 //#endregion
 //#region src/velair/controllers/climate-profile-actions.ts
-async function vu(e, t) {
-	let n = gc(t);
+async function yu(e, t) {
+	let n = _c(t);
 	if (n) throw Error(n);
-	return e.setClimateProfile(_c(t));
-}
-function yu(e, t) {
-	return e.deleteClimateProfile(t);
+	return e.setClimateProfile(vc(t));
 }
 function bu(e, t) {
+	return e.deleteClimateProfile(t);
+}
+function xu(e, t) {
 	return e.activateProfile(t);
 }
 //#endregion
 //#region src/velair/domain/modes.ts
-var xu = new Set([
+var Su = new Set([
 	"default",
 	"predeterminado",
 	"manual",
 	"unknown",
 	"unavailable"
 ]);
-function Su(e) {
+function Cu(e) {
 	return e.normalize("NFKC").toLowerCase().replaceAll("ß", "ss").replaceAll("ς", "σ");
 }
-function Cu(e) {
+function wu(e) {
 	return e ? {
 		key: e.key,
 		name: e.name,
@@ -24275,12 +24468,12 @@ function Cu(e) {
 		profileIds: []
 	};
 }
-function wu(e, t, n) {
+function Tu(e, t, n) {
 	let r = e.name.trim();
 	if (!r || /[\u0000-\u001F\u007F-\u009F]/u.test(e.name)) return "name";
 	if (r.length > 255) return "length";
-	let i = Su(r);
-	if (xu.has(i) || t.some((t) => t.key !== e.key && Su(t.name.trim()) === i)) return "duplicate";
+	let i = Cu(r);
+	if (Su.has(i) || t.some((t) => t.key !== e.key && Cu(t.name.trim()) === i)) return "duplicate";
 	if (!e.profileIds.length || new Set(e.profileIds).size !== e.profileIds.length) return "profile";
 	let a = new Map((n ?? []).map((e) => [e.key, e])), o = /* @__PURE__ */ new Set();
 	for (let t of e.profileIds) {
@@ -24292,12 +24485,12 @@ function wu(e, t, n) {
 		}
 	}
 }
-function Tu(e) {
+function Eu(e) {
 	return e?.global.active_profile_ids?.length ? e.modes?.find((t) => t.key === e.active_mode_id) ?? "manual" : "default";
 }
 //#endregion
 //#region src/velair/styles/profile-styles.ts
-var Eu = l`
+var Du = l`
   :host {
     display: block;
     color: var(--primary-text-color);
@@ -25683,7 +25876,7 @@ var Eu = l`
 `;
 //#endregion
 //#region src/velair/views/weekly-schedule-editor.ts
-function Du(e) {
+function Ou(e) {
 	return T`
     ${e.dayTabs}
     <div class="schedule-step-heading"><strong>${e.configureHeading}</strong></div>
@@ -25700,7 +25893,7 @@ function Du(e) {
 }
 //#endregion
 //#region src/velair/views/schedule-editor-controls.ts
-var Ou = [
+var ku = [
 	{
 		preset: "weekdays",
 		key: "clonePresetWeekdays",
@@ -25717,11 +25910,11 @@ var Ou = [
 		icon: "mdi:calendar-multiselect"
 	}
 ];
-function ku(e, t, n) {
+function Au(e, t, n) {
 	return T`
     <div class="copy-presets" role="group" aria-label=${e("clonePresetLabel")}>
       <div class="copy-preset-options">
-        ${Ou.map(({ preset: n, key: r, icon: i }) => T`
+        ${ku.map(({ preset: n, key: r, icon: i }) => T`
         <button class="copy-preset-button" type="button" @click=${() => t(n)}>
           <ha-icon icon=${i}></ha-icon>
           <span>${e(r)}</span>
@@ -25742,7 +25935,7 @@ function ku(e, t, n) {
     </div>
   `;
 }
-function Au(e, t) {
+function ju(e, t) {
 	if (!t) return;
 	let n = t.max > 0 ? Math.min(100, t.used / t.max * 100) : 0;
 	return T`
@@ -25770,11 +25963,11 @@ function J(e, t, n, r) {
 //#region src/velair/components/profiles-view-element.ts
 var Y = class extends Ve {
 	constructor(...e) {
-		super(...e), this.initialWeekday = "", this.compact = !1, this.activeSetupControls = "both", this.workspace = "both", this.scheduleWorkspace = !1, this._selectedKey = "", this._draft = ic(), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._dirty = !1, this._expandedZones = /* @__PURE__ */ new Set(), this._selectedModeKey = "", this._modeEditorOpen = !1, this._modeDraft = Cu(), this._modeDirty = !1, this._activeLibrary = "profiles", this._selectedEntity = "", this._validationNotices = new si(() => this.requestUpdate()), this._handleDocumentClick = (e) => {
+		super(...e), this.initialWeekday = "", this.compact = !1, this.activeSetupControls = "both", this.workspace = "both", this.scheduleWorkspace = !1, this._selectedKey = "", this._draft = ac(), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._dirty = !1, this._expandedZones = /* @__PURE__ */ new Set(), this._selectedModeKey = "", this._modeEditorOpen = !1, this._modeDraft = wu(), this._modeDirty = !1, this._activeLibrary = "profiles", this._selectedEntity = "", this._validationNotices = new si(() => this.requestUpdate()), this._handleDocumentClick = (e) => {
 			let t = this.shadowRoot?.querySelector(".active-setup-menu");
 			!t?.open || e.composedPath().includes(t) || (t.open = !1);
 		}, this._clearSelection = () => {
-			this._validationNotices.dispose(), this._selectedKey = "", this._draft = ic(), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._expandedZones = /* @__PURE__ */ new Set(), this._setDirty(!1), this._clearNotices();
+			this._validationNotices.dispose(), this._selectedKey = "", this._draft = ac(), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._expandedZones = /* @__PURE__ */ new Set(), this._setDirty(!1), this._clearNotices();
 		}, this._saveDayAsTemplate = async () => {
 			let e = this._templateDialog, t = this.hass ? new P(this.hass) : void 0;
 			if (!e || !t || !e.name.trim() || this._busy) return;
@@ -25788,7 +25981,7 @@ var Y = class extends Ve {
 				};
 				return;
 			}
-			let a = _c(this._draft).zones[e.entityId];
+			let a = vc(this._draft).zones[e.entityId];
 			if (a.behavior !== "schedule") return;
 			this._busy = "template-save";
 			let o = Symbol("profile-template-save");
@@ -25824,7 +26017,7 @@ var Y = class extends Ve {
 					return;
 				}
 			}
-			this._draft = pc(this._draft, e.entityId, e.weekday, e.targets), this._cloneClimateTargets = {
+			this._draft = mc(this._draft, e.entityId, e.weekday, e.targets), this._cloneClimateTargets = {
 				...this._cloneClimateTargets,
 				[e.entityId]: /* @__PURE__ */ new Set()
 			}, this._closeClimateCloneDialog(), this._setDirty(!0);
@@ -25837,7 +26030,7 @@ var Y = class extends Ve {
 			let e = this._dialogTrigger;
 			this._dialogTrigger = void 0, this.updateComplete.then(() => e?.focus());
 		}, this._createMode = () => {
-			this._discardModeChanges() && (this._selectedModeKey = "", this._modeDraft = Cu(), this._modeEditorOpen = !0, this._setModeDirty(!1));
+			this._discardModeChanges() && (this._selectedModeKey = "", this._modeDraft = wu(), this._modeEditorOpen = !0, this._setModeDirty(!1));
 		};
 	}
 	connectedCallback() {
@@ -25860,12 +26053,12 @@ var Y = class extends Ve {
 		if (e.has("data")) {
 			if (this._modeEditorOpen && this._selectedModeKey) {
 				let e = this.data?.modes?.find((e) => e.key === this._selectedModeKey);
-				e ? this._modeDirty || (this._modeDraft = Cu(e)) : this._clearModeSelection();
+				e ? this._modeDirty || (this._modeDraft = wu(e)) : this._clearModeSelection();
 			}
 			let e = this.data?.profiles ?? [], t = this._localEntityIds();
 			(!this._selectedEntity || !t.includes(this._selectedEntity)) && (this._selectedEntity = t[0] ?? "");
 			let n = e.find((e) => e.key === this._selectedKey);
-			this._dirty && this._selectedKey && !n ? (this._clearSelection(), this._error = this._t("profileRemovedElsewhere")) : this._dirty || (n ? this._draft = ic(n) : this._selectedKey && this._clearSelection());
+			this._dirty && this._selectedKey && !n ? (this._clearSelection(), this._error = this._t("profileRemovedElsewhere")) : this._dirty || (n ? this._draft = ac(n) : this._selectedKey && this._clearSelection());
 		}
 		this._validationNotices.sync(this._desiredValidationNotices());
 	}
@@ -25952,7 +26145,7 @@ var Y = class extends Ve {
 	_renderClimateCloneDialog() {
 		let e = this._climateCloneDialog;
 		if (!e) return E;
-		let t = this.hass?.states?.[e.entityId]?.attributes?.friendly_name ?? e.entityId, n = [...e.targets].map((e) => this.hass?.states?.[e]?.attributes?.friendly_name ?? e), r = [...e.targets].filter((e) => lc(this._draft.zones[e]) !== "schedule");
+		let t = this.hass?.states?.[e.entityId]?.attributes?.friendly_name ?? e.entityId, n = [...e.targets].map((e) => this.hass?.states?.[e]?.attributes?.friendly_name ?? e), r = [...e.targets].filter((e) => uc(this._draft.zones[e]) !== "schedule");
 		return T`
       <div class="profile-dialog-backdrop" @click=${(e) => {
 			e.target === e.currentTarget && this._closeClimateCloneDialog();
@@ -26107,7 +26300,7 @@ var Y = class extends Ve {
     `;
 	}
 	_renderActiveSelector() {
-		let e = ac(this.data), t = this.data?.global.active_profile_ids ?? [], n = this.data?.profiles ?? [], r = this.data?.modes ?? [], i = Tu(this.data), a = i === "default" ? this._t("modeDefault") : i === "manual" ? this._t("modeManual") : i.name, o = i === "default" ? "default" : i === "manual" ? "manual" : `custom:${i.key}`, s = typeof i == "string" ? [] : i.profile_ids.map((e) => n.find((t) => t.key === e)).filter((e) => !!e), c = i === "default" ? this._t("modeDefaultDescription") : i === "manual" ? this._t("modeManualDescription") : this._t("modeCustomDescription", { profile: s.map((e) => e.name).join(", ") }), l = !!this._busy || this._operationRunning() || this._dirty || this._modeDirty, u = this.activeSetupControls === "modes" || this.activeSetupControls === "profiles" ? this.activeSetupControls : "both", d = u !== "profiles", f = u !== "modes";
+		let e = oc(this.data), t = this.data?.global.active_profile_ids ?? [], n = this.data?.profiles ?? [], r = this.data?.modes ?? [], i = Eu(this.data), a = i === "default" ? this._t("modeDefault") : i === "manual" ? this._t("modeManual") : i.name, o = i === "default" ? "default" : i === "manual" ? "manual" : `custom:${i.key}`, s = typeof i == "string" ? [] : i.profile_ids.map((e) => n.find((t) => t.key === e)).filter((e) => !!e), c = i === "default" ? this._t("modeDefaultDescription") : i === "manual" ? this._t("modeManualDescription") : this._t("modeCustomDescription", { profile: s.map((e) => e.name).join(", ") }), l = !!this._busy || this._operationRunning() || this._dirty || this._modeDirty, u = this.activeSetupControls === "modes" || this.activeSetupControls === "profiles" ? this.activeSetupControls : "both", d = u !== "profiles", f = u !== "modes";
 		return T`
       <section class="profile-active-context active-setup-card" aria-label=${this._t("activeSetup")}>
         <div class="active-setup-heading">
@@ -26351,7 +26544,7 @@ var Y = class extends Ve {
     `;
 	}
 	_renderModeEditor() {
-		let e = this.data?.profiles ?? [], t = wu(this._modeDraft, this.data?.modes ?? [], e);
+		let e = this.data?.profiles ?? [], t = Tu(this._modeDraft, this.data?.modes ?? [], e);
 		return T`
       <section class="mode-editor">
         <div class="mode-field mode-name-field">
@@ -26430,7 +26623,7 @@ var Y = class extends Ve {
             </button>
           </div>
         </div>
-        <div class="profile-schedule-error">${ls(c)}</div>
+        <div class="profile-schedule-error">${us(c)}</div>
         <div class="metadata">
           <div class="profile-color-field profile-metadata-row">
             <label for="profile-color-picker">${this._t("profileColor")}</label>
@@ -26519,7 +26712,7 @@ var Y = class extends Ve {
 	_renderWorkspaceZone() {
 		let e = this._localEntityIds();
 		if (!e.length) return T`<span class="empty">${this._t("noManagedEntities")}</span>`;
-		let t = e.includes(this._selectedEntity) ? this._selectedEntity : e[0], n = this._draft.zones[t], r = lc(n), i = this._zoneScheduleError(t), a = _c(this._draft), o = this._persistedProfileInput();
+		let t = e.includes(this._selectedEntity) ? this._selectedEntity : e[0], n = this._draft.zones[t], r = uc(n), i = this._zoneScheduleError(t), a = vc(this._draft), o = this._persistedProfileInput();
 		return T`
       <section class="schedule-zone-picker profile-workspace-zone-picker">
         <div class="schedule-step-heading"><strong>${this._t("scheduleStepClimate")}</strong></div>
@@ -26592,7 +26785,7 @@ var Y = class extends Ve {
     `;
 	}
 	_renderZone(e) {
-		let t = this._draft.zones[e], n = lc(t), r = this._zoneScheduleError(e), i = this._expandedZones.has(e), a = `profile-zone-content-${e.replace(/[^a-zA-Z0-9_-]/g, "-")}`, o = this.hass?.states?.[e]?.attributes?.friendly_name ?? e, s = this._t(i ? "profileCollapseClimate" : "profileExpandClimate", { climate: o }), c = () => this._toggleZone(e);
+		let t = this._draft.zones[e], n = uc(t), r = this._zoneScheduleError(e), i = this._expandedZones.has(e), a = `profile-zone-content-${e.replace(/[^a-zA-Z0-9_-]/g, "-")}`, o = this.hass?.states?.[e]?.attributes?.friendly_name ?? e, s = this._t(i ? "profileCollapseClimate" : "profileExpandClimate", { climate: o }), c = () => this._toggleZone(e);
 		return T`
       <article class=${`profile-zone ${i ? "expanded" : "collapsed"} ${r ? "error" : ""}`}>
         <div
@@ -26653,7 +26846,7 @@ var Y = class extends Ve {
     `;
 	}
 	_renderSchedule(e, t) {
-		let n = Xt(this.data?.settings?.first_weekday ?? k[0]), r = n.includes(this.initialWeekday) ? this.initialWeekday : n[0], i = this._selectedDays[e] ?? r, a = t.schedule[i] ?? [], o = this._externalCapabilities(e), s = new Set([...this._cloneWeekdayTargets[e] ?? []].filter((e) => e !== i)), c = this._localEntityIds().filter((t) => t !== e), l = new Set([...this._cloneClimateTargets[e] ?? []].filter((e) => c.includes(e))), u = this._blockEditorHost(e, i), d = _c(this._draft), f = this._persistedProfileInput(), p = T`<div class="day-tabs">
+		let n = Xt(this.data?.settings?.first_weekday ?? k[0]), r = n.includes(this.initialWeekday) ? this.initialWeekday : n[0], i = this._selectedDays[e] ?? r, a = t.schedule[i] ?? [], o = this._externalCapabilities(e), s = new Set([...this._cloneWeekdayTargets[e] ?? []].filter((e) => e !== i)), c = this._localEntityIds().filter((t) => t !== e), l = new Set([...this._cloneClimateTargets[e] ?? []].filter((e) => c.includes(e))), u = this._blockEditorHost(e, i), d = vc(this._draft), f = this._persistedProfileInput(), p = T`<div class="day-tabs">
           ${n.map((n) => {
 			let r = this._profileDayDirty(e, n, d, f), a = M(j(this.hass), n);
 			return T`
@@ -26673,7 +26866,7 @@ var Y = class extends Ve {
             </button>
           `;
 		})}
-        </div>`, m = Ru(u, e, "template", {
+        </div>`, m = zu(u, e, "template", {
 			schedule: t.schedule,
 			weekday: i
 		}), h = T`<div class="template-panel">
@@ -26703,10 +26896,10 @@ var Y = class extends Ve {
             </button>
           </div>`, _ = T`<div class="draft-list profile-block-list">
           ${a.length ? T`
-                ${Hu(u, "template")}
-                ${a.map((t, n) => _u(nd("template", `${this._selectedKey}:${e}`, i, n), Wu(u, t, n, "template")))}
                 ${Uu(u, "template")}
-              ` : Uu(u, "template")}
+                ${a.map((t, n) => vu(rd("template", `${this._selectedKey}:${e}`, i, n), Gu(u, t, n, "template")))}
+                ${Wu(u, "template")}
+              ` : Wu(u, "template")}
         </div>`, v = T`<div class="copy-panel profile-day-copy">
           <div class="copy-header">
             <div>
@@ -26714,7 +26907,7 @@ var Y = class extends Ve {
               <strong>${this._t("otherDays")}</strong>
             </div>
           </div>
-          ${ku(this._t.bind(this), (t) => this._setCloneDayPreset(e, i, t), s.size > 0)}
+          ${Au(this._t.bind(this), (t) => this._setCloneDayPreset(e, i, t), s.size > 0)}
           <div class="copy-targets">
             ${n.filter((e) => e !== i).map((t) => T`
                 <label class="check-target" title=${M(j(this.hass), t)}>
@@ -26774,13 +26967,13 @@ var Y = class extends Ve {
         ` : E}`;
 		return T`
       <div class="profile-week">
-        ${Du({
+        ${Ou({
 			dayTabs: p,
 			timeline: m,
 			configureHeading: this._t("scheduleStepConfigure"),
 			helper: this._t("templateOptionalHint"),
 			templatePanel: h,
-			externalUsage: Au(this._t.bind(this), o ? yi(a, o) : void 0),
+			externalUsage: ju(this._t.bind(this), o ? yi(a, o) : void 0),
 			blockList: _,
 			primaryActions: g,
 			copyPanels: v
@@ -26792,16 +26985,16 @@ var Y = class extends Ve {
 		if (this._dirty && !window.confirm(this._t("profileDiscardChanges"))) return;
 		let e = this.hass ? new P(this.hass) : void 0;
 		if (!e || this._busy) return;
-		let t = hc(this._t("profileNewName"), this.data?.profiles ?? []);
+		let t = gc(this._t("profileNewName"), this.data?.profiles ?? []);
 		this._busy = "save", this._clearNotices();
 		try {
-			let n = await vu(e, {
-				...ic(),
+			let n = await yu(e, {
+				...ac(),
 				name: t
 			});
 			this._emitData(n);
 			let r = n.profiles?.find((e) => e.key === n.profile_id) ?? n.profiles?.find((e) => e.name === t);
-			r && (this._selectedKey = r.key, this._draft = ic(r), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._expandedZones = /* @__PURE__ */ new Set()), this._setDirty(!1), this._showSuccess(this._t("profileSaved"));
+			r && (this._selectedKey = r.key, this._draft = ac(r), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._expandedZones = /* @__PURE__ */ new Set()), this._setDirty(!1), this._showSuccess(this._t("profileSaved"));
 		} catch (e) {
 			this._error = this._errorMessage(e, "profileInvalidSchedule");
 		} finally {
@@ -26809,7 +27002,7 @@ var Y = class extends Ve {
 		}
 	}
 	_selectProfile(e) {
-		this._dirty && !window.confirm(this._t("profileDiscardChanges")) || (this._selectedKey = e.key, this._draft = ic(e), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._expandedZones = /* @__PURE__ */ new Set(), this._setDirty(!1), this._clearNotices());
+		this._dirty && !window.confirm(this._t("profileDiscardChanges")) || (this._selectedKey = e.key, this._draft = ac(e), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}, this._expandedZones = /* @__PURE__ */ new Set(), this._setDirty(!1), this._clearNotices());
 	}
 	_updateMetadata(e, t) {
 		this._draft = {
@@ -26818,7 +27011,7 @@ var Y = class extends Ve {
 		}, this._setDirty(!0);
 	}
 	_setZoneBehavior(e, t) {
-		this._isExternalEntity(e) && t === "pause" || (this._draft = uc(this._draft, e, t), this._cloneWeekdayTargets = {
+		this._isExternalEntity(e) && t === "pause" || (this._draft = dc(this._draft, e, t), this._cloneWeekdayTargets = {
 			...this._cloneWeekdayTargets,
 			[e]: /* @__PURE__ */ new Set()
 		}, this._cloneClimateTargets = {
@@ -26880,7 +27073,7 @@ var Y = class extends Ve {
 				...this._draft.zones,
 				[e]: {
 					...r,
-					schedule: fc(r.schedule, t, n)
+					schedule: pc(r.schedule, t, n)
 				}
 			}
 		}, this._cloneWeekdayTargets = {
@@ -26913,7 +27106,7 @@ var Y = class extends Ve {
 		}, this._setDirty(!0));
 	}
 	_addBlock(e, t) {
-		let n = this._blocks(e, t), r = li(n, mc(n), this.data?.temperature_unit), i = this.hass?.states?.[e];
+		let n = this._blocks(e, t), r = li(n, hc(n), this.data?.temperature_unit), i = this.hass?.states?.[e];
 		!n.length && Ft(i) && !Pt(i) && (r = r.map((e, t) => t === r.length - 1 ? {
 			...e,
 			temperature: void 0,
@@ -27034,8 +27227,8 @@ var Y = class extends Ve {
 			_inputValue: (e) => e.currentTarget.value,
 			_formatTemperatureLimit: (e) => this._formatTemperatureLimit(e),
 			_currentTimelineNow: () => this.timelineNow ?? /* @__PURE__ */ new Date(),
-			_formatScheduleTime: (e) => Ha(e, Ra(j(this.hass)), this.hass?.locale?.time_format),
-			_formatTemperature: (e) => Wa(e, this.data?.temperature_unit ?? "°C"),
+			_formatScheduleTime: (e) => Ua(e, za(j(this.hass)), this.hass?.locale?.time_format),
+			_formatTemperature: (e) => Ga(e, this.data?.temperature_unit ?? "°C"),
 			_blocksForSource: () => this._blocks(e, t),
 			_setBlocksForSource: (n, r) => this._setBlocks(e, t, r)
 		};
@@ -27044,8 +27237,8 @@ var Y = class extends Ve {
 			a[n] && (a[n] = {
 				...a[n],
 				start: r
-			}, this._setBlocks(e, t, a), i.sort && ha(o, "template"));
-		}, o._sortDraftBlocksByStart = () => ha(o, "template"), o._resizeTimelineBlock = (e, t, n) => ma(o, e, t, n, "template"), o._timelineBlocks = () => ga(o, "template"), o._handleTimelineDragStart = (e, t, n) => oa(o, e, t, n), o._handleTimelineDragOver = (e) => sa(e), o._handleTimelineDrop = (e, t = "template") => ca(o, e, t), o._handleTimelineDragEnd = () => ua(o), o._handleTimelineResizeStart = (e, t, n, r) => da(o, e, t, n, r), o._handleTimelineResizeMove = (e) => fa(o, e), o._handleTimelineResizeEnd = (e) => pa(o), o;
+			}, this._setBlocks(e, t, a), i.sort && ga(o, "template"));
+		}, o._sortDraftBlocksByStart = () => ga(o, "template"), o._resizeTimelineBlock = (e, t, n) => ha(o, e, t, n, "template"), o._timelineBlocks = () => _a(o, "template"), o._handleTimelineDragStart = (e, t, n) => sa(o, e, t, n), o._handleTimelineDragOver = (e) => ca(e), o._handleTimelineDrop = (e, t = "template") => la(o, e, t), o._handleTimelineDragEnd = () => da(o), o._handleTimelineResizeStart = (e, t, n, r) => fa(o, e, t, n, r), o._handleTimelineResizeMove = (e) => pa(o, e), o._handleTimelineResizeEnd = (e) => ma(o), o;
 	}
 	_formatTemperatureLimit(e) {
 		return String(Number.isInteger(e) ? e : Number(e.toFixed(2)));
@@ -27065,7 +27258,7 @@ var Y = class extends Ve {
 		});
 	}
 	_hasScheduleValidationError() {
-		return gc(this._draft) === "schedule" || this._unsupportedScheduleModeError() ? !0 : Object.entries(this._draft.zones).some(([e, t]) => t.behavior === "schedule" && k.some((n) => (t.schedule[n] ?? []).some((t) => !!this._temperatureError(e, t))));
+		return _c(this._draft) === "schedule" || this._unsupportedScheduleModeError() ? !0 : Object.entries(this._draft.zones).some(([e, t]) => t.behavior === "schedule" && k.some((n) => (t.schedule[n] ?? []).some((t) => !!this._temperatureError(e, t))));
 	}
 	_desiredValidationNotices() {
 		if (!this._selectedKey) return [];
@@ -27166,13 +27359,13 @@ var Y = class extends Ve {
 		}
 	}
 	_selectMode(e) {
-		this._discardModeChanges() && (this._selectedModeKey = e.key, this._modeDraft = Cu(e), this._modeEditorOpen = !0, this._setModeDirty(!1));
+		this._discardModeChanges() && (this._selectedModeKey = e.key, this._modeDraft = wu(e), this._modeEditorOpen = !0, this._setModeDirty(!1));
 	}
 	_discardModeChanges() {
 		return !this._modeDirty || window.confirm(this._t("modeDiscardChanges"));
 	}
 	_clearModeSelection() {
-		this._selectedModeKey = "", this._modeDraft = Cu(), this._modeEditorOpen = !1, this._setModeDirty(!1);
+		this._selectedModeKey = "", this._modeDraft = wu(), this._modeEditorOpen = !1, this._setModeDirty(!1);
 	}
 	_updateModeDraft(e, t) {
 		this._modeDraft = {
@@ -27189,7 +27382,7 @@ var Y = class extends Ve {
 	}
 	async _saveMode() {
 		let e = this.hass ? new P(this.hass) : void 0;
-		if (!(!e || this._busy || wu(this._modeDraft, this.data?.modes ?? [], this.data?.profiles ?? []))) {
+		if (!(!e || this._busy || Tu(this._modeDraft, this.data?.modes ?? [], this.data?.profiles ?? []))) {
 			this._busy = "mode-save", this._clearNotices();
 			try {
 				let t = await e.setVelairMode({
@@ -27199,7 +27392,7 @@ var Y = class extends Ve {
 				});
 				this._emitData(t);
 				let n = this._modeDraft.key ?? t.mode_id, r = t.modes?.find((e) => e.key === n);
-				r && (this._selectedModeKey = r.key, this._modeDraft = Cu(r)), this._setModeDirty(!1), this._showSuccess(this._t("modeSaved"));
+				r && (this._selectedModeKey = r.key, this._modeDraft = wu(r)), this._setModeDirty(!1), this._showSuccess(this._t("modeSaved"));
 			} catch (e) {
 				this._error = this._errorMessage(e, "modeUnableSave");
 			} finally {
@@ -27226,7 +27419,7 @@ var Y = class extends Ve {
 		let n = this.data?.operation_status?.id;
 		this._busy = "activate", this._clearNotices();
 		try {
-			this._emitData(await bu(t, e));
+			this._emitData(await xu(t, e));
 		} catch (e) {
 			let t = this.data?.operation_status;
 			t?.state === "failed" && t.id !== n || (this._error = this._errorMessage(e, "profileUnableActivate"));
@@ -27258,10 +27451,10 @@ var Y = class extends Ve {
 		if (!(!e || this._busy)) {
 			this._busy = "save", this._clearNotices();
 			try {
-				let t = await vu(e, this._draft);
+				let t = await yu(e, this._draft);
 				this._emitData(t);
 				let n = t.profiles?.find((e) => e.key === (this._draft.key ?? t.profile_id)) ?? t.profiles?.find((e) => e.name === this._draft.name.trim());
-				n && (this._selectedKey = n.key, this._draft = ic(n), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}), this._setDirty(!1), this._showSuccess(this._t("profileSaved"));
+				n && (this._selectedKey = n.key, this._draft = ac(n), this._selectedDays = {}, this._cloneWeekdayTargets = {}, this._cloneClimateTargets = {}), this._setDirty(!1), this._showSuccess(this._t("profileSaved"));
 			} catch (e) {
 				this._error = e instanceof Error && e.message === "name" ? this._t("profileNameRequired") : e instanceof Error && e.message === "icon" ? this._t("profileInvalidIcon") : e instanceof Error && e.message === "color" ? this._t("profileInvalidColor") : e instanceof Error && e.message === "description" ? this._t("profileDescriptionTooLong", { count: 500 }) : this._errorMessage(e, "profileInvalidSchedule");
 			} finally {
@@ -27276,7 +27469,7 @@ var Y = class extends Ve {
 		if (window.confirm(this._t(n ? "profileConfirmDeleteActive" : "profileConfirmDelete", { profile: e.name }))) {
 			this._busy = "delete", this._clearNotices();
 			try {
-				this._emitData(await yu(t, e.key)), e.key === this._selectedKey && this._clearSelection(), this._showSuccess(this._t("profileDeleted"));
+				this._emitData(await bu(t, e.key)), e.key === this._selectedKey && this._clearSelection(), this._showSuccess(this._t("profileDeleted"));
 			} catch (e) {
 				this._error = this._errorMessage(e, "profileUnableDelete");
 			} finally {
@@ -27296,10 +27489,10 @@ var Y = class extends Ve {
 	}
 	_persistedProfileInput() {
 		let e = this.data?.profiles?.find((e) => e.key === this._selectedKey);
-		return e ? _c(ic(e)) : void 0;
+		return e ? vc(ac(e)) : void 0;
 	}
 	_profileZoneSummary(e) {
-		let t = this._draft.zones[e], n = lc(t);
+		let t = this._draft.zones[e], n = uc(t);
 		if (n === "schedule") return this._t("profileBehaviorSchedule");
 		if (n === "pause") {
 			let e = t?.behavior === "pause" && t.action === "turn_off" ? this._t("profilePauseTurnOff") : this._t("profilePauseKeep");
@@ -27307,11 +27500,11 @@ var Y = class extends Ve {
 		}
 		return this._t("profileBehaviorDefault");
 	}
-	_profileZoneDirty(e, t = _c(this._draft), n = this._persistedProfileInput()) {
+	_profileZoneDirty(e, t = vc(this._draft), n = this._persistedProfileInput()) {
 		let r = t.zones[e] ?? { behavior: "normal" }, i = n?.zones[e] ?? { behavior: "normal" };
 		return this._canonicalJson(r) !== this._canonicalJson(i);
 	}
-	_profileDayDirty(e, t, n = _c(this._draft), r = this._persistedProfileInput()) {
+	_profileDayDirty(e, t, n = vc(this._draft), r = this._persistedProfileInput()) {
 		let i = n.zones[e];
 		if (i?.behavior !== "schedule") return !1;
 		let a = r?.zones[e], o = a?.behavior === "schedule" ? a.schedule[t] ?? [] : [];
@@ -27319,7 +27512,7 @@ var Y = class extends Ve {
 	}
 	_profileDraftChanged() {
 		let e = this._persistedProfileInput();
-		return e ? this._canonicalJson(_c(this._draft)) !== this._canonicalJson(e) : !1;
+		return e ? this._canonicalJson(vc(this._draft)) !== this._canonicalJson(e) : !1;
 	}
 	_canonicalJson(e) {
 		return JSON.stringify(e, (e, t) => !t || typeof t != "object" || Array.isArray(t) ? t : Object.fromEntries(Object.entries(t).sort(([e], [t]) => e.localeCompare(t))));
@@ -27367,7 +27560,7 @@ var Y = class extends Ve {
 		return Ct(j(this.hass), e, t);
 	}
 	static {
-		this.styles = [Yn, Eu];
+		this.styles = [Yn, Du];
 	}
 };
 J([D({ attribute: !1 })], Y.prototype, "hass", void 0), J([D({ attribute: !1 })], Y.prototype, "data", void 0), J([D({ attribute: "initial-weekday" })], Y.prototype, "initialWeekday", void 0), J([D({ attribute: !1 })], Y.prototype, "timelineNow", void 0), J([D({ type: Boolean })], Y.prototype, "compact", void 0), J([D({ attribute: "active-setup-controls" })], Y.prototype, "activeSetupControls", void 0), J([D({ type: String })], Y.prototype, "workspace", void 0), J([D({
@@ -27376,9 +27569,9 @@ J([D({ attribute: !1 })], Y.prototype, "hass", void 0), J([D({ attribute: !1 })]
 })], Y.prototype, "scheduleWorkspace", void 0), J([O()], Y.prototype, "_selectedKey", void 0), J([O()], Y.prototype, "_draft", void 0), J([O()], Y.prototype, "_selectedDays", void 0), J([O()], Y.prototype, "_cloneWeekdayTargets", void 0), J([O()], Y.prototype, "_cloneClimateTargets", void 0), J([O()], Y.prototype, "_busy", void 0), J([O()], Y.prototype, "_dirty", void 0), J([O()], Y.prototype, "_error", void 0), J([O()], Y.prototype, "_expandedZones", void 0), J([O()], Y.prototype, "_selectedModeKey", void 0), J([O()], Y.prototype, "_modeEditorOpen", void 0), J([O()], Y.prototype, "_modeDraft", void 0), J([O()], Y.prototype, "_modeDirty", void 0), J([O()], Y.prototype, "_activeLibrary", void 0), J([O()], Y.prototype, "_selectedEntity", void 0), J([O()], Y.prototype, "_templateDialog", void 0), J([O()], Y.prototype, "_climateCloneDialog", void 0), customElements.get("velair-profiles-view") || customElements.define("velair-profiles-view", Y);
 //#endregion
 //#region src/velair/views/schedule-view.ts
-function ju(e, t, n, r) {
+function Mu(e, t, n, r) {
 	return !e._hasExternalConfig && e._scheduleSource === "profile" ? T`
-      ${Mu(e)}
+      ${Nu(e)}
       <velair-profiles-view
         workspace="profiles"
         schedule-workspace
@@ -27394,12 +27587,12 @@ function ju(e, t, n, r) {
         @profile-success=${(t) => e._showSuccess(t.detail)}
       ></velair-profiles-view>
     ` : T`
-    ${e._hasExternalConfig ? E : Mu(e)}
-    ${Pu(e, t, n)}
-    ${n && r ? Fu(e, n, r) : T`<div class="notice">${e._t("noManagedEntities")}</div>`}
+    ${e._hasExternalConfig ? E : Nu(e)}
+    ${Fu(e, t, n)}
+    ${n && r ? Iu(e, n, r) : T`<div class="notice">${e._t("noManagedEntities")}</div>`}
   `;
 }
-function Mu(e) {
+function Nu(e) {
 	return T`
     <div class="schedule-source-selector" role="group" aria-label=${e._t("scheduleSourceLabel")}>
       <button
@@ -27423,7 +27616,7 @@ function Mu(e) {
     </div>
   `;
 }
-function Nu(e, t, n) {
+function Pu(e, t, n) {
 	return T`
     <section class="zones">
       ${t.map((t) => T`
@@ -27442,17 +27635,17 @@ function Nu(e, t, n) {
     </section>
   `;
 }
-function Pu(e, t, n) {
+function Fu(e, t, n) {
 	return t.length ? T`
     <section class="schedule-zone-picker">
       <div class="schedule-step-heading">
         <strong>${e._t("scheduleStepClimate")}</strong>
       </div>
-      ${Nu(e, t, n)}
+      ${Pu(e, t, n)}
     </section>
   ` : E;
 }
-function Fu(e, t, n) {
+function Iu(e, t, n) {
 	let r = e._hasDraftValidationError("schedule"), i = n.execution?.type === "external", a = i ? e._data?.external_execution?.systems.find((e) => e.provider === n.execution?.provider)?.capabilities : void 0;
 	return T`
     <section class="schedule">
@@ -27468,25 +27661,25 @@ function Fu(e, t, n) {
       ${i ? T`<div class="notice external-execution-notice" role="status">
           <ha-icon icon="mdi:information-outline"></ha-icon>
           <span>${e._t("externalActionsInactive")}</span>
-        </div>` : Iu(e, t, n)}
-      ${Du({
+        </div>` : Lu(e, t, n)}
+      ${Ou({
 		dayTabs: T`<div class="day-tabs">
-          ${e._orderedWeekdays().map((t) => Lu(e, t, n.schedule[t] ?? []))}
+          ${e._orderedWeekdays().map((t) => Ru(e, t, n.schedule[t] ?? []))}
         </div>`,
-		timeline: Ru(e, t, "schedule", {
+		timeline: zu(e, t, "schedule", {
 			schedule: n.schedule,
 			weekday: e._selectedWeekday
 		}),
 		configureHeading: e._t("scheduleStepConfigure"),
 		helper: e._t("templateOptionalHint"),
-		templatePanel: Vu(e),
-		externalUsage: Au(e._t.bind(e), a ? yi(e._draftBlocks, a) : void 0),
+		templatePanel: Hu(e),
+		externalUsage: ju(e._t.bind(e), a ? yi(e._draftBlocks, a) : void 0),
 		blockList: T`<div class="draft-list">
           ${e._draftBlocks.length ? T`
-                ${Hu(e, "schedule")}
-                ${e._draftBlocks.map((n, r) => _u(nd("schedule", t, e._selectedWeekday, r), Wu(e, n, r, "schedule")))}
                 ${Uu(e, "schedule")}
-              ` : Uu(e, "schedule")}
+                ${e._draftBlocks.map((n, r) => vu(rd("schedule", t, e._selectedWeekday, r), Gu(e, n, r, "schedule")))}
+                ${Wu(e, "schedule")}
+              ` : Wu(e, "schedule")}
         </div>`,
 		primaryActions: T`<div class="schedule-save-actions">
           <button
@@ -27511,14 +27704,14 @@ function Fu(e, t, n) {
         </div>`,
 		copyPanels: T`
           <div class="schedule-copy-helper">${e._t("scheduleCopyHint")}</div>
-          ${id(e)}
-          ${od(e)}
+          ${ad(e)}
+          ${sd(e)}
         `
 	})}
     </section>
   `;
 }
-function Iu(e, t, n) {
+function Lu(e, t, n) {
 	let r = n.override ?? e._data?.active_overrides?.[t];
 	if (!wr(r)) return E;
 	let i = Number(r.temperature), a = Number(r.target_temp_low), o = Number(r.target_temp_high), s = F(r.until), c = typeof r.hvac_mode == "string" ? r.hvac_mode : "";
@@ -27528,7 +27721,7 @@ function Iu(e, t, n) {
       <div>
         <strong>${e._t("boostActive")}</strong>
         <span>
-          ${Number.isFinite(i) ? T`${e._t("boostTarget")}: ${e._formatTemperature(i, t)}` : Number.isFinite(a) && Number.isFinite(o) ? T`${e._t("boostTarget")}: ${Yu(e, a, o, t)}` : E}
+          ${Number.isFinite(i) ? T`${e._t("boostTarget")}: ${e._formatTemperature(i, t)}` : Number.isFinite(a) && Number.isFinite(o) ? T`${e._t("boostTarget")}: ${Xu(e, a, o, t)}` : E}
           ${c ? T` - ${e._modeLabel(c)}` : E}
           ${s ? T` - ${e._t("boostUntil")}: ${e._formatRemaining(Math.max(0, s - Date.now()))}` : E}
         </span>
@@ -27536,7 +27729,7 @@ function Iu(e, t, n) {
     </div>
   `;
 }
-function Lu(e, t, n) {
+function Ru(e, t, n) {
 	return T`
     <button
       type="button"
@@ -27548,7 +27741,7 @@ function Lu(e, t, n) {
     </button>
   `;
 }
-function Ru(e, t, n = "schedule", r) {
+function zu(e, t, n = "schedule", r) {
 	let i = e._timelineBlocks(n), a = r ? jr({
 		...r.schedule,
 		[r.weekday]: i.map((e) => e.draft)
@@ -27563,7 +27756,7 @@ function Ru(e, t, n = "schedule", r) {
           <span>12</span>
           <span>18</span>
           <span>24</span>
-          ${zu(e)}
+          ${Bu(e)}
         </div>
       </div>
       <div
@@ -27572,14 +27765,14 @@ function Ru(e, t, n = "schedule", r) {
         @drop=${(t) => e._handleTimelineDrop(t, n)}
       >
         ${i.length || a ? T`
-              ${a ? Gu(e, a, t) : E}
-              ${i.map((r) => Bu(e, r, t, n))}
+              ${a ? Ku(e, a, t) : E}
+              ${i.map((r) => Vu(e, r, t, n))}
             ` : T`<span class="empty timeline-empty">${e._t("noBlocks")}</span>`}
       </div>
     </div>
   `;
 }
-function zu(e) {
+function Bu(e) {
 	let t = Dr(e._currentTimelineNow());
 	return T`
     <div
@@ -27592,8 +27785,8 @@ function zu(e) {
     </div>
   `;
 }
-function Bu(e, t, n, r = "schedule") {
-	let i = t.draft.action === qe, a = Number(t.draft.temperature), o = Number(t.draft.target_temp_low), s = Number(t.draft.target_temp_high), c = i ? e._t("off") : L(t.draft) && Number.isFinite(o) && Number.isFinite(s) ? Yu(e, o, s, n) : Number.isFinite(a) ? e._formatTemperature(a, n) : e._t("invalidTemperatureRange"), l = e._formatScheduleTime(t.draft.start), u = i ? "" : t.draft.hvac_mode || e._t("keep"), d = td(e, t.draft), f = d.map((e) => e.short).join(" • "), p = [
+function Vu(e, t, n, r = "schedule") {
+	let i = t.draft.action === qe, a = Number(t.draft.temperature), o = Number(t.draft.target_temp_low), s = Number(t.draft.target_temp_high), c = i ? e._t("off") : L(t.draft) && Number.isFinite(o) && Number.isFinite(s) ? Xu(e, o, s, n) : Number.isFinite(a) ? e._formatTemperature(a, n) : e._t("invalidTemperatureRange"), l = e._formatScheduleTime(t.draft.start), u = i ? "" : t.draft.hvac_mode || e._t("keep"), d = nd(e, t.draft), f = d.map((e) => e.short).join(" • "), p = [
 		`${l} - ${c}`,
 		u ? `${e._t("mode")}: ${u}` : "",
 		...d.map((e) => `${e.label}: ${e.value}`)
@@ -27637,7 +27830,7 @@ function Bu(e, t, n, r = "schedule") {
     </div>
   `;
 }
-function Vu(e) {
+function Hu(e) {
 	let t = e._scheduleTemplates();
 	return T`
     <div class="template-panel">
@@ -27662,7 +27855,7 @@ function Vu(e) {
     </div>
   `;
 }
-function Hu(e, t = "schedule") {
+function Uu(e, t = "schedule") {
 	let n = e._temperatureUnit?.(t === "schedule" ? e._selectedEntity : void 0) ?? "°C";
 	return T`
     <div class="draft-list-header" aria-hidden="true">
@@ -27674,7 +27867,7 @@ function Hu(e, t = "schedule") {
     </div>
   `;
 }
-function Uu(e, t = "schedule") {
+function Wu(e, t = "schedule") {
 	return T`
     <div class="draft-add-row">
       <button
@@ -27689,8 +27882,8 @@ function Uu(e, t = "schedule") {
     </div>
   `;
 }
-function Wu(e, t, n, r = "schedule") {
-	let i = (t.action || "set_temperature") === qe, a = i ? "off" : t.hvac_mode ?? "", o = e._temperatureError(t, r), s = L(t), [c, l] = e._temperatureLimits(r), u = e._temperatureStep(r), d = Mt(c, u), f = e._temperatureUnit?.(r === "schedule" ? e._selectedEntity : void 0) ?? "°C", p = e._hvacModeOptions(r), m = a && !p.includes(a) ? [...p, a] : p, h = e._fanModeOptions(r), g = e._presetModeOptions(r), _ = e._swingModeOptions(r), v = e._swingHorizontalModeOptions(r), y = e._humidityLimits(r), b = !i && (h.length > 0 || g.length > 0 || _.length > 0 || v.length > 0 || !!y), x = td(e, t), S = x.length > 0, C = b || S, ee = S ? x.map((e) => e.short).join(" • ") : e._t("climateOptionsAdd");
+function Gu(e, t, n, r = "schedule") {
+	let i = (t.action || "set_temperature") === qe, a = i ? "off" : t.hvac_mode ?? "", o = e._temperatureError(t, r), s = L(t), [c, l] = e._temperatureLimits(r), u = e._temperatureStep(r), d = Mt(c, u), f = e._temperatureUnit?.(r === "schedule" ? e._selectedEntity : void 0) ?? "°C", p = e._hvacModeOptions(r), m = a && !p.includes(a) ? [...p, a] : p, h = e._fanModeOptions(r), g = e._presetModeOptions(r), _ = e._swingModeOptions(r), v = e._swingHorizontalModeOptions(r), y = e._humidityLimits(r), b = !i && (h.length > 0 || g.length > 0 || _.length > 0 || v.length > 0 || !!y), x = nd(e, t), S = x.length > 0, C = b || S, ee = S ? x.map((e) => e.short).join(" • ") : e._t("climateOptionsAdd");
 	return T`
     <div class=${o ? "editable-block invalid" : "editable-block"}>
       <label>
@@ -27704,7 +27897,7 @@ function Wu(e, t, n, r = "schedule") {
       <label>
         <span class="label">${e._t("mode")}</span>
         <span class="select-wrap">
-          ${_u(rd(r, n, a, m), T`
+          ${vu(id(r, n, a, m), T`
               <select
                 value=${a}
                 .value=${a}
@@ -27719,14 +27912,14 @@ function Wu(e, t, n, r = "schedule") {
             `)}
         </span>
       </label>
-      ${s ? qu(e, t, n, r, d, l, u, i, o, f) : Ku(e, t, n, r, "temperature", "temp", f, d, l, u, i, o)}
+      ${s ? Ju(e, t, n, r, d, l, u, i, o, f) : qu(e, t, n, r, "temperature", "temp", f, d, l, u, i, o)}
       ${C ? T`
-            <details class="advanced-climate-options" @toggle=${Qu}>
+            <details class="advanced-climate-options" @toggle=${$u}>
               <summary
                 class="icon-button climate-options-toggle"
                 title=${x.map((e) => `${e.label}: ${e.value}`).join("\n") || e._t("climateOptions")}
                 aria-label=${e._t("climateOptions")}
-                @click=${Xu}
+                @click=${Zu}
               >
                 <ha-icon icon="mdi:tune-variant"></ha-icon>
                 ${S ? T`<span class="climate-options-badge">${x.length}</span>` : E}
@@ -27735,14 +27928,14 @@ function Wu(e, t, n, r = "schedule") {
                 class="climate-options-scrim"
                 type="button"
                 aria-label=${e._t("dismiss")}
-                @click=${Zu}
+                @click=${Qu}
               ></button>
               <fieldset class="advanced-climate-options-fields">
                 <legend>${e._t("climateOptions")}</legend>
-                ${ed(e, t, n, r, "fan_mode", "fanMode", h)}
-                ${ed(e, t, n, r, "preset_mode", "presetMode", g)}
-                ${ed(e, t, n, r, "swing_mode", "swingMode", _)}
-                ${ed(e, t, n, r, "swing_horizontal_mode", "horizontalSwingMode", v)}
+                ${td(e, t, n, r, "fan_mode", "fanMode", h)}
+                ${td(e, t, n, r, "preset_mode", "presetMode", g)}
+                ${td(e, t, n, r, "swing_mode", "swingMode", _)}
+                ${td(e, t, n, r, "swing_horizontal_mode", "horizontalSwingMode", v)}
                 ${y || String(t.humidity ?? "").trim() ? T`
                       <label>
                         <span class="label">${e._t("targetHumidity")}</span>
@@ -27780,8 +27973,8 @@ function Wu(e, t, n, r = "schedule") {
     </div>
   `;
 }
-function Gu(e, t, n) {
-	let r = t.block, i = r.action === qe, a = Number(r.temperature), o = Number(r.target_temp_low), s = Number(r.target_temp_high), c = i ? e._t("off") : L(r) && Number.isFinite(o) && Number.isFinite(s) ? Yu(e, o, s, n) : Number.isFinite(a) ? e._formatTemperature(a, n) : e._t("invalidTemperatureRange"), l = i ? "" : r.hvac_mode || e._t("keep"), u = e._t("timelineContinuesFrom", {
+function Ku(e, t, n) {
+	let r = t.block, i = r.action === qe, a = Number(r.temperature), o = Number(r.target_temp_low), s = Number(r.target_temp_high), c = i ? e._t("off") : L(r) && Number.isFinite(o) && Number.isFinite(s) ? Xu(e, o, s, n) : Number.isFinite(a) ? e._formatTemperature(a, n) : e._t("invalidTemperatureRange"), l = i ? "" : r.hvac_mode || e._t("keep"), u = e._t("timelineContinuesFrom", {
 		day: e._shortWeekdayName(t.sourceWeekday),
 		time: e._formatScheduleTime(r.start)
 	}), d = [
@@ -27811,7 +28004,7 @@ function Gu(e, t, n) {
     </div>
   `;
 }
-function Ku(e, t, n, r, i, a, o, s, c, l, u, d) {
+function qu(e, t, n, r, i, a, o, s, c, l, u, d) {
 	return T`
     <label class=${i === "temperature" ? "single-temperature-field" : "range-temperature-field"}>
       <span class="label">${e._t(a)} (${o})</span>
@@ -27831,18 +28024,18 @@ function Ku(e, t, n, r, i, a, o, s, c, l, u, d) {
     </label>
   `;
 }
-function qu(e, t, n, r, i, a, o, s, c, l = "°C") {
+function Ju(e, t, n, r, i, a, o, s, c, l = "°C") {
 	return T`
     <div class="temperature-range-fields" role="group" aria-label=${e._t("temperatureRange")}>
       <div class=${c ? "temperature-range-control invalid" : "temperature-range-control"}>
-        ${Ju(e, t, n, r, "target_temp_low", "minimumShort", "heatBelow", i, a, o, s, l)}
-        ${Ju(e, t, n, r, "target_temp_high", "maximumShort", "coolAbove", i, a, o, s, l)}
+        ${Yu(e, t, n, r, "target_temp_low", "minimumShort", "heatBelow", i, a, o, s, l)}
+        ${Yu(e, t, n, r, "target_temp_high", "maximumShort", "coolAbove", i, a, o, s, l)}
       </div>
       ${c ? T`<small class="field-error range-error">${c}</small>` : E}
     </div>
   `;
 }
-function Ju(e, t, n, r, i, a, o, s, c, l, u, d) {
+function Yu(e, t, n, r, i, a, o, s, c, l, u, d) {
 	return T`
     <label class="range-temperature-field">
       <span class="range-input-label" aria-hidden="true">${e._t(a)}</span>
@@ -27862,10 +28055,10 @@ function Ju(e, t, n, r, i, a, o, s, c, l, u, d) {
     </label>
   `;
 }
-function Yu(e, t, n, r) {
+function Xu(e, t, n, r) {
 	return `${e._formatTemperature(t, r).replace(/\s+[^\s]+$/, "")}–${e._formatTemperature(n, r)}`;
 }
-function Xu(e) {
+function Zu(e) {
 	let t = e.currentTarget;
 	if (!(t instanceof HTMLElement)) return;
 	let n = t.closest("details"), r = t.getRootNode();
@@ -27873,24 +28066,24 @@ function Xu(e) {
 		e !== n && (e.open = !1);
 	});
 }
-function Zu(e) {
+function Qu(e) {
 	e.preventDefault();
 	let t = e.currentTarget;
 	if (!(t instanceof HTMLElement)) return;
 	let n = t.closest("details");
 	n instanceof HTMLDetailsElement && (n.open = !1);
 }
-function Qu(e) {
+function $u(e) {
 	let t = e.currentTarget;
 	if (!(t instanceof HTMLDetailsElement) || !t.open) return;
 	let n = t.querySelector("summary");
-	n instanceof HTMLElement && $u(n, t);
+	n instanceof HTMLElement && ed(n, t);
 }
-function $u(e, t) {
+function ed(e, t) {
 	let n = e.getBoundingClientRect(), r = window.innerWidth || document.documentElement.clientWidth || 0, i = window.innerHeight || document.documentElement.clientHeight || 0, a = Math.max(280, Math.min(420, r - 32)), o = n.left + n.width / 2 - a / 2, s = Math.max(16, Math.min(o, r - a - 16)), c = Math.max(0, i - n.bottom - 8 - 16), l = Math.max(0, n.top - 8 - 16), u = l > c && c < 260, d = Math.max(180, u ? l : c), f = u ? n.top - 8 : n.bottom + 8;
 	t.style.setProperty("--climate-options-left", `${Math.round(s)}px`), t.style.setProperty("--climate-options-top", `${Math.round(f)}px`), t.style.setProperty("--climate-options-width", `${Math.round(a)}px`), t.style.setProperty("--climate-options-max-height", `${Math.round(d)}px`), t.style.setProperty("--climate-options-translate-y", u ? "-100%" : "0");
 }
-function ed(e, t, n, r, i, a, o) {
+function td(e, t, n, r, i, a, o) {
 	let s = String(t[i] ?? ""), c = s && !o.includes(s) ? [...o, s] : o;
 	return !c.length && !s ? E : T`
     <label>
@@ -27910,7 +28103,7 @@ function ed(e, t, n, r, i, a, o) {
     </label>
   `;
 }
-function td(e, t) {
+function nd(e, t) {
 	let n = [], r = (t, r) => {
 		if (typeof r != "string" || !r.trim()) return;
 		let i = e._t(t);
@@ -27930,7 +28123,7 @@ function td(e, t) {
 	}
 	return n;
 }
-function nd(e, t, n, r) {
+function rd(e, t, n, r) {
 	return [
 		e,
 		t ?? "",
@@ -27938,7 +28131,7 @@ function nd(e, t, n, r) {
 		r
 	].join(":");
 }
-function rd(e, t, n, r) {
+function id(e, t, n, r) {
 	return [
 		e,
 		t,
@@ -27946,7 +28139,7 @@ function rd(e, t, n, r) {
 		r.join(",")
 	].join(":");
 }
-function id(e) {
+function ad(e) {
 	let t = e._orderedWeekdays();
 	return T`
     <div class="copy-panel">
@@ -27956,9 +28149,9 @@ function id(e) {
           <strong>${e._t("otherDays")}</strong>
         </div>
       </div>
-      ${ku(e._t.bind(e), (t) => e._setCopyTargetPreset(t), e._copyTargets.size > 0)}
+      ${Au(e._t.bind(e), (t) => e._setCopyTargetPreset(t), e._copyTargets.size > 0)}
       <div class="copy-targets">
-        ${t.map((t) => ad(e, t))}
+        ${t.map((t) => od(e, t))}
       </div>
       <div class="copy-actions">
         <button
@@ -27974,7 +28167,7 @@ function id(e) {
     </div>
   `;
 }
-function ad(e, t) {
+function od(e, t) {
 	return t === e._selectedWeekday ? T`
       <span class="check-target disabled" title=${e._weekdayName(t)}>
         <span>${e._shortWeekdayName(t)}</span>
@@ -27990,7 +28183,7 @@ function ad(e, t) {
     </label>
   `;
 }
-function od(e) {
+function sd(e) {
 	let t = e._visibleZoneIds(e._data?.configured_entities ?? []).filter((t) => t !== e._selectedEntity);
 	return t.length ? T`
     <div class="copy-panel">
@@ -28028,7 +28221,7 @@ function od(e) {
 }
 //#endregion
 //#region src/velair/views/sensors-view.ts
-var sd = {
+var cd = {
 	appliedHigh: "var(--sensor-scale-applied-color)",
 	appliedLow: "var(--sensor-scale-applied-color)",
 	climate: "var(--secondary-text-color)",
@@ -28037,7 +28230,7 @@ var sd = {
 	scheduledHigh: "var(--sensor-scale-scheduled-color)",
 	scheduledLow: "var(--sensor-scale-scheduled-color)",
 	target: "var(--sensor-scale-scheduled-color)"
-}, cd = {
+}, ld = {
 	target: 0,
 	scheduledLow: 0,
 	scheduledHigh: 1,
@@ -28046,13 +28239,13 @@ var sd = {
 	appliedLow: 3,
 	appliedHigh: 4,
 	climate: 5
-}, ld = 1.25, ud = 22, dd = 10, fd = 24, pd = {
+}, ud = 1.25, dd = 22, fd = 10, pd = 24, md = {
 	roomSensorAssist: "roomSensorAssistHelp",
 	roomSensorAssistDeadband: "roomSensorAssistDeadbandHelp",
 	roomSensorAssistMaxDelta: "roomSensorAssistMaxDeltaHelp",
 	roomSensorAssistDebounce: "roomSensorAssistDebounceHelp",
 	roomSensorTemperatureEntity: "roomSensorTemperatureEntityHelp"
-}, md = {
+}, hd = {
 	showAssistSwitch: !0,
 	showDeadband: !0,
 	showDebounce: !0,
@@ -28060,8 +28253,8 @@ var sd = {
 	showMaxDelta: !0,
 	showRoomSensor: !0
 };
-function hd(e, t, n = {}) {
-	let r = gd(n);
+function gd(e, t, n = {}) {
+	let r = _d(n);
 	return T`
     <section class="sensors-view">
       <header class="sensors-intro">
@@ -28071,17 +28264,17 @@ function hd(e, t, n = {}) {
           <small>${e._t("roomSensorIntroDetail")}</small>
         </span>
       </header>
-      ${t.length ? t.map((t) => _d(e, t, r)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
+      ${t.length ? t.map((t) => vd(e, t, r)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
     </section>
   `;
 }
-function gd(e) {
+function _d(e) {
 	return {
-		...md,
+		...hd,
 		...e
 	};
 }
-function _d(e, t, n) {
+function vd(e, t, n) {
 	if (e._data?.zones[t]?.execution?.type === "external") return T`
       <section class="sensor-zone disabled">
         <header class="sensor-zone-heading">
@@ -28095,7 +28288,7 @@ function _d(e, t, n) {
         </div>
       </section>
     `;
-	let r = e._entityExists(t), i = Wl(e._data?.zones[t]?.preconditioning, e._temperatureUnit(t)), a = e._data?.room_sensor_assist?.[t], o = r && e._expandedPreconditioningZones.has(t), s = `sensor-zone-content-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}`, c = r ? e._t(o ? "roomSensorCollapseClimate" : "roomSensorExpandClimate", { climate: e._friendlyEntityName(t) }) : e._t("roomSensorUnavailable"), l = r && !!i.room_temperature_entity_id;
+	let r = e._entityExists(t), i = Gl(e._data?.zones[t]?.preconditioning, e._temperatureUnit(t)), a = e._data?.room_sensor_assist?.[t], o = r && e._expandedPreconditioningZones.has(t), s = `sensor-zone-content-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}`, c = r ? e._t(o ? "roomSensorCollapseClimate" : "roomSensorExpandClimate", { climate: e._friendlyEntityName(t) }) : e._t("roomSensorUnavailable"), l = r && !!i.room_temperature_entity_id;
 	return T`
     <section class=${`sensor-zone ${i.room_sensor_assist_enabled ? "enabled" : "disabled"} ${o ? "expanded" : "collapsed"}`}>
       <header class="sensor-zone-heading" @click=${(n) => {
@@ -28142,28 +28335,28 @@ function _d(e, t, n) {
       </header>
       ${r && o ? T`
             <div id=${s} class="sensor-zone-content">
-              ${vd(e, t, i, n)}
-              ${n.showLiveStatus && i.room_temperature_entity_id && !i.room_sensor_assist_enabled ? yd(e) : E}
-              ${n.showLiveStatus && i.room_temperature_entity_id && i.room_sensor_assist_enabled ? bd(e, t, a, i, n.showDeadband) : E}
+              ${yd(e, t, i, n)}
+              ${n.showLiveStatus && i.room_temperature_entity_id && !i.room_sensor_assist_enabled ? bd(e) : E}
+              ${n.showLiveStatus && i.room_temperature_entity_id && i.room_sensor_assist_enabled ? xd(e, t, a, i, n.showDeadband) : E}
             </div>
           ` : E}
     </section>
   `;
 }
-function vd(e, t, n, r) {
+function yd(e, t, n, r) {
 	return !r.showRoomSensor && !r.showDeadband && !r.showMaxDelta && !r.showDebounce ? E : T`
     <section class="sensor-config-section">
       <h3><ha-icon icon="mdi:tune-variant"></ha-icon>${e._t("roomSensorAssist")}</h3>
       <div class="sensor-config-rows">
-        ${r.showRoomSensor ? Vd(e, t, n.room_temperature_entity_id ?? "") : E}
-        ${r.showDeadband ? Hd(e, t, "roomSensorAssistDeadband", "room_sensor_assist_deadband", n.room_sensor_assist_deadband, 0, mr(e._temperatureUnit(t), 5), .1, e._temperatureUnit(t), { inactive: !n.room_temperature_entity_id || !n.room_sensor_assist_enabled }) : E}
-        ${r.showMaxDelta ? Hd(e, t, "roomSensorAssistMaxDelta", "room_sensor_assist_max_delta", n.room_sensor_assist_max_delta, Wd(e._temperatureUnit(t)), Ud(e._temperatureUnit(t)), Wd(e._temperatureUnit(t)), e._temperatureUnit(t), { inactive: !n.room_temperature_entity_id || !n.room_sensor_assist_enabled }) : E}
-        ${r.showDebounce ? Hd(e, t, "roomSensorAssistDebounce", "room_sensor_assist_debounce_seconds", n.room_sensor_assist_debounce_seconds, 0, 300, 1, e._t("secondsShort"), { inactive: !n.room_temperature_entity_id || !n.room_sensor_assist_enabled }) : E}
+        ${r.showRoomSensor ? Hd(e, t, n.room_temperature_entity_id ?? "") : E}
+        ${r.showDeadband ? Ud(e, t, "roomSensorAssistDeadband", "room_sensor_assist_deadband", n.room_sensor_assist_deadband, 0, mr(e._temperatureUnit(t), 5), .1, e._temperatureUnit(t), { inactive: !n.room_temperature_entity_id || !n.room_sensor_assist_enabled }) : E}
+        ${r.showMaxDelta ? Ud(e, t, "roomSensorAssistMaxDelta", "room_sensor_assist_max_delta", n.room_sensor_assist_max_delta, Gd(e._temperatureUnit(t)), Wd(e._temperatureUnit(t)), Gd(e._temperatureUnit(t)), e._temperatureUnit(t), { inactive: !n.room_temperature_entity_id || !n.room_sensor_assist_enabled }) : E}
+        ${r.showDebounce ? Ud(e, t, "roomSensorAssistDebounce", "room_sensor_assist_debounce_seconds", n.room_sensor_assist_debounce_seconds, 0, 300, 1, e._t("secondsShort"), { inactive: !n.room_temperature_entity_id || !n.room_sensor_assist_enabled }) : E}
       </div>
     </section>
   `;
 }
-function yd(e) {
+function bd(e) {
 	return T`
     <section class="sensor-runtime-section sensor-inactive-section">
       <h3>
@@ -28174,9 +28367,9 @@ function yd(e) {
     </section>
   `;
 }
-function bd(e, t, n, r, i = !0) {
+function xd(e, t, n, r, i = !0) {
 	if (!n) return E;
-	let a = r?.room_sensor_assist_deadband ?? 0, o = i ? Mc(n, a) : void 0, s = Zd(e, t, n, o), c = Lc(n) && !!n.start;
+	let a = r?.room_sensor_assist_deadband ?? 0, o = i ? Nc(n, a) : void 0, s = Qd(e, t, n, o), c = Rc(n) && !!n.start;
 	return T`
     <section class="sensor-runtime-section">
       <h3 class="sensor-runtime-heading">
@@ -28184,26 +28377,26 @@ function bd(e, t, n, r, i = !0) {
           <ha-icon icon="mdi:pulse"></ha-icon>
           ${e._t("roomSensorLiveStatus")}
         </span>
-        ${xd(e, n)}
+        ${Sd(e, n)}
       </h3>
       <div class="sensor-status-card">
-        ${c ? Cd(e, t, n) : Sd(e)}
-        ${c ? Td(e, t, n) : E}
+        ${c ? wd(e, t, n) : Cd(e)}
         ${c ? Ed(e, t, n) : E}
-        ${c && s.markers.length ? wd(e, t, s, n, o, a) : E}
+        ${c ? Dd(e, t, n) : E}
+        ${c && s.markers.length ? Td(e, t, s, n, o, a) : E}
       </div>
     </section>
   `;
 }
-function xd(e, t) {
+function Sd(e, t) {
 	let n = t?.status ?? "not_configured";
 	return T`
     <span class=${`sensor-status-pill ${n}`}>
-      ${e._t(sf(n))}
+      ${e._t(cf(n))}
     </span>
   `;
 }
-function Sd(e) {
+function Cd(e) {
 	return T`
     <div class="sensor-idle-state">
       <ha-icon icon="mdi:clock-outline"></ha-icon>
@@ -28211,8 +28404,8 @@ function Sd(e) {
     </div>
   `;
 }
-function Cd(e, t, n) {
-	let r = n.start ? e._formatScheduleTime(n.start) : "", i = of(e, n.active_from), a = !!(n.target_when && n.active_from), o = G(n), s = typeof n.target_temperature == "number" ? e._formatTemperature(n.target_temperature, t) : o ? ef(e, t, o.low, o.high) : e._t("roomSensorValueUnavailable"), c = n.hvac_mode ? e._modeLabel(n.hvac_mode) : e._t("roomSensorValueUnavailable"), l = typeof n.hysteresis_target == "number" ? e._formatTemperature(n.hysteresis_target, t) : "", u = n.hysteresis_phase === "towards_lower" ? "roomSensorHysteresisTowardsLower" : n.hysteresis_phase === "towards_upper" ? "roomSensorHysteresisTowardsUpper" : void 0;
+function wd(e, t, n) {
+	let r = n.start ? e._formatScheduleTime(n.start) : "", i = sf(e, n.active_from), a = !!(n.target_when && n.active_from), o = G(n), s = typeof n.target_temperature == "number" ? e._formatTemperature(n.target_temperature, t) : o ? tf(e, t, o.low, o.high) : e._t("roomSensorValueUnavailable"), c = n.hvac_mode ? e._modeLabel(n.hvac_mode) : e._t("roomSensorValueUnavailable"), l = typeof n.hysteresis_target == "number" ? e._formatTemperature(n.hysteresis_target, t) : "", u = n.hysteresis_phase === "towards_lower" ? "roomSensorHysteresisTowardsLower" : n.hysteresis_phase === "towards_upper" ? "roomSensorHysteresisTowardsUpper" : void 0;
 	return T`
     <div class="sensor-block-summary">
       ${a ? T`
@@ -28253,11 +28446,11 @@ function Cd(e, t, n) {
     </div>
   `;
 }
-function wd(e, t, n, r, i, a = 0) {
-	let { markers: o } = n, s = r.hvac_mode ? `mode-${kt(r.hvac_mode)}` : "mode-keep", c = Kd(e, t, o, r), l = qd(e, t, o, r), u = Dd(e, t, o, r), d = u.length === 2, f = kd(o), p = d ? tf(o.filter((e) => !Od(e.key))) : o, m = i && a > 0 ? {
-		left: Qd(i.low, n),
-		width: Qd(i.high, n) - Qd(i.low, n)
-	} : void 0, h = r.hysteresis_phase === "towards_lower" ? " towards-lower" : r.hysteresis_phase === "towards_upper" ? " towards-upper" : "", g = r.hysteresis_phase === "towards_lower" || r.hysteresis_phase === "towards_upper", _ = G(r) !== void 0, v = r.hvac_mode === "heat" || r.hvac_mode === "cool", y = !_ && (r.hvac_mode === "auto" || r.hvac_mode === "heat_cool"), b = Yd(e, t, a), x = i ? a === 0 ? e._t("roomSensorDeadbandZoneZero", { value: b }) : _ ? e._t("roomSensorDeadbandZoneRange", { value: b }) : g || v ? e._t("roomSensorDeadbandZoneSingle", { value: b }) : y ? e._t("roomSensorDeadbandZoneAutomatic", { value: b }) : e._t("roomSensorDeadbandZoneGeneric", { value: b }) : "", S = i ? _ || g || v ? e._t("roomSensorDeadbandZoneHelp") : y ? e._t("roomSensorDeadbandZoneHelpAutomatic") : e._t("roomSensorDeadbandZoneHelpGeneric") : "", C = i && a > 0 ? ef(e, t, i.low, i.high) : "", ee = C ? `${x}. ${C}. ${S}` : `${x}. ${S}`;
+function Td(e, t, n, r, i, a = 0) {
+	let { markers: o } = n, s = r.hvac_mode ? `mode-${kt(r.hvac_mode)}` : "mode-keep", c = qd(e, t, o, r), l = Jd(e, t, o, r), u = Od(e, t, o, r), d = u.length === 2, f = Ad(o), p = d ? nf(o.filter((e) => !kd(e.key))) : o, m = i && a > 0 ? {
+		left: $d(i.low, n),
+		width: $d(i.high, n) - $d(i.low, n)
+	} : void 0, h = r.hysteresis_phase === "towards_lower" ? " towards-lower" : r.hysteresis_phase === "towards_upper" ? " towards-upper" : "", g = r.hysteresis_phase === "towards_lower" || r.hysteresis_phase === "towards_upper", _ = G(r) !== void 0, v = r.hvac_mode === "heat" || r.hvac_mode === "cool", y = !_ && (r.hvac_mode === "auto" || r.hvac_mode === "heat_cool"), b = Xd(e, t, a), x = i ? a === 0 ? e._t("roomSensorDeadbandZoneZero", { value: b }) : _ ? e._t("roomSensorDeadbandZoneRange", { value: b }) : g || v ? e._t("roomSensorDeadbandZoneSingle", { value: b }) : y ? e._t("roomSensorDeadbandZoneAutomatic", { value: b }) : e._t("roomSensorDeadbandZoneGeneric", { value: b }) : "", S = i ? _ || g || v ? e._t("roomSensorDeadbandZoneHelp") : y ? e._t("roomSensorDeadbandZoneHelpAutomatic") : e._t("roomSensorDeadbandZoneHelpGeneric") : "", C = i && a > 0 ? tf(e, t, i.low, i.high) : "", ee = C ? `${x}. ${C}. ${S}` : `${x}. ${S}`;
 	return T`
     <div class=${`sensor-temperature-scale ${s} ${d ? "has-range" : ""}`}>
       <div
@@ -28297,10 +28490,10 @@ function wd(e, t, n, r, i, a = 0) {
             ` : E}
         ${f.map((e) => T`
             <span
-              class=${jd(e)}
-              style=${Nd(e)}
+              class=${Md(e)}
+              style=${Pd(e)}
               role="img"
-              aria-label=${Id(e)}
+              aria-label=${Ld(e)}
             >
               <span class=${`sensor-scale-dot ${e.markers.length > 1 ? "segmented" : ""}`}></span>
             </span>
@@ -28321,16 +28514,16 @@ function wd(e, t, n, r, i, a = 0) {
           `)}
         ${p.map((n) => T`
             <span
-              class=${`sensor-scale-callout-marker marker-${n.key} marker-${Md(n.key)} lane-${n.lane} ${Ld(n)} ${n.shifted ? "shifted" : ""}`}
+              class=${`sensor-scale-callout-marker marker-${n.key} marker-${Nd(n.key)} lane-${n.lane} ${Rd(n)} ${n.shifted ? "shifted" : ""}`}
               style=${`--callout-left: ${n.calloutPosition.toFixed(2)}%;`}
             >
-              ${Rd(e, t, n, r)}
+              ${zd(e, t, n, r)}
             </span>
           `)}
       </div>
       <div class="sensor-scale-bounds">
-        <span>${Gd(e, t, n.lowerBound)}</span>
-        <span>${Gd(e, t, n.upperBound)}</span>
+        <span>${Kd(e, t, n.lowerBound)}</span>
+        <span>${Kd(e, t, n.upperBound)}</span>
       </div>
       ${i && m ? T`
             <div class="sensor-scale-deadband-legend-track">
@@ -28367,9 +28560,9 @@ function wd(e, t, n, r, i, a = 0) {
     </div>
   `;
 }
-function Td(e, t, n) {
+function Ed(e, t, n) {
 	if (!n.limited_by || typeof n.limit_temperature != "number") return E;
-	let r = n.requested_target_temp_low != null && n.requested_target_temp_high != null ? ef(e, t, n.requested_target_temp_low, n.requested_target_temp_high) : void 0, i = n.applied_target_temp_low != null && n.applied_target_temp_high != null ? ef(e, t, n.applied_target_temp_low, n.applied_target_temp_high) : void 0, a = r ?? Gd(e, t, n.requested_temperature), o = i ?? Gd(e, t, n.applied_temperature), s = e._formatTemperature(n.limit_temperature, t), c = n.limited_by === "maximum" ? "roomSensorLimitMaximumTitle" : "roomSensorLimitMinimumTitle", l = n.limited_by === "maximum" ? "roomSensorLimitMaximumDetail" : "roomSensorLimitMinimumDetail";
+	let r = n.requested_target_temp_low != null && n.requested_target_temp_high != null ? tf(e, t, n.requested_target_temp_low, n.requested_target_temp_high) : void 0, i = n.applied_target_temp_low != null && n.applied_target_temp_high != null ? tf(e, t, n.applied_target_temp_low, n.applied_target_temp_high) : void 0, a = r ?? Kd(e, t, n.requested_temperature), o = i ?? Kd(e, t, n.applied_temperature), s = e._formatTemperature(n.limit_temperature, t), c = n.limited_by === "maximum" ? "roomSensorLimitMaximumTitle" : "roomSensorLimitMinimumTitle", l = n.limited_by === "maximum" ? "roomSensorLimitMaximumDetail" : "roomSensorLimitMinimumDetail";
 	return T`
     <div class="sensor-limit-warning" role="status">
       <ha-icon icon="mdi:alert-outline"></ha-icon>
@@ -28384,7 +28577,7 @@ function Td(e, t, n) {
     </div>
   `;
 }
-function Ed(e, t, n) {
+function Dd(e, t, n) {
 	if (!n.scheduled_target_guard || typeof n.calculated_temperature != "number" || typeof n.applied_temperature != "number") return E;
 	let r = e._formatTemperature(n.calculated_temperature, t), i = e._formatTemperature(n.applied_temperature, t), a = n.scheduled_target_guard === "cooling_floor" ? "roomSensorScheduledGuardCoolingDetail" : "roomSensorScheduledGuardHeatingDetail";
 	return T`
@@ -28400,33 +28593,33 @@ function Ed(e, t, n) {
     </div>
   `;
 }
-function Dd(e, t, n, r) {
-	let i = G(r), a = Fc(r);
+function Od(e, t, n, r) {
+	let i = G(r), a = Ic(r);
 	if (!i || !a) return [];
 	let o = n.find((e) => e.key === "scheduledLow"), s = n.find((e) => e.key === "scheduledHigh"), c = n.find((e) => e.key === "appliedLow"), l = n.find((e) => e.key === "appliedHigh");
 	return !o || !s || !c || !l ? [] : [{
 		kind: "scheduled",
 		label: e._t("roomSensorScheduledRange"),
-		formatted: ef(e, t, i.low, i.high),
+		formatted: tf(e, t, i.low, i.high),
 		left: Math.min(o.position, s.position),
 		width: Math.abs(s.position - o.position)
 	}, {
 		kind: "applied",
 		label: e._t("roomSensorAppliedRange"),
-		formatted: ef(e, t, a.low, a.high),
+		formatted: tf(e, t, a.low, a.high),
 		left: Math.min(c.position, l.position),
 		width: Math.abs(l.position - c.position)
 	}];
 }
-function Od(e) {
+function kd(e) {
 	return e === "scheduledLow" || e === "scheduledHigh" || e === "appliedLow" || e === "appliedHigh";
 }
-function kd(e) {
-	let t = [...e].sort((e, t) => e.position - t.position || cd[e.key] - cd[t.key]), n = [];
+function Ad(e) {
+	let t = [...e].sort((e, t) => e.position - t.position || ld[e.key] - ld[t.key]), n = [];
 	for (let e of t) {
 		let t = n[n.length - 1];
-		if (t && Math.abs(e.position - t.position) <= ld) {
-			t.markers = [...t.markers, e].sort((e, t) => cd[e.key] - cd[t.key]), t.position = Ad(t.markers);
+		if (t && Math.abs(e.position - t.position) <= ud) {
+			t.markers = [...t.markers, e].sort((e, t) => ld[e.key] - ld[t.key]), t.position = jd(t.markers);
 			continue;
 		}
 		n.push({
@@ -28436,42 +28629,42 @@ function kd(e) {
 	}
 	return n;
 }
-function Ad(e) {
+function jd(e) {
 	return e.reduce((e, t) => e + t.position, 0) / e.length;
 }
-function jd(e) {
+function Md(e) {
 	return [
 		"sensor-scale-marker",
 		`count-${e.markers.length}`,
 		...e.markers.map((e) => `marker-${e.key}`),
-		...new Set(e.markers.map((e) => `marker-${Md(e.key)}`))
+		...new Set(e.markers.map((e) => `marker-${Nd(e.key)}`))
 	].join(" ");
 }
-function Md(e) {
+function Nd(e) {
 	return e === "scheduledLow" || e === "scheduledHigh" ? "target" : e === "appliedLow" || e === "appliedHigh" ? "climateTarget" : e;
 }
-function Nd(e) {
-	let t = [`left: ${e.position.toFixed(2)}%;`];
-	return e.markers.length > 1 && t.push(`--sensor-scale-dot-segments: ${Pd(e.markers)};`), t.join(" ");
-}
 function Pd(e) {
-	let t = [...e].sort((e, t) => t.calloutPosition - e.calloutPosition || e.lane - t.lane || cd[e.key] - cd[t.key]), n = 360 / t.length;
-	return `conic-gradient(${t.map((e, t) => {
-		let r = Fd(t * n), i = Fd((t + 1) * n);
-		return `${sd[e.key]} ${r}deg ${i}deg`;
-	}).join(", ")})`;
+	let t = [`left: ${e.position.toFixed(2)}%;`];
+	return e.markers.length > 1 && t.push(`--sensor-scale-dot-segments: ${Fd(e.markers)};`), t.join(" ");
 }
 function Fd(e) {
-	return Math.round(e * 100) / 100;
+	let t = [...e].sort((e, t) => t.calloutPosition - e.calloutPosition || e.lane - t.lane || ld[e.key] - ld[t.key]), n = 360 / t.length;
+	return `conic-gradient(${t.map((e, t) => {
+		let r = Id(t * n), i = Id((t + 1) * n);
+		return `${cd[e.key]} ${r}deg ${i}deg`;
+	}).join(", ")})`;
 }
 function Id(e) {
-	return e.markers.map((e) => `${e.label}: ${e.formatted}`).join(", ");
+	return Math.round(e * 100) / 100;
 }
 function Ld(e) {
-	return e.calloutPosition <= dd ? "edge-left" : e.calloutPosition >= 100 - dd ? "edge-right" : "";
+	return e.markers.map((e) => `${e.label}: ${e.formatted}`).join(", ");
 }
-function Rd(e, t, n, r) {
-	let i = Pc(r), a = Ic(r), o = $d(r, "applied"), s = n.key === "climateTarget" ? i : n.key === o ? a : null, c = typeof s == "number" ? Xd(e, t, s) : "", l = o && n.key === o ? e._t("roomSensorRangeShiftHelp") : n.key === "climateTarget" ? zd(e, t, r) : e._t("roomSensorAssistOffsetHelp"), u = !!c || n.key === "climateTarget", d = `room-assist-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}-${n.key}-help`;
+function Rd(e) {
+	return e.calloutPosition <= fd ? "edge-left" : e.calloutPosition >= 100 - fd ? "edge-right" : "";
+}
+function zd(e, t, n, r) {
+	let i = Fc(r), a = Lc(r), o = ef(r, "applied"), s = n.key === "climateTarget" ? i : n.key === o ? a : null, c = typeof s == "number" ? Zd(e, t, s) : "", l = o && n.key === o ? e._t("roomSensorRangeShiftHelp") : n.key === "climateTarget" ? Bd(e, t, r) : e._t("roomSensorAssistOffsetHelp"), u = !!c || n.key === "climateTarget", d = `room-assist-${t.replace(/[^a-zA-Z0-9_-]/g, "-")}-${n.key}-help`;
 	return T`
     <span class=${c ? "sensor-scale-callout has-offset" : "sensor-scale-callout"}>
       <small>${n.label}</small>
@@ -28480,14 +28673,14 @@ function Rd(e, t, n, r) {
         ${u ? T`
               <span class=${c ? "sensor-scale-offset" : "sensor-scale-offset help-only"}>
                 ${c ? T`<span>${c}</span>` : E}
-                ${Yc(d, l, l, { compact: !0 })}
+                ${Xc(d, l, l, { compact: !0 })}
               </span>
             ` : E}
       </span>
     </span>
   `;
 }
-function zd(e, t, n) {
+function Bd(e, t, n) {
 	let r = n.applied_temperature, i = (n.status === "assisting" || n.status === "holding") && typeof r == "number", a = e._t(i ? "roomSensorClimateTargetAppliedHelp" : "roomSensorClimateTargetHelp");
 	return !i || typeof r != "number" || typeof n.pre_step_temperature != "number" || typeof n.target_temp_step != "number" ? a : `${a} ${e._t("roomSensorClimateTargetStepHelp", {
 		calculated: e._formatTemperature(n.pre_step_temperature, t),
@@ -28495,8 +28688,8 @@ function zd(e, t, n) {
 		applied: e._formatTemperature(r, t)
 	})}`;
 }
-function Bd(e, t, n = {}) {
-	let r = pd[t], i = r ? e._t(r) : "";
+function Vd(e, t, n = {}) {
+	let r = md[t], i = r ? e._t(r) : "";
 	return r && n.persistentHelp ? T`
       <span class="sensor-config-label sensor-config-label-stacked">
         <span>${e._t(t)}</span>
@@ -28521,11 +28714,11 @@ function Bd(e, t, n = {}) {
     </span>
   `;
 }
-function Vd(e, t, n) {
-	let r = e._settingsSaving, i = Ul(e.hass, n);
+function Hd(e, t, n) {
+	let r = e._settingsSaving, i = Wl(e.hass, n);
 	return T`
     <label class="sensor-config-row sensor-picker-row">
-      ${Bd(e, "roomSensorTemperatureEntity")}
+      ${Vd(e, "roomSensorTemperatureEntity")}
       <span class="select-wrap">
         <select
           .value=${n}
@@ -28553,11 +28746,11 @@ function Vd(e, t, n) {
     </label>
   `;
 }
-function Hd(e, t, n, r, i, a, o, s, c, l = {}) {
+function Ud(e, t, n, r, i, a, o, s, c, l = {}) {
 	let u = e._settingsSaving || !!l.inactive, d = r === "room_sensor_assist_deadband" || r === "room_sensor_assist_max_delta";
 	return T`
     <label class=${`sensor-config-row ${l.inactive ? "inactive" : ""}`}>
-      ${Bd(e, n, { persistentHelp: d })}
+      ${Vd(e, n, { persistentHelp: d })}
       <span class="sensor-number-input">
         <input
           type="number"
@@ -28586,21 +28779,21 @@ function Hd(e, t, n, r, i, a, o, s, c, l = {}) {
     </label>
   `;
 }
-function Ud(e) {
+function Wd(e) {
 	return mr(e, 10);
 }
-function Wd(e) {
+function Gd(e) {
 	return .1;
 }
-function Gd(e, t, n) {
+function Kd(e, t, n) {
 	return typeof n == "number" ? e._formatTemperature(n, t) : e._t("roomSensorValueUnavailable");
 }
-function Kd(e, t, n, r) {
+function qd(e, t, n, r) {
 	let i = n.find((e) => e.key === "room"), a = G(r), o = a && i ? i.value < a.low ? "scheduledLow" : i.value > a.high ? "scheduledHigh" : void 0 : "target", s = n.find((e) => e.key === o);
 	if (!s || !i) return null;
 	let c = Math.abs(s.value - i.value);
 	if (c < (e._temperatureUnit(t).toUpperCase().includes("F") ? .1 : .05)) return null;
-	let l = Yd(e, t, c), u = i.value < s.value ? "below" : "above";
+	let l = Xd(e, t, c), u = i.value < s.value ? "below" : "above";
 	return {
 		label: e._t(u === "below" ? "roomSensorGapBelowTarget" : "roomSensorGapAboveTarget", { value: l }),
 		left: Math.min(s.position, i.position),
@@ -28608,10 +28801,10 @@ function Kd(e, t, n, r) {
 		width: Math.abs(s.position - i.position)
 	};
 }
-function qd(e, t, n, r) {
-	let i = Ic(r), a = i === void 0 ? void 0 : Jd(n, "scheduledLow", "scheduledHigh"), o = i === void 0 ? void 0 : Jd(n, "appliedLow", "appliedHigh"), s = n.find((e) => e.key === "climate"), c = n.find((e) => e.key === "climateTarget"), l = i ?? Pc(r), u = i === void 0 ? s?.position : a, d = i === void 0 ? c?.position : o;
+function Jd(e, t, n, r) {
+	let i = Lc(r), a = i === void 0 ? void 0 : Yd(n, "scheduledLow", "scheduledHigh"), o = i === void 0 ? void 0 : Yd(n, "appliedLow", "appliedHigh"), s = n.find((e) => e.key === "climate"), c = n.find((e) => e.key === "climateTarget"), l = i ?? Fc(r), u = i === void 0 ? s?.position : a, d = i === void 0 ? c?.position : o;
 	if (u === void 0 || d === void 0 || l === void 0) return null;
-	let f = e._temperatureUnit(t).toUpperCase().includes("F") ? .1 : .05, p = Math.abs(l) >= f ? "active" : "holding", m = Xd(e, t, l);
+	let f = e._temperatureUnit(t).toUpperCase().includes("F") ? .1 : .05, p = Math.abs(l) >= f ? "active" : "holding", m = Zd(e, t, l);
 	return {
 		label: i === void 0 ? p === "active" ? e._t("roomSensorAssistCorrectionValue", { value: m }) : e._t("roomSensorAssistNoCorrection") : e._t("roomSensorRangeShiftValue", { value: m }),
 		left: Math.min(u, d),
@@ -28620,19 +28813,19 @@ function qd(e, t, n, r) {
 		width: Math.abs(u - d)
 	};
 }
-function Jd(e, t, n) {
+function Yd(e, t, n) {
 	let r = e.find((e) => e.key === t), i = e.find((e) => e.key === n);
 	return r && i ? (r.position + i.position) / 2 : void 0;
 }
-function Yd(e, t, n) {
+function Xd(e, t, n) {
 	return e._formatTemperature(Math.abs(n), t);
 }
-function Xd(e, t, n) {
-	let r = Yd(e, t, n);
+function Zd(e, t, n) {
+	let r = Xd(e, t, n);
 	return n > 0 ? `+${r}` : n < 0 ? `-${r}` : r;
 }
-function Zd(e, t, n, r) {
-	let i = G(n), a = Fc(n), o = i ? void 0 : n.status === "assisting" || n.status === "holding" ? n.applied_temperature ?? n.climate_target_temperature : n.climate_target_temperature ?? n.applied_temperature, s = [
+function Qd(e, t, n, r) {
+	let i = G(n), a = Ic(n), o = i ? void 0 : n.status === "assisting" || n.status === "holding" ? n.applied_temperature ?? n.climate_target_temperature : n.climate_target_temperature ?? n.applied_temperature, s = [
 		{
 			key: "target",
 			label: e._t("roomSensorScheduledTarget"),
@@ -28682,7 +28875,7 @@ function Zd(e, t, n, r) {
 	let c = [...s.map((e) => e.value), ...r ? [r.low, r.high] : []], l = Math.min(...c), u = Math.max(...c), d = e._temperatureUnit(t).toUpperCase().includes("F") ? 2 : 1, f = u - l, p = Math.max(f, d), m = (l + u) / 2, h = m - p * .58, g = m + p * .58, _ = g - h;
 	return {
 		lowerBound: h,
-		markers: tf(s.map((n) => ({
+		markers: nf(s.map((n) => ({
 			...n,
 			calloutPosition: 0,
 			formatted: e._formatTemperature(n.value, t),
@@ -28693,38 +28886,38 @@ function Zd(e, t, n, r) {
 		upperBound: g
 	};
 }
-function Qd(e, t) {
-	let n = t.upperBound - t.lowerBound;
-	return n <= 0 ? 50 : af((e - t.lowerBound) / n * 100, 0, 100);
-}
 function $d(e, t) {
+	let n = t.upperBound - t.lowerBound;
+	return n <= 0 ? 50 : of((e - t.lowerBound) / n * 100, 0, 100);
+}
+function ef(e, t) {
 	let n = G(e);
 	if (!n) return;
 	let r = typeof e.room_temperature == "number" ? e.room_temperature : void 0;
 	return `${t}${e.direction === "cool" || r !== void 0 && r > n.high ? "High" : "Low"}`;
 }
-function ef(e, t, n, r) {
+function tf(e, t, n, r) {
 	return `${e._formatTemperature(n, t).replace(/\s+[^\s]+$/, "")}–${e._formatTemperature(r, t)}`;
 }
-function tf(e) {
+function nf(e) {
 	let t = [...e].sort((e, t) => e.position - t.position), n = /* @__PURE__ */ new Map(), r = [], i = [], a = () => {
 		i.length && (r.push(i), i = []);
 	};
 	for (let e of t) {
 		let t = i[i.length - 1];
-		t && e.position - t.position > ud && a(), i.push(e);
+		t && e.position - t.position > dd && a(), i.push(e);
 	}
 	a();
 	for (let e = 0; e < r.length - 1;) {
-		let t = nf(r[e]), n = nf(r[e + 1]), i = t[t.length - 1];
-		if (n[0] - i < fd) {
+		let t = rf(r[e]), n = rf(r[e + 1]), i = t[t.length - 1];
+		if (n[0] - i < pd) {
 			r.splice(e, 2, [...r[e], ...r[e + 1]]), e = Math.max(0, e - 1);
 			continue;
 		}
 		e += 1;
 	}
 	for (let e of r) {
-		let t = nf(e);
+		let t = rf(e);
 		e.forEach((e, r) => {
 			let i = t[r] ?? e.position;
 			n.set(e.key, {
@@ -28743,26 +28936,26 @@ function tf(e) {
 		}
 	}));
 }
-function nf(e) {
+function rf(e) {
 	let t = e.reduce((e, t) => e + t.position, 0) / e.length;
-	return rf(e.length, t);
+	return af(e.length, t);
 }
-function rf(e, t) {
-	if (e <= 1) return [af(t, dd, 100 - dd)];
-	let n = Math.min(fd, (100 - 2 * dd) / (e - 1)), r = (e - 1) * n, i = t - r / 2, a = dd, o = 100 - dd;
-	return i < a ? i = a : i + r > o && (i = o - r), Array.from({ length: e }, (e, t) => af(i + t * n, a, o));
+function af(e, t) {
+	if (e <= 1) return [of(t, fd, 100 - fd)];
+	let n = Math.min(pd, (100 - 2 * fd) / (e - 1)), r = (e - 1) * n, i = t - r / 2, a = fd, o = 100 - fd;
+	return i < a ? i = a : i + r > o && (i = o - r), Array.from({ length: e }, (e, t) => of(i + t * n, a, o));
 }
-function af(e, t, n) {
+function of(e, t, n) {
 	return Math.min(n, Math.max(t, e));
 }
-function of(e, t) {
+function sf(e, t) {
 	if (!t) return "";
 	let n = new Date(t);
 	if (Number.isNaN(n.getTime())) return t;
 	let r = `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
 	return e._formatScheduleTime(r);
 }
-function sf(e) {
+function cf(e) {
 	return {
 		assisting: "roomSensorStatusAssisting",
 		blocked: "roomSensorStatusBlocked",
@@ -28776,11 +28969,11 @@ function sf(e) {
 }
 //#endregion
 //#region src/velair/views/settings-view.ts
-function cf(e, t) {
+function lf(e, t) {
 	let n = e._firstWeekday(), r = !!e._data?.settings?.apply_active_schedule_on_startup;
 	return T`
     <section class="settings-view">
-      ${ff(e)}
+      ${pf(e)}
 
       <label class="settings-field">
         <span class="label">${e._t("firstWeekday")}</span>
@@ -28812,9 +29005,9 @@ function cf(e, t) {
         ></ha-switch>
       </section>
 
-      ${lf(e)}
+      ${uf(e)}
 
-      ${hf(e)}
+      ${gf(e)}
 
       <section class="settings-zone-order">
         <div class="section-heading">
@@ -28825,15 +29018,15 @@ function cf(e, t) {
           </div>
         </div>
         <div class="settings-zone-list">
-          ${t.length ? t.map((n, r) => _f(e, n, r, t.length)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
+          ${t.length ? t.map((n, r) => vf(e, n, r, t.length)) : T`<span class="empty">${e._t("noManagedEntities")}</span>`}
         </div>
       </section>
 
-      ${pf(e)}
+      ${mf(e)}
     </section>
   `;
 }
-function lf(e) {
+function uf(e) {
 	let t = e._data?.external_execution;
 	if (!t || !t.systems.length && !Object.keys(t.zones).length) return E;
 	let n = /* @__PURE__ */ new Map();
@@ -28844,7 +29037,7 @@ function lf(e) {
 			name: e.name
 		}), n.set(t, r);
 	}
-	let r = Array.from(new Set([...n.keys(), ...Object.keys(t.zones)])), i = new Map(t.systems.map((e) => [e.provider, e])), a = df(t);
+	let r = Array.from(new Set([...n.keys(), ...Object.keys(t.zones)])), i = new Map(t.systems.map((e) => [e.provider, e])), a = ff(t);
 	return T`
     <section class="settings-startup external-systems-settings">
       <ha-icon class="settings-startup-icon" icon="mdi:calendar-export"></ha-icon>
@@ -28895,9 +29088,9 @@ function lf(e) {
                 ${t.capabilities ? T`
                   <ul>
                     ${t.capabilities.supports_profile_schedules ? T`<li>${e._t("externalConditionProfilesSupported")}</li>` : E}
-                    <li>${e._t("externalConditionHvacModes", { modes: uf(e, "hvac", t.capabilities.supported_hvac_modes) })}</li>
-                    <li>${e._t("externalConditionTargetTypes", { types: uf(e, "target", t.capabilities.supported_target_types) })}</li>
-                    <li>${e._t("externalConditionActions", { actions: uf(e, "action", t.capabilities.supported_actions) })}</li>
+                    <li>${e._t("externalConditionHvacModes", { modes: df(e, "hvac", t.capabilities.supported_hvac_modes) })}</li>
+                    <li>${e._t("externalConditionTargetTypes", { types: df(e, "target", t.capabilities.supported_target_types) })}</li>
+                    <li>${e._t("externalConditionActions", { actions: df(e, "action", t.capabilities.supported_actions) })}</li>
                     ${t.capabilities.supported_actions.includes("turn_off") ? E : T`<li>${e._t("externalConditionTurnOffUnsupported")}</li>`}
                     <li>${t.capabilities.supported_option_fields.length ? e._t("externalConditionOptionFields", { fields: t.capabilities.supported_option_fields.join(", ") }) : e._t("externalConditionOptionsUnsupported")}</li>
                     <li>${e._t("externalConditionMaxChanges", { count: t.capabilities.max_switchpoints_per_day })}</li>
@@ -28914,13 +29107,13 @@ function lf(e) {
     </section>
   `;
 }
-function uf(e, t, n) {
+function df(e, t, n) {
 	return n.map((n) => {
 		let r = `externalCapability_${t}_${n}`, i = e._t(r);
 		return i === r ? n.replaceAll("_", " ") : i;
 	}).join(", ");
 }
-function df(e) {
+function ff(e) {
 	let t = new Map(e.systems.map((e) => [e.provider, e]));
 	return Array.from(new Set(Object.values(e.zones).map((e) => e.provider))).map((e) => t.get(e) ?? {
 		provider: e,
@@ -28928,7 +29121,7 @@ function df(e) {
 		capabilities: null
 	});
 }
-function ff(e) {
+function pf(e) {
 	let t = !!e._data?.temperature_migration?.required, n = e._data?.home_assistant_temperature_unit ?? e._temperatureUnit(), r = e._data?.temperature_migration, i = r?.reason === "legacy_celsius_upgrade_reset_required", a = r?.source_unit, o = r?.target_unit ?? n;
 	return T`
     <section class=${t ? "settings-temperature migration-required" : "settings-temperature"}>
@@ -28977,7 +29170,7 @@ function ff(e) {
     </section>
   `;
 }
-function pf(e) {
+function mf(e) {
 	let t = e._data?.versions ?? {}, r = t.portable_model ?? 8, i = t.storage ?? 1, a = t.model ?? 1, o = t.integration || "-", s = e._maintenanceAction === "reset", c = !!e._data?.temperature_migration?.required, l = e._data?.temperature_migration?.reason === "legacy_celsius_upgrade_reset_required";
 	return T`
     <section class="settings-maintenance">
@@ -28990,10 +29183,10 @@ function pf(e) {
       </div>
 
       <div class="maintenance-grid">
-        ${mf(e._t("frontendBuild"), n)}
-        ${mf(e._t("portableFormatVersion"), `v${r}`)}
-        ${mf(e._t("internalStorageVersion"), `v${i} / v${a}`)}
-        ${mf(e._t("integrationVersion"), o)}
+        ${hf(e._t("frontendBuild"), n)}
+        ${hf(e._t("portableFormatVersion"), `v${r}`)}
+        ${hf(e._t("internalStorageVersion"), `v${i} / v${a}`)}
+        ${hf(e._t("integrationVersion"), o)}
       </div>
     </section>
 
@@ -29015,7 +29208,7 @@ function pf(e) {
     </section>
   `;
 }
-function mf(e, t) {
+function hf(e, t) {
 	return T`
     <div class="maintenance-item">
       <span class="label">${e}</span>
@@ -29023,7 +29216,7 @@ function mf(e, t) {
     </div>
   `;
 }
-function hf(e) {
+function gf(e) {
 	let t = e._importAvailableSections(), n = e._exportSections.size > 0 && !e._portabilityAction, r = !!e._importPayload && e._importSections.size > 0 && !e._portabilityAction, i = new Map(e._portableExportSummaryItems().map((e) => [e.section, e])), a = new Map(e._portableImportSummaryItems().map((e) => [e.section, e])), o = e._importSections.has("preconditioning_learning") ? Ii(e._importPayload, e._data?.configured_entities ?? []) : [], s = !!(e._importPayload && e._importPayload.temperature_unit === void 0);
 	return T`
     <section class="settings-portability">
@@ -29038,7 +29231,7 @@ function hf(e) {
       <div class="portability-grid">
         <div class="portability-card portability-export-card">
           <div class="portability-options">
-            ${et.map((t) => gf(e, "export", t, e._exportSections.has(t), !1, i.get(t)))}
+            ${et.map((t) => _f(e, "export", t, e._exportSections.has(t), !1, i.get(t)))}
           </div>
           <button
             class="command-button primary"
@@ -29090,7 +29283,7 @@ function hf(e) {
                 </div>
               ` : E}
           <div class="portability-options">
-            ${t.length ? t.map((t) => gf(e, "import", t, e._importSections.has(t), !1, a.get(t))) : T`<span class="empty">${e._t("noImportSections")}</span>`}
+            ${t.length ? t.map((t) => _f(e, "import", t, e._importSections.has(t), !1, a.get(t))) : T`<span class="empty">${e._t("noImportSections")}</span>`}
           </div>
           <button
             class="command-button success"
@@ -29106,7 +29299,7 @@ function hf(e) {
     </section>
   `;
 }
-function gf(e, t, n, r, i, a) {
+function _f(e, t, n, r, i, a) {
 	return T`
     <label class="portable-option" title=${a?.title ?? e._portableSectionLabel(n)}>
       <input
@@ -29120,7 +29313,7 @@ function gf(e, t, n, r, i, a) {
     </label>
   `;
 }
-function _f(e, t, n, r) {
+function vf(e, t, n, r) {
 	return T`
     <div
       class="settings-zone-row"
@@ -29146,7 +29339,8 @@ function _f(e, t, n, r) {
           </div>
           <span>${t}</span>
         </div>
-        ${vf(e, t)}
+        ${yf(e, t)}
+        ${bf(e, t)}
       </div>
       <div class="settings-row-actions">
         <button
@@ -29171,7 +29365,7 @@ function _f(e, t, n, r) {
     </div>
   `;
 }
-function vf(e, t) {
+function yf(e, t) {
 	if (e._data?.zones[t]?.execution?.type === "external") return T`<small>${e._t("externalActionsInactive")}</small>`;
 	let n = e._data?.zones[t]?.external_change_policy ?? {
 		action: "keep_automatic",
@@ -29181,7 +29375,7 @@ function vf(e, t) {
     <div class="settings-external-policy">
       <div class="settings-policy-heading">
         <span class="label" id=${i}>${e._t("externalChangePolicy")}</span>
-        ${Yc(a, e._t("externalAdjustmentInfoAction"), e._t("externalChangePolicyDescription"))}
+        ${Xc(a, e._t("externalAdjustmentInfoAction"), e._t("externalChangePolicyDescription"))}
       </div>
       <div class="settings-policy-controls">
         <span class="select-wrap">
@@ -29221,9 +29415,50 @@ function vf(e, t) {
     </div>
   `;
 }
+function bf(e, t) {
+	if (e._data?.zones[t]?.execution?.type === "external") return E;
+	let n = e._data?.zones[t]?.limits ?? {
+		min_temperature: null,
+		max_temperature: null
+	}, [r, i] = e._entityTemperatureLimits(t), a = e._entityTemperatureStep(t), o = e._temperatureUnit(t), s = t.replace(/[^a-z0-9_-]/gi, "-"), c = `zone-limits-label-${s}`, l = `zone-limits-info-${s}`;
+	return T`
+    <div class="settings-zone-limits">
+      <div class="settings-policy-heading">
+        <span class="label" id=${c}>${e._t("zoneLimits")}</span>
+        ${Xc(l, e._t("zoneLimitsInfoAction"), e._t("zoneLimitsDescription"))}
+      </div>
+      <div class="settings-policy-controls settings-zone-limit-controls">
+        ${["min_temperature", "max_temperature"].map((s) => {
+		let c = e._t(s === "min_temperature" ? "zoneLimitMinimum" : "zoneLimitMaximum"), l = n[s];
+		return T`
+            <label class=${`settings-zone-limit ${s === "min_temperature" ? "minimum" : "maximum"}`}>
+              <span class="settings-zone-limit-label">${c}</span>
+              <input
+                type="number"
+                inputmode="decimal"
+                min=${r}
+                max=${i}
+                step=${a ?? "any"}
+                placeholder=${e._t("zoneLimitNone")}
+                aria-label=${c}
+                .value=${typeof l == "number" ? String(l) : ""}
+                ?disabled=${e._settingsSaving}
+                @change=${(n) => {
+			let r = n.target.value.trim(), i = r === "" ? null : Number(r);
+			i !== null && !Number.isFinite(i) || e._saveZoneLimits(t, s === "min_temperature" ? { min_temperature: i } : { max_temperature: i });
+		}}
+              />
+              <span class="settings-zone-limit-unit">${o}</span>
+            </label>
+          `;
+	})}
+      </div>
+    </div>
+  `;
+}
 //#endregion
 //#region src/velair/views/diagnostics-view.ts
-var yf = [
+var xf = [
 	"control",
 	"room_assist",
 	"preconditioning",
@@ -29231,10 +29466,10 @@ var yf = [
 	"delivery",
 	"availability"
 ];
-function bf(e) {
+function Sf(e) {
 	let t = e._data?.diagnostics;
 	if (!t) return T`<p class="empty">${e._t("diagnosticsUnavailable")}</p>`;
-	let n = t.overall.unit_counts, r = xf(e, t), i = Sf(e, r), a = i ? t.units[i] : void 0;
+	let n = t.overall.unit_counts, r = Cf(e, t), i = wf(e, r), a = i ? t.units[i] : void 0;
 	return T`<section class="diagnostics-view">
     <header class="diagnostics-intro">
       <ha-icon icon="mdi:stethoscope"></ha-icon>
@@ -29245,7 +29480,7 @@ function bf(e) {
         title=${e._t("diagnosticsDownloadActionDescription")}
         aria-expanded=${e._diagnosticsExportOpen ? "true" : "false"}
         aria-controls="diagnostics-export-options"
-        @click=${() => Lp(e)}>
+        @click=${() => Vp(e)}>
         <ha-icon icon="mdi:download"></ha-icon>
         <span><strong>${e._t("diagnosticsDownloadAction")}</strong>
           <small>${e._t("diagnosticsDownloadActionDescription")}</small></span>
@@ -29263,8 +29498,8 @@ function bf(e) {
       <p>${e._t("diagnosticsOperationalIdsAlwaysRedacted")}</p>
       ${e._diagnosticsRedactEntityIds ? E : T`<p class="diagnostics-export-warning" role="alert">
         ${e._t("diagnosticsRawEntityIdsWarning")}</p>`}
-      <div><button class="command-button" type="button" @click=${() => Rp(e)}>${e._t("cancel")}</button>
-      <button class="command-button success" type="button" @click=${() => Ip(e)}>${e._t(e._diagnosticsRedactEntityIds ? "diagnosticsDownloadNow" : "diagnosticsDownloadWithEntityIds")}</button></div>
+      <div><button class="command-button" type="button" @click=${() => Hp(e)}>${e._t("cancel")}</button>
+      <button class="command-button success" type="button" @click=${() => Bp(e)}>${e._t(e._diagnosticsRedactEntityIds ? "diagnosticsDownloadNow" : "diagnosticsDownloadWithEntityIds")}</button></div>
       </div>` : E}
     </section>
     <section class=${`diagnostics-summary status-${t.overall.status}`}>
@@ -29281,42 +29516,42 @@ function bf(e) {
 	})}</small>
       </div>
     </section>
-    ${t.overall.issues.length ? T`<div class="diagnostics-issues">${t.overall.issues.map((t) => Pf(e, t))}</div>` : E}
+    ${t.overall.issues.length ? T`<div class="diagnostics-issues">${t.overall.issues.map((t) => If(e, t))}</div>` : E}
     <div class="diagnostics-master-detail">
       <nav class="diagnostics-unit-list" aria-label=${e._t("diagnosticsUnits")}>
         ${r.map(([t, n]) => T`<button
           class=${`diagnostics-unit-option status-${n.status}${t === i ? " selected" : ""}`}
           type="button" aria-pressed=${t === i ? "true" : "false"}
           aria-current=${t === i ? "true" : "false"}
-          @click=${() => Cf(e, t)}>
-          ${_p(e, t)}
+          @click=${() => Tf(e, t)}>
+          ${xp(e, t)}
           <span class="diagnostics-unit-name"><strong>${e._friendlyEntityName(t)}</strong><small>${t}</small></span>
-          <span class="diagnostics-unit-state">${yp(e, n.state)}</span>
+          <span class="diagnostics-unit-state">${Cp(e, n.state)}</span>
           <span class=${`diagnostics-status-dot ${n.status}`} role="img"
-            title=${gp(e, n)}
-            aria-label=${gp(e, n)}></span>
+            title=${bp(e, n)}
+            aria-label=${bp(e, n)}></span>
         </button>`)}
       </nav>
-      ${a && i ? wf(e, i, a) : T`<div class="empty diagnostics-detail-panel diagnostics-unit-placeholder">
+      ${a && i ? Ef(e, i, a) : T`<div class="empty diagnostics-detail-panel diagnostics-unit-placeholder">
             <ha-icon icon="mdi:cursor-default-click-outline"></ha-icon>
             <span>${e._t(r.length ? "diagnosticsSelectUnit" : "diagnosticsNoUnits")}</span>
           </div>`}
     </div>
-    ${Nf(e, t)}
-    ${If(e, t, r)}
+    ${Ff(e, t)}
+    ${Rf(e, t, r)}
     <p class="diagnostics-privacy">${e._t("diagnosticsPrivacy")}</p>
   </section>`;
 }
-function xf(e, t) {
+function Cf(e, t) {
 	return vn(e, Object.keys(t.units)).map((e) => [e, t.units[e]]);
 }
-function Sf(e, t) {
+function wf(e, t) {
 	if (e._selectedDiagnosticEntity && t.some(([t]) => t === e._selectedDiagnosticEntity)) return e._selectedDiagnosticEntity;
 }
-function Cf(e, t) {
+function Tf(e, t) {
 	e._selectedDiagnosticEntity = t, e.requestUpdate();
 }
-function wf(e, t, n) {
+function Ef(e, t, n) {
 	let r = X(n.configuration), i = X(r.preconditioning), a = X(r.comfort), o = [
 		{
 			label: "diagnosticsCurrentState",
@@ -29325,11 +29560,11 @@ function wf(e, t, n) {
 		},
 		{
 			label: "diagnosticsCalculatedIntent",
-			value: ap(e, n.intent, t)
+			value: sp(e, n.intent, t)
 		},
 		{
 			label: "diagnosticsLastApplication",
-			value: op(e, n.last_application, t)
+			value: cp(e, n.last_application, t)
 		},
 		{
 			label: "diagnosticsDeliveryStatus",
@@ -29342,12 +29577,12 @@ function wf(e, t, n) {
 		},
 		{
 			label: "diagnosticsLastError",
-			value: mp(e, n.delivery.last_error)
+			value: vp(e, n.delivery.last_error)
 		}
 	], s = [
 		{
 			label: "diagnosticsScheduleSource",
-			value: bp(e, n.effective_setup.schedule_source)
+			value: wp(e, n.effective_setup.schedule_source)
 		},
 		{
 			label: "diagnosticsMode",
@@ -29359,11 +29594,15 @@ function wf(e, t, n) {
 		},
 		{
 			label: "diagnosticsOverride",
-			value: pp(e, n.override)
+			value: _p(e, n.override)
 		},
 		{
 			label: "diagnosticsPauses",
 			value: n.pauses?.length ? n.pauses.length : void 0
+		},
+		{
+			label: "diagnosticsZoneLimits",
+			value: lp(e, t, r.limits)
 		}
 	], c = [
 		{
@@ -29373,40 +29612,40 @@ function wf(e, t, n) {
 		},
 		{
 			label: "diagnosticsTemperatureRange",
-			value: ip(e, t, n.capabilities.min_temperature, n.capabilities.max_temperature)
+			value: op(e, t, n.capabilities.min_temperature, n.capabilities.max_temperature)
 		},
 		{
 			label: "diagnosticsTemperatureStep",
-			value: rp(e, t, n.capabilities.target_temperature_step)
+			value: ap(e, t, n.capabilities.target_temperature_step)
 		}
 	];
 	return T`<article class=${`diagnostics-detail-panel status-${n.status}`}>
-    <header class="diagnostics-unit-heading">${_p(e, t)}
+    <header class="diagnostics-unit-heading">${xp(e, t)}
       <div class="diagnostics-unit-identity"><h3>${e._friendlyEntityName(t)}</h3><small>${t}</small>
         <span class="diagnostics-feature-chips">
-          ${i.room_sensor_assist_enabled ? Tf(e, "diagnosticsRoomAssist", "mdi:thermometer-auto") : E}
-          ${i.enabled ? Tf(e, "diagnosticsPreconditioning", "mdi:clock-fast") : E}
-          ${a.enabled ? Tf(e, "diagnosticsComfort", "mdi:home-heart") : E}
+          ${i.room_sensor_assist_enabled ? Df(e, "diagnosticsRoomAssist", "mdi:thermometer-auto") : E}
+          ${i.enabled ? Df(e, "diagnosticsPreconditioning", "mdi:clock-fast") : E}
+          ${a.enabled ? Df(e, "diagnosticsComfort", "mdi:home-heart") : E}
         </span>
       </div>
       <span class=${`diagnostics-status-dot ${n.status}`} role="img"
-        title=${gp(e, n)}
-        aria-label=${gp(e, n)}></span>
+        title=${bp(e, n)}
+        aria-label=${bp(e, n)}></span>
     </header>
-    ${n.issues.length ? T`<div class="diagnostics-issues">${n.issues.map((t) => Pf(e, t))}</div>` : E}
+    ${n.issues.length ? T`<div class="diagnostics-issues">${n.issues.map((t) => If(e, t))}</div>` : E}
     <div class="diagnostics-groups">
-      ${Of(e, "diagnosticsStatusDelivery", "mdi:send-check-outline", o)}
-      ${Of(e, "diagnosticsActiveConfiguration", "mdi:tune-variant", s)}
-      ${Ef(e, t, n, i, a)}
-      ${Df(e, n, c)}
+      ${Af(e, "diagnosticsStatusDelivery", "mdi:send-check-outline", o)}
+      ${Af(e, "diagnosticsActiveConfiguration", "mdi:tune-variant", s)}
+      ${Of(e, t, n, i, a)}
+      ${kf(e, n, c)}
     </div>
   </article>`;
 }
-function Tf(e, t, n) {
+function Df(e, t, n) {
 	let r = e._t(t);
 	return T`<span title=${r} aria-label=${r}><ha-icon icon=${n}></ha-icon>${r}</span>`;
 }
-function Ef(e, t, n, r, i) {
+function Of(e, t, n, r, i) {
 	let a = [
 		{
 			title: "diagnosticsRoomAssist",
@@ -29419,11 +29658,11 @@ function Ef(e, t, n, r, i) {
 				},
 				{
 					label: "diagnosticsFunctionState",
-					value: Dp(e, X(n.room_assist).status)
+					value: jp(e, X(n.room_assist).status)
 				},
 				{
 					label: "diagnosticsAppliedTarget",
-					value: cp(e, X(n.room_assist), t)
+					value: fp(e, X(n.room_assist), t)
 				}
 			]
 		},
@@ -29455,81 +29694,81 @@ function Ef(e, t, n, r, i) {
 				value: i.enabled === !1 && n.comfort ? !1 : void 0
 			}, {
 				label: "diagnosticsFunctionState",
-				value: Op(e, X(n.comfort).condition ?? X(n.comfort).status)
+				value: Mp(e, X(n.comfort).condition ?? X(n.comfort).status)
 			}]
 		}
 	].filter((e) => e.visible);
 	return a.length ? T`<section class="diagnostics-group"><h4><ha-icon icon="mdi:puzzle-outline"></ha-icon><span>${e._t("diagnosticsFunctions")}</span></h4>
     <div class="diagnostics-function-grid">${a.map((t) => T`<section class="diagnostics-function">
-      <strong><ha-icon icon=${t.icon}></ha-icon><span>${e._t(t.title)}</span></strong>${kf(e, t.rows)}</section>`)}</div>
+      <strong><ha-icon icon=${t.icon}></ha-icon><span>${e._t(t.title)}</span></strong>${jf(e, t.rows)}</section>`)}</div>
   </section>` : E;
 }
-function Df(e, t, n) {
-	return !ep(n).length && !t.sensors.length ? E : T`<section class="diagnostics-group"><h4><ha-icon icon="mdi:devices"></ha-icon><span>${e._t("diagnosticsDeviceSensors")}</span></h4>
-    ${kf(e, n)}
+function kf(e, t, n) {
+	return !np(n).length && !t.sensors.length ? E : T`<section class="diagnostics-group"><h4><ha-icon icon="mdi:devices"></ha-icon><span>${e._t("diagnosticsDeviceSensors")}</span></h4>
+    ${jf(e, n)}
     ${t.sensors.length ? T`<ul class="diagnostics-sensors">${t.sensors.map((t) => T`<li>
-      <strong>${e._t(wp(t.purpose))}</strong>
+      <strong>${e._t(Op(t.purpose))}</strong>
       <span class="diagnostics-sensor-detail">
-        <ha-icon icon=${Tp(t.purpose)}></ha-icon>
+        <ha-icon icon=${kp(t.purpose)}></ha-icon>
         <span class="diagnostics-sensor-entity" title=${t.entity_id}>${t.entity_id}</span>
-        <small class="diagnostics-sensor-value">${vp(e, t)}</small>
+        <small class="diagnostics-sensor-value">${Sp(e, t)}</small>
       </span></li>`)}</ul>` : E}
   </section>`;
 }
-function Of(e, t, n, r) {
-	let i = ep(r);
-	return i.length ? T`<section class="diagnostics-group"><h4><ha-icon icon=${n}></ha-icon><span>${e._t(t)}</span></h4>${kf(e, i)}</section>` : E;
+function Af(e, t, n, r) {
+	let i = np(r);
+	return i.length ? T`<section class="diagnostics-group"><h4><ha-icon icon=${n}></ha-icon><span>${e._t(t)}</span></h4>${jf(e, i)}</section>` : E;
 }
-function kf(e, t) {
-	return T`<dl class="diagnostics-rows">${ep(t).map((t) => T`<div>
-    <dt>${e._t(t.label)}</dt><dd>${Af(e, t)}</dd></div>`)}</dl>`;
+function jf(e, t) {
+	return T`<dl class="diagnostics-rows">${np(t).map((t) => T`<div>
+    <dt>${e._t(t.label)}</dt><dd>${Mf(e, t)}</dd></div>`)}</dl>`;
 }
-function Af(e, t) {
+function Mf(e, t) {
 	if (t.presentation === "mode") return [
 		"missing",
 		"unknown",
 		"unavailable"
-	].includes(String(t.value)) ? T`<span class=${`diagnostics-state-chip ${t.value === "missing" ? "error" : "warning"}`}>${yp(e, t.value)}</span>` : jf(e, t.value);
-	if (t.presentation === "modes" && Array.isArray(t.value)) return T`<span class="diagnostics-mode-list">${t.value.map((t) => jf(e, t))}</span>`;
+	].includes(String(t.value)) ? T`<span class=${`diagnostics-state-chip ${t.value === "missing" ? "error" : "warning"}`}>${Cp(e, t.value)}</span>` : Nf(e, t.value);
+	if (t.presentation === "modes" && Array.isArray(t.value)) return T`<span class="diagnostics-mode-list">${t.value.map((t) => Nf(e, t))}</span>`;
 	if (t.presentation === "delivery-status") {
 		let n = String(t.value ?? "");
-		return T`<span class=${`diagnostics-state-chip ${Mf(n)}`}>
-      ${Cp(e, n)}
+		return T`<span class=${`diagnostics-state-chip ${Pf(n)}`}>
+      ${Dp(e, n)}
     </span>`;
 	}
-	return tp(e, t.value);
+	return rp(e, t.value);
 }
-function jf(e, t) {
+function Nf(e, t) {
 	let n = String(t ?? "");
 	return n ? T`<span class=${`mode-chip mode-${kt(n)}`}>${e._modeLabel(n)}</span>` : E;
 }
-function Mf(e) {
+function Pf(e) {
 	return e === "success" ? "success" : [
 		"failed",
 		"exhausted",
 		"invalid_intent"
 	].includes(e) ? "error" : ["retrying", "unavailable"].includes(e) ? "warning" : "neutral";
 }
-function Nf(e, t) {
+function Ff(e, t) {
 	return T`<section class="diagnostics-history-policy"><header><div class="diagnostics-section-heading">
       <ha-icon icon="mdi:history"></ha-icon><div><h3>${e._t("diagnosticsHistorySettings")}</h3>
       <p>${e._t("diagnosticsHistoryExplanation", { limit: Z(e, t.history_limit) })}</p>
       </div></div><button class="command-button diagnostics-clear-history" type="button"
       title=${e._t("diagnosticsClearHistory")} aria-label=${e._t("diagnosticsClearHistory")}
       ?disabled=${e._diagnosticsHistorySaving || t.history.length === 0}
-      @click=${() => Fp(e)}><ha-icon icon="mdi:delete-outline"></ha-icon>
+      @click=${() => zp(e)}><ha-icon icon="mdi:delete-outline"></ha-icon>
       <span>${e._t("diagnosticsClearHistory")}</span></button></header>
-    <div class="diagnostics-category-grid">${yf.map((n) => T`<label><input type="checkbox"
+    <div class="diagnostics-category-grid">${xf.map((n) => T`<label><input type="checkbox"
       .checked=${t.history_policy.categories[n]} ?disabled=${e._diagnosticsHistorySaving}
-      @change=${(r) => Pp(e, t, n, r.currentTarget.checked)} />
-      <span><strong>${e._t(Mp(n))}</strong><small>${e._t(Np(n))}</small></span>
+      @change=${(r) => Rp(e, t, n, r.currentTarget.checked)} />
+      <span><strong>${e._t(Ip(n))}</strong><small>${e._t(Lp(n))}</small></span>
     </label>`)}</div>
   </section>`;
 }
-function Pf(e, t) {
-	return T`<p class=${`diagnostics-issue ${t.severity}`}><ha-icon icon=${t.severity === "error" ? "mdi:alert-circle" : "mdi:alert"}></ha-icon><span>${Ff(e, t.code)}</span></p>`;
+function If(e, t) {
+	return T`<p class=${`diagnostics-issue ${t.severity}`}><ha-icon icon=${t.severity === "error" ? "mdi:alert-circle" : "mdi:alert"}></ha-icon><span>${Lf(e, t.code)}</span></p>`;
 }
-function Ff(e, t) {
+function Lf(e, t) {
 	let n = {
 		entity_missing: "entityDiagnosticMissing",
 		entity_unavailable: "diagnosticsEntityUnavailable",
@@ -29547,7 +29786,7 @@ function Ff(e, t) {
 	};
 	return n[t] ? e._t(n[t]) : Q(t) ?? t;
 }
-function If(e, t, n) {
+function Rf(e, t, n) {
 	let r = n.map(([e]) => e), i = Tn(e._diagnosticsHistoryFilters ?? xn, r), a = Sn(i), o = Cn(t.history, i);
 	return T`<section class="diagnostics-history" aria-labelledby="diagnostics-history-title">
     <header><div><h3 id="diagnostics-history-title">${e._t("diagnosticsHistoryLog")}</h3>
@@ -29557,33 +29796,33 @@ function If(e, t, n) {
 	})}</p></div>
       <button class=${`command-button diagnostics-clear-filters${wn(i) ? " success" : ""}`} type="button"
         ?disabled=${!wn(i)}
-        @click=${() => Vf(e, xn)}>
+        @click=${() => Uf(e, xn)}>
         <ha-icon icon="mdi:filter-off-outline"></ha-icon>
         <span>${e._t("diagnosticsHistoryClearFilters")}</span>
       </button></header>
     <div class="diagnostics-history-filters">
-      ${Lf(e, i, r)}
+      ${zf(e, i, r)}
       <label><span>${e._t("diagnosticsHistoryCategoryFilter")}</span><select
         .value=${i.category}
-        @change=${(t) => Vf(e, {
+        @change=${(t) => Uf(e, {
 		...i,
 		category: t.currentTarget.value
 	})}>
         <option value="all">${e._t("diagnosticsHistoryAllCategories")}</option>
-        ${yf.map((t) => T`<option value=${t}>${e._t(Mp(t))}</option>`)}
+        ${xf.map((t) => T`<option value=${t}>${e._t(Ip(t))}</option>`)}
       </select></label>
-      ${Bf(e, i, "from", "diagnosticsHistoryFrom")}
-      ${Bf(e, i, "to", "diagnosticsHistoryTo")}
+      ${Hf(e, i, "from", "diagnosticsHistoryFrom")}
+      ${Hf(e, i, "to", "diagnosticsHistoryTo")}
     </div>
     ${a ? E : T`<p class="diagnostics-filter-error" role="alert">${e._t("diagnosticsHistoryInvalidRange")}</p>`}
     <p class="diagnostics-history-results" aria-live="polite">${e._t("diagnosticsHistoryResults", {
 		visible: Z(e, o.length),
 		total: Z(e, t.history.length)
 	})}</p>
-    ${Hf(e, t.history, o)}
+    ${Wf(e, t.history, o)}
   </section>`;
 }
-function Lf(e, t, n) {
+function zf(e, t, n) {
 	let r = e._diagnosticsSourceFilterOpen, i = t.sources, a = (e) => i === null || i.has(e);
 	return T`<div class="diagnostics-source-filter"
     @keydown=${(t) => {
@@ -29593,7 +29832,7 @@ function Lf(e, t, n) {
     <button class="diagnostics-source-trigger" type="button"
       aria-expanded=${r ? "true" : "false"} aria-controls="diagnostics-source-options"
       @click=${() => e._setDiagnosticsSourceFilterOpen(!r)}>
-      <span>${Rf(e, t, n)}</span>
+      <span>${Bf(e, t, n)}</span>
       <ha-icon icon=${r ? "mdi:chevron-up" : "mdi:chevron-down"}></ha-icon>
     </button>
     ${r ? T`<div id="diagnostics-source-options"
@@ -29601,16 +29840,16 @@ function Lf(e, t, n) {
       style=${e._diagnosticsSourceMaxHeight === void 0 ? E : `max-height:${e._diagnosticsSourceMaxHeight}px`}>
       <fieldset><legend>${e._t("diagnosticsHistorySourcesLegend")}</legend>
         <label><input type="checkbox" .checked=${i === null}
-          @change=${(n) => Vf(e, {
+          @change=${(n) => Uf(e, {
 		...t,
 		sources: n.currentTarget.checked ? null : /* @__PURE__ */ new Set()
 	})} /><span>${e._t("diagnosticsHistoryAllSources")}</span></label>
         <label><input type="checkbox" .checked=${a(bn)}
-          @change=${(r) => zf(e, t, n, bn, r.currentTarget.checked)} />
+          @change=${(r) => Vf(e, t, n, bn, r.currentTarget.checked)} />
           <span>${e._t("diagnosticsHistoryVelairOnly")}</span></label>
         ${n.map((r) => T`<label><input type="checkbox"
           .checked=${a(r)}
-          @change=${(i) => zf(e, t, n, r, i.currentTarget.checked)} />
+          @change=${(i) => Vf(e, t, n, r, i.currentTarget.checked)} />
           <span>${e._friendlyEntityName(r)}</span></label>`)}
       </fieldset>
       <button class="command-button diagnostics-source-done" type="button"
@@ -29618,7 +29857,7 @@ function Lf(e, t, n) {
     </div>` : E}
   </div>`;
 }
-function Rf(e, t, n) {
+function Bf(e, t, n) {
 	if (t.sources === null) return e._t("diagnosticsHistoryAllSources");
 	let r = t.sources.has(bn), i = n.filter((e) => t.sources?.has(e));
 	if (!i.length) return r ? e._t("diagnosticsHistoryVelairOnly") : e._t("diagnosticsHistoryNoSources");
@@ -29628,173 +29867,190 @@ function Rf(e, t, n) {
 	}
 	return e._t(r ? "diagnosticsHistorySourceCountWithVelair" : "diagnosticsHistorySourceCount", { count: Z(e, i.length) });
 }
-function zf(e, t, n, r, i) {
+function Vf(e, t, n, r, i) {
 	let a = new Set(t.sources ?? [bn, ...n]);
-	i ? a.add(r) : a.delete(r), Vf(e, Tn({
+	i ? a.add(r) : a.delete(r), Uf(e, Tn({
 		...t,
 		sources: a
 	}, n));
 }
-function Bf(e, t, n, r) {
+function Hf(e, t, n, r) {
 	return T`<label><span>${e._t(r)}</span><input type="datetime-local"
     .value=${t[n]}
     aria-invalid=${Sn(t) ? "false" : "true"}
-    @input=${(r) => Vf(e, {
+    @input=${(r) => Uf(e, {
 		...t,
 		[n]: r.currentTarget.value
 	})} /></label>`;
 }
-function Vf(e, t) {
+function Uf(e, t) {
 	e._diagnosticsHistoryFilters = { ...t }, e.requestUpdate();
 }
-function Hf(e, t, n) {
+function Wf(e, t, n) {
 	if (!t.length) return T`<p class="empty">${e._t("diagnosticsNoHistory")}</p>`;
 	if (!n.length) return T`<p class="empty">${e._t("diagnosticsHistoryNoMatches")}</p>`;
 	let r = Nn(e._diagnosticsLogColumns ?? Dn, e._diagnosticsLogAvailableWidth);
 	return T`<div class="diagnostics-history-table" style=${`--diagnostics-log-time:${r.time}px;--diagnostics-log-climate:${r.climate}px;--diagnostics-log-type:${r.type}px`}>
     <div class="diagnostics-history-header" role="row">
-      <span>${e._t("diagnosticsLogTime")}</span>${Wf(e, "time", r.time)}
-      <span>${e._t("diagnosticsLogClimate")}</span>${Wf(e, "climate", r.climate)}
-      <span>${e._t("diagnosticsLogType")}</span>${Wf(e, "type", r.type)}
+      <span>${e._t("diagnosticsLogTime")}</span>${Kf(e, "time", r.time)}
+      <span>${e._t("diagnosticsLogClimate")}</span>${Kf(e, "climate", r.climate)}
+      <span>${e._t("diagnosticsLogType")}</span>${Kf(e, "type", r.type)}
       <span>${e._t("diagnosticsLogMessage")}</span>
     </div>
     <ol>${n.map((t) => T`<li>
-    <time datetime=${t.at} title=${t.at}>${np(e, t.at)}</time>
+    <time datetime=${t.at} title=${t.at}>${ip(e, t.at)}</time>
       <span class="diagnostics-history-climate">${t.entity_id ? e._friendlyEntityName(t.entity_id) : "Velair"}</span>
-      <span class="diagnostics-history-type">${Ep(e, t)}</span>
-    <span class="diagnostics-history-message">${Zf(e, t)}</span></li>`)}</ol>
+      <span class="diagnostics-history-type">${Ap(e, t)}</span>
+    <span class="diagnostics-history-message">${$f(e, t)}</span></li>`)}</ol>
   </div>`;
 }
-var Uf = /* @__PURE__ */ new WeakMap();
-function Wf(e, t, n) {
+var Gf = /* @__PURE__ */ new WeakMap();
+function Kf(e, t, n) {
 	let r = `diagnosticsLog${t[0].toUpperCase()}${t.slice(1)}`;
 	return T`<span class="diagnostics-log-resizer" role="separator" tabindex="0"
     aria-orientation="vertical" aria-valuemin=${On[t]}
     aria-valuemax=${jn(e._diagnosticsLogColumns ?? Dn, t, e._diagnosticsLogAvailableWidth)}
     aria-valuenow=${Math.round(n)} aria-label=${e._t("diagnosticsLogResizeColumn", { column: e._t(r) })}
-    @pointerdown=${(r) => qf(e, t, n, r)}
-    @pointermove=${(t) => Jf(e, t)}
-    @pointerup=${(t) => Yf(e, t)}
-    @pointercancel=${(t) => Yf(e, t)}
-    @lostpointercapture=${(t) => Yf(e, t)}
-    @keydown=${(n) => Xf(e, t, n)}
-    @dblclick=${(n) => Kf(e, t, Dn[t], Gf(n.currentTarget))}></span>`;
+    @pointerdown=${(r) => Yf(e, t, n, r)}
+    @pointermove=${(t) => Xf(e, t)}
+    @pointerup=${(t) => Zf(e, t)}
+    @pointercancel=${(t) => Zf(e, t)}
+    @lostpointercapture=${(t) => Zf(e, t)}
+    @keydown=${(n) => Qf(e, t, n)}
+    @dblclick=${(n) => Jf(e, t, Dn[t], qf(n.currentTarget))}></span>`;
 }
-function Gf(e) {
+function qf(e) {
 	let t = e?.closest(".diagnostics-history-table")?.getBoundingClientRect().width;
 	return An(t && t > 0 ? t : 900);
 }
-function Kf(e, t, n, r) {
+function Jf(e, t, n, r) {
 	e._diagnosticsLogColumns = Mn(e._diagnosticsLogColumns ?? Dn, t, n, r), e._diagnosticsLogAvailableWidth = r, e.requestUpdate();
 }
-function qf(e, t, n, r) {
-	!r.isPrimary || r.button !== 0 || Uf.has(e) || (Uf.set(e, {
+function Yf(e, t, n, r) {
+	!r.isPrimary || r.button !== 0 || Gf.has(e) || (Gf.set(e, {
 		column: t,
 		pointerId: r.pointerId,
 		startX: r.clientX,
 		startWidth: n
 	}), r.currentTarget.setPointerCapture?.(r.pointerId));
 }
-function Jf(e, t) {
-	let n = Uf.get(e);
-	!n || n.pointerId !== t.pointerId || Kf(e, n.column, n.startWidth + t.clientX - n.startX, Gf(t.currentTarget));
+function Xf(e, t) {
+	let n = Gf.get(e);
+	!n || n.pointerId !== t.pointerId || Jf(e, n.column, n.startWidth + t.clientX - n.startX, qf(t.currentTarget));
 }
-function Yf(e, t) {
-	let n = Uf.get(e);
+function Zf(e, t) {
+	let n = Gf.get(e);
 	if (!n || n.pointerId !== t.pointerId) return;
-	Uf.delete(e);
+	Gf.delete(e);
 	let r = t.currentTarget;
 	r.hasPointerCapture?.(t.pointerId) && r.releasePointerCapture?.(t.pointerId);
 }
-function Xf(e, t, n) {
-	let r = e._diagnosticsLogColumns ?? Dn, i = Gf(n.currentTarget), a;
-	n.key === "ArrowLeft" && (a = r[t] - (n.shiftKey ? 25 : 10)), n.key === "ArrowRight" && (a = r[t] + (n.shiftKey ? 25 : 10)), n.key === "Home" && (a = On[t]), n.key === "End" && (a = jn(r, t, i)), a !== void 0 && (n.preventDefault(), Kf(e, t, a, i));
+function Qf(e, t, n) {
+	let r = e._diagnosticsLogColumns ?? Dn, i = qf(n.currentTarget), a;
+	n.key === "ArrowLeft" && (a = r[t] - (n.shiftKey ? 25 : 10)), n.key === "ArrowRight" && (a = r[t] + (n.shiftKey ? 25 : 10)), n.key === "Home" && (a = On[t]), n.key === "End" && (a = jn(r, t, i)), a !== void 0 && (n.preventDefault(), Jf(e, t, a, i));
 }
-function Zf(e, t) {
+function $f(e, t) {
 	let n = t.data;
 	return t.category === "room_assist" ? [
 		n.direction ? e._modeLabel(String(n.direction)) : void 0,
-		Qf(e._t("roomSensorAppliedTarget"), cp(e, n, t.entity_id ?? "")),
-		$f(e, "roomSensorRoomTemperature", n.room_temperature, t.entity_id),
-		$f(e, "roomSensorClimateTemperature", n.climate_temperature, t.entity_id),
-		xp(e, n.reason)
+		ep(e._t("roomSensorAppliedTarget"), fp(e, n, t.entity_id ?? "")),
+		tp(e, "roomSensorRoomTemperature", n.room_temperature, t.entity_id),
+		tp(e, "roomSensorClimateTemperature", n.climate_temperature, t.entity_id),
+		Tp(e, n.reason)
 	].filter(Boolean).join(" · ") : t.category === "preconditioning" ? [
 		n.direction ? e._modeLabel(String(n.direction)) : void 0,
 		typeof n.lead_minutes == "number" ? e._t("preconditioningLeadTime", { minutes: Z(e, n.lead_minutes) }) : void 0,
-		jp(e, n.model_source),
-		sp(e, n, t.entity_id ?? ""),
-		xp(e, n.reason)
+		Fp(e, n.model_source),
+		dp(e, n, t.entity_id ?? ""),
+		Tp(e, n.reason)
 	].filter(Boolean).join(" · ") : t.category === "comfort" ? [
-		Op(e, n.condition),
-		kp(e, n.air_quality),
-		Ap(e, n.data_quality)
-	].filter(Boolean).join(" · ") : t.category === "availability" ? [yp(e, n.state)].filter(Boolean).join(" · ") : t.category === "control" ? n.event === "external_climate_change_detected" ? dp(e, t) : n.event === "zone_control_changed" ? fp(e, t) : [
+		Mp(e, n.condition),
+		Np(e, n.air_quality),
+		Pp(e, n.data_quality)
+	].filter(Boolean).join(" · ") : t.category === "availability" ? [Cp(e, n.state)].filter(Boolean).join(" · ") : t.category === "control" ? n.event === "external_climate_change_detected" ? hp(e, t) : n.event === "zone_control_changed" ? gp(e, t) : [
 		n.hvac_mode ? e._modeLabel(String(n.hvac_mode)) : void 0,
-		Sp(e, n.action ?? n.operation),
-		sp(e, n, t.entity_id ?? ""),
-		xp(e, n.reason)
-	].filter(Boolean).join(" · ") : [n.reason ? xp(e, n.reason) : n.error ? Q(n.error) : n.state ? yp(e, n.state) : void 0].filter(Boolean).join(" · ");
+		Ep(e, n.action ?? n.operation),
+		dp(e, n, t.entity_id ?? ""),
+		up(e, n, t.entity_id ?? ""),
+		Tp(e, n.reason)
+	].filter(Boolean).join(" · ") : [n.reason ? Tp(e, n.reason) : n.error ? Q(n.error) : n.state ? Cp(e, n.state) : void 0].filter(Boolean).join(" · ");
 }
-function Qf(e, t) {
+function ep(e, t) {
 	return t ? `${e}: ${t}` : void 0;
 }
-function $f(e, t, n, r) {
+function tp(e, t, n, r) {
 	return typeof n == "number" ? `${e._t(t)}: ${e._formatTemperature(n, r ?? void 0)}` : void 0;
 }
-function ep(e) {
+function np(e) {
 	return e.filter((e) => e.value !== void 0 && e.value !== null && e.value !== "");
 }
 function X(e) {
 	return e && typeof e == "object" && !Array.isArray(e) ? e : {};
 }
-function tp(e, t) {
+function rp(e, t) {
 	return typeof t == "boolean" ? e._t(t ? "diagnosticsOn" : "diagnosticsOff") : typeof t == "number" ? Z(e, t) : String(t);
 }
-function np(e, t) {
-	return Va(t, Ra(e._language()), e.hass?.locale?.time_format);
-}
-function rp(e, t, n) {
-	return typeof n == "number" ? e._formatTemperature(n, t) : void 0;
-}
-function ip(e, t, n, r) {
-	return typeof n == "number" && typeof r == "number" ? `${e._formatTemperature(n, t)} – ${e._formatTemperature(r, t)}` : void 0;
+function ip(e, t) {
+	return Ha(t, za(e._language()), e.hass?.locale?.time_format);
 }
 function ap(e, t, n) {
+	return typeof n == "number" ? e._formatTemperature(n, t) : void 0;
+}
+function op(e, t, n, r) {
+	return typeof n == "number" && typeof r == "number" ? `${e._formatTemperature(n, t)} – ${e._formatTemperature(r, t)}` : void 0;
+}
+function sp(e, t, n) {
 	let r = X(t);
 	return [
-		lp(e, r.control_mode),
-		yp(e, r.state),
+		pp(e, r.control_mode),
+		Cp(e, r.state),
 		r.hvac_mode ? e._modeLabel(String(r.hvac_mode)) : void 0,
-		sp(e, r, n)
+		dp(e, r, n)
 	].filter(Boolean).join(" · ") || void 0;
 }
-function op(e, t, n) {
+function cp(e, t, n) {
 	let r = X(t);
 	return [
 		r.at ? e._formatDateTime(String(r.at)) : void 0,
 		r.hvac_mode ? e._modeLabel(String(r.hvac_mode)) : void 0,
-		sp(e, r, n)
+		dp(e, r, n),
+		up(e, r, n)
 	].filter(Boolean).join(" · ") || void 0;
 }
-function sp(e, t, n) {
+function lp(e, t, n) {
+	let r = X(n), i = typeof r.min_temperature == "number" ? e._formatTemperature(r.min_temperature, t) : void 0, a = typeof r.max_temperature == "number" ? e._formatTemperature(r.max_temperature, t) : void 0;
+	if (i && a) return `${i} – ${a}`;
+	if (i) return `≥ ${i}`;
+	if (a) return `≤ ${a}`;
+}
+function up(e, t, n) {
+	if (t.limited_by !== "zone_limits") return;
+	let r = dp(e, {
+		temperature: t.requested_temperature,
+		target_temp_low: t.requested_target_temp_low ?? t.target_temp_low,
+		target_temp_high: t.requested_target_temp_high ?? t.target_temp_high
+	}, n), i = e._t("diagnosticsLimitedByZoneLimits");
+	return r ? `${i} (${e._t("diagnosticsRequestedTarget")}: ${r})` : i;
+}
+function dp(e, t, n) {
 	let r = t.temperature ?? t.target_temperature;
 	return typeof r == "number" ? e._formatTemperature(r, n) : typeof t.target_temp_low == "number" && typeof t.target_temp_high == "number" ? `${e._formatTemperature(t.target_temp_low, n)} – ${e._formatTemperature(t.target_temp_high, n)}` : void 0;
 }
-function cp(e, t, n) {
+function fp(e, t, n) {
 	let r = t.applied_temperature ?? t.applied_target;
 	return typeof r == "number" ? e._formatTemperature(r, n) : typeof t.applied_target_temp_low == "number" && typeof t.applied_target_temp_high == "number" ? `${e._formatTemperature(t.applied_target_temp_low, n)} – ${e._formatTemperature(t.applied_target_temp_high, n)}` : void 0;
 }
-function lp(e, t) {
+function pp(e, t) {
 	if (t === "manual") return e._t("diagnosticsControlManual");
 	if (t === "automatic") return e._t("diagnosticsControlAutomatic");
 }
-function up(e, t, n) {
+function mp(e, t, n) {
 	if (t === "keep_automatic") return e._t("externalChangeKeepAutomatic");
 	if (t === "until_next_block") return e._t("externalChangeUntilNextBlock");
 	if (t === "for_duration") return [e._t("externalChangeForDuration"), typeof n == "number" ? e._t("manualSessionDuration", { minutes: n }) : void 0].filter(Boolean).join(" · ");
 	if (t === "until_resumed") return e._t("externalChangeUntilResumed");
 }
-function dp(e, t) {
+function hp(e, t) {
 	let n = t.data, r = X(n.previous), i = X(n.current), a = new Set(Array.isArray(n.changed_fields) ? n.changed_fields.map(String) : []), o = t.entity_id ?? "", s = [];
 	a.has("hvac_mode") && r.hvac_mode && i.hvac_mode && s.push(e._t("diagnosticsHvacModeChanged", {
 		previous: e._modeLabel(String(r.hvac_mode)),
@@ -29805,7 +30061,7 @@ function dp(e, t) {
 	}));
 	let c = a.has("target_temp_low"), l = a.has("target_temp_high");
 	if (c || l) {
-		let t = ip(e, o, r.target_temp_low, r.target_temp_high), n = ip(e, o, i.target_temp_low, i.target_temp_high);
+		let t = op(e, o, r.target_temp_low, r.target_temp_high), n = op(e, o, i.target_temp_low, i.target_temp_high);
 		t && n && c && l && s.push(e._t("diagnosticsRangeChanged", {
 			previous: t,
 			current: n
@@ -29817,25 +30073,25 @@ function dp(e, t) {
 			current: e._formatTemperature(i.target_temp_high, o)
 		})));
 	}
-	return s.push(up(e, n.policy, n.duration_minutes)), s.filter(Boolean).join(" · ");
+	return s.push(mp(e, n.policy, n.duration_minutes)), s.filter(Boolean).join(" · ");
 }
-function fp(e, t) {
-	let n = t.data, r = lp(e, n.previous_control_mode), i = lp(e, n.control_mode);
+function gp(e, t) {
+	let n = t.data, r = pp(e, n.previous_control_mode), i = pp(e, n.control_mode);
 	return [
 		r && i ? e._t("diagnosticsControlChanged", {
 			previous: r,
 			current: i
 		}) : i,
-		up(e, n.policy, n.duration_minutes),
+		mp(e, n.policy, n.duration_minutes),
 		n.until ? e._t("diagnosticsUntil", { time: e._formatDateTime(String(n.until)) }) : void 0,
-		xp(e, n.reason)
+		Tp(e, n.reason)
 	].filter(Boolean).join(" · ");
 }
-function pp(e, t) {
+function _p(e, t) {
 	let n = X(t), r = n.action ?? n.status;
 	return (r === "turn_off" ? e._t("diagnosticsOverrideTurnOff") : r === "none" ? e._t("diagnosticsNone") : r ? Q(r) : void 0) ?? (n.expires_at ? e._formatDateTime(String(n.expires_at)) : void 0) ?? (Object.keys(n).length ? e._t("diagnosticsActive") : void 0);
 }
-function mp(e, t) {
+function vp(e, t) {
 	let n = X(t), r = String(n.code ?? ""), i = {
 		exhausted: "diagnosticsDeliveryExhausted",
 		failed: "diagnosticsDeliveryFailed",
@@ -29848,33 +30104,33 @@ function mp(e, t) {
 function Z(e, t) {
 	return new Intl.NumberFormat(e._language()).format(t);
 }
-function hp(e, t) {
+function yp(e, t) {
 	return e._t({
 		ok: "diagnosticsStatusHealthy",
 		warning: "diagnosticsStatusWarning",
 		error: "diagnosticsStatusError"
 	}[t]);
 }
-function gp(e, t) {
-	let n = hp(e, t.status);
+function bp(e, t) {
+	let n = yp(e, t.status);
 	return t.issues.length ? e._t("diagnosticsStatusWithIssues", {
 		status: n,
-		issues: t.issues.map((t) => Ff(e, t.code)).join("; ")
+		issues: t.issues.map((t) => Lf(e, t.code)).join("; ")
 	}) : n;
 }
-function _p(e, t) {
+function xp(e, t) {
 	let n = e.hass?.states?.[t];
 	return n ? T`<ha-state-icon class="diagnostics-climate-icon" .hass=${e.hass} .stateObj=${n}></ha-state-icon>` : T`<ha-icon class="diagnostics-climate-icon" icon="mdi:thermostat"></ha-icon>`;
 }
-function vp(e, t) {
-	let n = yp(e, t.state);
+function Sp(e, t) {
+	let n = Cp(e, t.state);
 	if (["unknown", "unavailable"].includes(t.state)) return n;
 	let r = Number(t.state);
 	if (!Number.isFinite(r)) return n;
 	let i = (e.hass?.states?.[t.entity_id])?.attributes?.unit_of_measurement, a = t.purpose === "comfort_humidity" ? "%" : t.purpose === "comfort_co2" ? "ppm" : t.purpose.includes("temperature") ? e._temperatureUnit(t.entity_id) : void 0, o = i ?? a, s = Z(e, r);
 	return o ? `${s} ${o}` : s;
 }
-function yp(e, t) {
+function Cp(e, t) {
 	if (!(t == null || t === "")) return t === "unavailable" ? e._t("roomSensorStatusUnavailable") : t === "unknown" ? e._t("diagnosticsEntityUnknown") : t === "missing" ? e._t("entityDiagnosticMissing") : t === "stopped" ? e._t("diagnosticsReasonStopped") : t === "hold" ? e._t("overviewZoneHold") : [
 		"idle",
 		"override_active",
@@ -29882,7 +30138,7 @@ function yp(e, t) {
 		"scheduled"
 	].includes(String(t)) ? e._schedulerStatusLabel(String(t)) : e._modeLabel(String(t));
 }
-function bp(e, t) {
+function wp(e, t) {
 	return t === "default" ? e._t("defaultSchedules") : t === "profile" ? e._t("profileSchedules") : t === "profile_pause" ? e._t("diagnosticsScheduleSourceProfilePause") : t ? Q(t) : void 0;
 }
 function Q(e) {
@@ -29890,7 +30146,7 @@ function Q(e) {
 	let t = String(e).replace(/[_-]+/g, " ").trim();
 	return t ? `${t.charAt(0).toUpperCase()}${t.slice(1)}` : void 0;
 }
-function xp(e, t) {
+function Tp(e, t) {
 	let n = {
 		assist_disabled: "diagnosticsReasonAssistDisabled",
 		boost_started: "diagnosticsEventBoostStarted",
@@ -29926,7 +30182,7 @@ function xp(e, t) {
 	}, r = String(t ?? "");
 	return n[r] ? e._t(n[r]) : Q(r);
 }
-function Sp(e, t) {
+function Ep(e, t) {
 	let n = {
 		added: "diagnosticsOperationAdded",
 		boost_ended: "diagnosticsEventBoostEnded",
@@ -29956,7 +30212,7 @@ function Sp(e, t) {
 	}, r = String(t ?? "");
 	return n[r] ? e._t(n[r]) : Q(r);
 }
-function Cp(e, t) {
+function Dp(e, t) {
 	let n = String(t ?? ""), r = {
 		cancelled: "operationCancelled",
 		exhausted: "diagnosticsDeliveryExhausted",
@@ -29969,7 +30225,7 @@ function Cp(e, t) {
 	};
 	return r[n] ? e._t(r[n]) : Q(n);
 }
-function wp(e) {
+function Op(e) {
 	return {
 		comfort_co2: "comfortCo2Sensor",
 		comfort_humidity: "comfortHumiditySensor",
@@ -29978,13 +30234,13 @@ function wp(e) {
 		room_temperature: "roomSensorTemperatureEntity"
 	}[e] ?? "diagnosticsAssociatedSensors";
 }
-function Tp(e) {
+function kp(e) {
 	return e === "comfort_humidity" ? "mdi:water-percent" : e === "comfort_co2" ? "mdi:molecule-co2" : e === "outdoor_temperature" ? "mdi:thermometer-chevron-down" : "mdi:thermometer";
 }
-function Ep(e, t) {
-	return t.category === "delivery" ? Cp(e, t.data.status) ?? e._t(Mp(t.category)) : t.data.event ? Sp(e, t.data.event) ?? e._t(Mp(t.category)) : e._t(Mp(t.category));
+function Ap(e, t) {
+	return t.category === "delivery" ? Dp(e, t.data.status) ?? e._t(Ip(t.category)) : t.data.event ? Ep(e, t.data.event) ?? e._t(Ip(t.category)) : e._t(Ip(t.category));
 }
-function Dp(e, t) {
+function jp(e, t) {
 	let n = {
 		assisting: "roomSensorStatusAssisting",
 		blocked: "roomSensorStatusBlocked",
@@ -29997,7 +30253,7 @@ function Dp(e, t) {
 	}, r = String(t ?? "");
 	return n[r] ? e._t(n[r]) : Q(r);
 }
-function Op(e, t) {
+function Mp(e, t) {
 	let n = {
 		cold: "comfortConditionCold",
 		cold_and_dry: "comfortConditionColdAndDry",
@@ -30015,7 +30271,7 @@ function Op(e, t) {
 	}, r = String(t ?? "");
 	return n[r] ? e._t(n[r]) : Q(r);
 }
-function kp(e, t) {
+function Np(e, t) {
 	let n = {
 		elevated: "comfortAirQualityElevated",
 		good: "comfortAirQualityGood",
@@ -30024,7 +30280,7 @@ function kp(e, t) {
 	}, r = String(t ?? "");
 	return n[r] ? e._t(n[r]) : Q(r);
 }
-function Ap(e, t) {
+function Pp(e, t) {
 	let n = {
 		partial: "comfortDataPartial",
 		stale: "comfortDataStale",
@@ -30032,18 +30288,18 @@ function Ap(e, t) {
 	}, r = String(t ?? "");
 	return r === "complete" ? e._t("comfortCurrentReadings") : n[r] ? e._t(n[r]) : Q(r);
 }
-function jp(e, t) {
+function Fp(e, t) {
 	return t === "history" ? e._t("preconditioningModelHistory") : t === "initial_model" || t === "initial" ? e._t("preconditioningModelInitial") : Q(t);
 }
-function Mp(e) {
+function Ip(e) {
 	return `diagnosticsHistoryCategory${e.replace(/(^|_)(\w)/g, (e, t, n) => n.toUpperCase())}`;
 }
-function Np(e) {
-	return `${Mp(e)}Description`;
+function Lp(e) {
+	return `${Ip(e)}Description`;
 }
-async function Pp(e, t, n, r) {
+async function Rp(e, t, n, r) {
 	if (!e.hass || e._diagnosticsHistorySaving) return;
-	let i = yf.filter((e) => e === n ? r : t.history_policy.categories[e]);
+	let i = xf.filter((e) => e === n ? r : t.history_policy.categories[e]);
 	e._diagnosticsHistorySaving = !0, e.requestUpdate();
 	try {
 		e._applyDiagnosticsSnapshot(await new P(e.hass).updateDiagnosticsHistory(i));
@@ -30053,7 +30309,7 @@ async function Pp(e, t, n, r) {
 		e._diagnosticsHistorySaving = !1, e.requestUpdate();
 	}
 }
-async function Fp(e) {
+async function zp(e) {
 	if (!(!e.hass || e._diagnosticsHistorySaving)) {
 		e._diagnosticsHistorySaving = !0, e.requestUpdate();
 		try {
@@ -30065,28 +30321,28 @@ async function Fp(e) {
 		}
 	}
 }
-async function Ip(e) {
+async function Bp(e) {
 	if (e.hass) try {
 		e._error = void 0;
 		let t = await new P(e.hass).exportDiagnostics(e._diagnosticsRedactEntityIds), n = URL.createObjectURL(new Blob([JSON.stringify(t, null, 2)], { type: "application/json" })), r = document.createElement("a");
-		r.href = n, r.download = `velair-diagnostics-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`, r.style.display = "none", document.body.append(r), r.click(), r.remove(), window.setTimeout(() => URL.revokeObjectURL(n), 0), Rp(e);
+		r.href = n, r.download = `velair-diagnostics-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`, r.style.display = "none", document.body.append(r), r.click(), r.remove(), window.setTimeout(() => URL.revokeObjectURL(n), 0), Hp(e);
 	} catch {
 		e._error = e._t("diagnosticsExportError"), e.requestUpdate();
 	}
 }
-function Lp(e) {
-	e._diagnosticsExportOpen ? Rp(e) : (e._diagnosticsExportOpen = !0, e.requestUpdate());
+function Vp(e) {
+	e._diagnosticsExportOpen ? Hp(e) : (e._diagnosticsExportOpen = !0, e.requestUpdate());
 }
-function Rp(e) {
+function Hp(e) {
 	e._diagnosticsExportOpen = !1, e._diagnosticsRedactEntityIds = !0, e.requestUpdate();
 }
 //#endregion
 //#region src/velair/views/templates-view.ts
-function zp(e, t) {
+function Up(e, t) {
 	let n = e._scheduleTemplates(), r = n.find((t) => t.key === e._selectedTemplateKey), i = e._hasDraftValidationError("template"), a = r ? e._templateNameInputValue(r) : "", o = r ? e._templateDraftBlocks : [];
 	return n.length ? T`
     <section class="templates-view">
-      ${Bp(e)}
+      ${Wp(e)}
       <div class="template-library">
         <div class="template-library-layout">
         <div class=${e._templateListClass(n.length)}>
@@ -30171,15 +30427,15 @@ function zp(e, t) {
                     </button>
                   </div>
                 </div>
-                ${Vp(e, r)}
+                ${Gp(e, r)}
                 <div class="editor template-editor">
-                  ${Ru(e, t, "template")}
+                  ${zu(e, t, "template")}
                   <div class="draft-list template-block-list">
                     ${o.length ? T`
-                          ${Hu(e, "template")}
-                          ${o.map((t, n) => _u(nd("template", r.key, void 0, n), Wu(e, t, n, "template")))}
                           ${Uu(e, "template")}
-                        ` : Uu(e, "template")}
+                          ${o.map((t, n) => vu(rd("template", r.key, void 0, n), Gu(e, t, n, "template")))}
+                          ${Wu(e, "template")}
+                        ` : Wu(e, "template")}
                   </div>
                 </div>
               ` : T`
@@ -30193,7 +30449,7 @@ function zp(e, t) {
     </section>
   ` : T`
       <section class="templates-view">
-        ${Bp(e)}
+        ${Wp(e)}
         <div class="template-library">
           <div class="template-placeholder compact">
             <span>${e._t("noTemplates")}</span>
@@ -30211,7 +30467,7 @@ function zp(e, t) {
       </section>
     `;
 }
-function Bp(e) {
+function Wp(e) {
 	return T`
     <header class="template-intro">
       <ha-icon icon="mdi:content-copy"></ha-icon>
@@ -30222,7 +30478,7 @@ function Bp(e) {
     </header>
   `;
 }
-function Vp(e, t) {
+function Gp(e, t) {
 	if (!e._templateApplyOpen) return E;
 	let n = e._visibleZoneIds(e._data?.configured_entities ?? []), r = e._orderedWeekdays(), i = e._hasDraftValidationError("template"), a = e._templateApplyTargets.size > 0;
 	return T`
@@ -30273,8 +30529,8 @@ function Vp(e, t) {
 }
 //#endregion
 //#region src/velair/views/card-content.ts
-function Hp(e) {
-	let t = e._effectiveView(), n = !e._hasExternalConfig || t === "active-setup", r = e._orderedZoneIds(e._data?.configured_entities ?? []), i = e._visibleZoneIds(e._data?.configured_entities ?? []), a = e._selectedEntity && i.includes(e._selectedEntity) ? e._selectedEntity : i[0], o = a ? e._data?.zones[a] : void 0, s = e._data && !e._data.temperature_migration.required ? Jo(e._data.zones, (t) => e._entityTemperatureLimits(t), (t) => e._entityTemperatureStep(t)) : 0;
+function Kp(e) {
+	let t = e._effectiveView(), n = !e._hasExternalConfig || t === "active-setup", r = e._orderedZoneIds(e._data?.configured_entities ?? []), i = e._visibleZoneIds(e._data?.configured_entities ?? []), a = e._selectedEntity && i.includes(e._selectedEntity) ? e._selectedEntity : i[0], o = a ? e._data?.zones[a] : void 0, s = e._data && !e._data.temperature_migration.required ? Yo(e._data.zones, (t) => e._entityTemperatureLimits(t), (t) => e._entityTemperatureStep(t)) : 0;
 	return T`
     <ha-card>
       <div
@@ -30283,8 +30539,8 @@ function Hp(e) {
       >
         ${e._schedulerMenuOpen ? T`<button class="card-scrim" type="button" @click=${e._closeSchedulerMenu}></button>` : E}
 
-        ${n && e._data?.operation_status && hs(e._data.operation_status, e._dismissedOperationId) ? gs(e, e._data.operation_status) : E}
-        ${us(e, e._noticeStackEntries?.() ?? [...e._saveMessage ? [{
+        ${n && e._data?.operation_status && gs(e._data.operation_status, e._dismissedOperationId) ? _s(e, e._data.operation_status) : E}
+        ${ds(e, e._noticeStackEntries?.() ?? [...e._saveMessage ? [{
 		id: "success",
 		type: "success",
 		message: e._saveMessage
@@ -30336,19 +30592,19 @@ function Hp(e) {
               </div>
             ` : E}
 
-        ${e._data ? Up(e, t, r, i, a, o) : E}
+        ${e._data ? qp(e, t, r, i, a, o) : E}
       </div>
     </ha-card>
   `;
 }
-function Up(e, t, n, r, i, a) {
+function qp(e, t, n, r, i, a) {
 	return e._data?.temperature_migration?.required && t !== "settings" && t !== "diagnostics" ? T`<div class="notice">${e._t(e._data.temperature_migration.reason === "legacy_celsius_upgrade_reset_required" ? "temperatureLegacyResetStopped" : "temperatureMigrationStopped")}</div>` : t === "overview" ? T`
-      ${Zc(e, n)}
-      ${Wp(e)}
-      ${Qc(e, r)}
-      ${Il(e, r)}
-      ${yl(e, r)}
-      ${el(e, r)}
+      ${Qc(e, n)}
+      ${Jp(e)}
+      ${$c(e, r)}
+      ${Ll(e, r)}
+      ${bl(e, r)}
+      ${tl(e, r)}
     ` : t === "modes" || t === "profiles" ? T`<velair-profiles-view
       workspace="modes"
       .hass=${e.hass}
@@ -30356,12 +30612,12 @@ function Up(e, t, n, r, i, a) {
       @profile-data-changed=${(t) => e._applyScheduleData(t.detail, { forceDraft: !1 })}
       @profile-error=${(t) => e._showError(t.detail ?? void 0)}
       @profile-success=${(t) => e._showSuccess(t.detail)}
-    ></velair-profiles-view>` : t === "overview-status" ? Zc(e, n) : t === "active-setup" ? Wp(e) : t === "overview-boosts" ? Qc(e, r) : t === "overview-events" ? Il(e, r) : t === "overview-timeline" ? yl(e, r) : t === "overview-zones" ? el(e, r) : t === "schedules" ? ju(e, r, i, a) : t === "templates" ? zp(e, i) : t === "sensors" ? hd(e, r, qp(e)) : t === "comfort" ? As(e, r, Kp(e)) : t === "preconditioning" ? ql(e, r) : t === "diagnostics" ? bf(e) : t === "settings" ? cf(e, r) : Zc(e, n);
+    ></velair-profiles-view>` : t === "overview-status" ? Qc(e, n) : t === "active-setup" ? Jp(e) : t === "overview-boosts" ? $c(e, r) : t === "overview-events" ? Ll(e, r) : t === "overview-timeline" ? bl(e, r) : t === "overview-zones" ? tl(e, r) : t === "schedules" ? Mu(e, r, i, a) : t === "templates" ? Up(e, i) : t === "sensors" ? gd(e, r, Zp(e)) : t === "comfort" ? js(e, r, Xp(e)) : t === "preconditioning" ? Jl(e, r) : t === "diagnostics" ? Sf(e) : t === "settings" ? lf(e, r) : Qc(e, n);
 }
-function Wp(e) {
+function Jp(e) {
 	return T`<velair-profiles-view
     compact
-    .activeSetupControls=${Gp(e._config?.active_setup_controls)}
+    .activeSetupControls=${Yp(e._config?.active_setup_controls)}
     .hass=${e.hass}
     .data=${e._data}
     @profile-data-changed=${(t) => e._applyScheduleData(t.detail, { forceDraft: !1 })}
@@ -30369,10 +30625,10 @@ function Wp(e) {
     @profile-success=${(t) => e._showSuccess(t.detail)}
   ></velair-profiles-view>`;
 }
-function Gp(e) {
+function Yp(e) {
 	return e === "modes" || e === "profiles" ? e : "both";
 }
-function Kp(e) {
+function Xp(e) {
 	return {
 		showCo2: e._config.show_comfort_co2 !== !1,
 		showConfiguration: e._config.show_comfort_configuration !== !1,
@@ -30380,7 +30636,7 @@ function Kp(e) {
 		showTemperature: e._config.show_comfort_temperature !== !1
 	};
 }
-function qp(e) {
+function Zp(e) {
 	return {
 		showAssistSwitch: e._config.show_room_assist_switch !== !1,
 		showDeadband: e._config.show_room_assist_deadband !== !1,
@@ -30409,7 +30665,7 @@ var $ = class extends Ve {
 			this._syncTemplateListScrollIndicators();
 		}, this._addBlock = (e = "schedule") => {
 			xi(bi(this), e);
-		}, this._applySelectedTemplate = () => Vo(U(this)), this._pauseScheduler = async (e, t = {}) => {
+		}, this._applySelectedTemplate = () => Ho(U(this)), this._pauseScheduler = async (e, t = {}) => {
 			await Gr(I(this), e, t);
 		}, this._resumeScheduler = async (e = {}) => {
 			await Kr(I(this), e);
@@ -30418,15 +30674,15 @@ var $ = class extends Ve {
 		}, this._toggleNextEvents = () => {
 			Yr(I(this));
 		}, this._handleTimelineDragOver = (e) => {
-			sa(e);
+			ca(e);
 		}, this._handleTimelineDragEnd = () => {
-			ua(B(this));
+			da(B(this));
 		}, this._handleTimelineResizeMove = (e) => {
-			fa(B(this), e);
+			pa(B(this), e);
 		}, this._handleTimelineResizeEnd = () => {
-			pa(B(this));
+			ma(B(this));
 		}, this._handleSettingsZoneDragEnd = () => {
-			ia(z(this));
+			aa(z(this));
 		};
 	}
 	get hass() {
@@ -30449,10 +30705,10 @@ var $ = class extends Ve {
 		this._selectedWeekday = this._firstWeekday(), this._selectedEntity !== t && this._resetDraftBlocks();
 	}
 	connectedCallback() {
-		super.connectedCallback(), this._loadSchedule(), this._syncInitialLoadingState(), this._subscribeUpdates(), this._syncDiagnosticsSubscription(), this._syncTimelineNowTick(), window.addEventListener(fs, this._handleOperationStatusDismissed);
+		super.connectedCallback(), this._loadSchedule(), this._syncInitialLoadingState(), this._subscribeUpdates(), this._syncDiagnosticsSubscription(), this._syncTimelineNowTick(), window.addEventListener(ps, this._handleOperationStatusDismissed);
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), this.ownerDocument.removeEventListener("pointerdown", this._handleDiagnosticsOutsidePointerDown, !0), this.ownerDocument.defaultView?.removeEventListener("resize", this._scheduleDiagnosticsSourcePosition), this.ownerDocument.removeEventListener("scroll", this._scheduleDiagnosticsSourcePosition, !0), this._cancelDiagnosticsSourcePosition(), this._diagnosticsSourceFilterOpen = !1, this._resetDiagnosticsExport(), this._disconnectDiagnosticsLogResizeObserver(), this._diagnosticsSubscriptionGeneration += 1, this._unsubscribeUpdates &&= (this._unsubscribeUpdates(), void 0), this._unsubscribeDiagnostics &&= (this._unsubscribeDiagnostics(), void 0), this._clearSuccessNoticeTimer(), this._operationalNotices.dispose(), this._clearOperationStatusTimer(), this._clearNextEventChangeTimer(), this._clearPreconditioningRefreshTimer(), this._clearOverviewTimelineDetail(), this._clearInitialLoadingTimer(), this._stopPauseTick(), this._stopTimelineNowTick(), window.removeEventListener(fs, this._handleOperationStatusDismissed);
+		super.disconnectedCallback(), this.ownerDocument.removeEventListener("pointerdown", this._handleDiagnosticsOutsidePointerDown, !0), this.ownerDocument.defaultView?.removeEventListener("resize", this._scheduleDiagnosticsSourcePosition), this.ownerDocument.removeEventListener("scroll", this._scheduleDiagnosticsSourcePosition, !0), this._cancelDiagnosticsSourcePosition(), this._diagnosticsSourceFilterOpen = !1, this._resetDiagnosticsExport(), this._disconnectDiagnosticsLogResizeObserver(), this._diagnosticsSubscriptionGeneration += 1, this._unsubscribeUpdates &&= (this._unsubscribeUpdates(), void 0), this._unsubscribeDiagnostics &&= (this._unsubscribeDiagnostics(), void 0), this._clearSuccessNoticeTimer(), this._operationalNotices.dispose(), this._clearOperationStatusTimer(), this._clearNextEventChangeTimer(), this._clearPreconditioningRefreshTimer(), this._clearOverviewTimelineDetail(), this._clearInitialLoadingTimer(), this._stopPauseTick(), this._stopTimelineNowTick(), window.removeEventListener(ps, this._handleOperationStatusDismissed);
 	}
 	getCardSize() {
 		return 8;
@@ -30487,7 +30743,7 @@ var $ = class extends Ve {
 		t === "overview" || t === "overview-timeline" ? this._data && !this._overviewTimelineScrollInitialized && (this._overviewTimelineScrollInitialized = !0, window.requestAnimationFrame(() => this._scrollOverviewTimelineToNow())) : this._overviewTimelineScrollInitialized = !1;
 	}
 	render() {
-		return Hp(Ko(this));
+		return Kp(qo(this));
 	}
 	willUpdate() {
 		this._operationalNotices.sync([...this._saveMessage ? [{
@@ -30506,7 +30762,7 @@ var $ = class extends Ve {
 	}
 	_dismissOperationStatus() {
 		let e = this._data?.operation_status?.id;
-		e && ms(e);
+		e && hs(e);
 	}
 	_syncOperationStatusTimer() {
 		this._clearOperationStatusTimer();
@@ -30588,37 +30844,37 @@ var $ = class extends Ve {
 		return Wr(I(this));
 	}
 	_selectTemplate(e) {
-		Eo(U(this), e);
-	}
-	_selectScheduleTemplate(e) {
 		Do(U(this), e);
 	}
-	_resetTemplateDraft(e) {
+	_selectScheduleTemplate(e) {
 		Oo(U(this), e);
 	}
+	_resetTemplateDraft(e) {
+		ko(U(this), e);
+	}
 	_templateListClass(e) {
-		return ko(U(this), e);
+		return Ao(U(this), e);
 	}
 	_syncTemplateListScrollIndicators() {
-		Ao(U(this));
+		jo(U(this));
 	}
 	_setTemplateListScrollIndicators(e, t) {
-		jo(U(this), e, t);
+		Mo(U(this), e, t);
 	}
 	_templateNameInputValue(e) {
-		return Mo(U(this), e);
+		return No(U(this), e);
 	}
 	_updateTemplateNameDraft(e, t) {
-		No(U(this), e, t);
+		Po(U(this), e, t);
 	}
 	async _createTemplate() {
-		await Po(U(this));
+		await Fo(U(this));
 	}
 	async _saveSelectedTemplateFromLibrary(e) {
-		await Fo(U(this), e);
+		await Io(U(this), e);
 	}
 	_uniqueTemplateName(e) {
-		return Io(U(this), e);
+		return Lo(U(this), e);
 	}
 	_scheduleTemplates() {
 		return _r(this._data?.templates, this._temperatureUnit());
@@ -30628,15 +30884,15 @@ var $ = class extends Ve {
 	}
 	async _loadSchedule() {
 		if (!this._loading) do
-			this._temperatureUnitReloadPending = !1, await Oa(V(this));
+			this._temperatureUnitReloadPending = !1, await ka(V(this));
 		while (this._temperatureUnitReloadPending);
 	}
 	async _subscribeUpdates() {
-		await ka(V(this));
+		await Aa(V(this));
 	}
 	_applyScheduleData(e, t = {}) {
 		let n = sr(this._data?.next_events ?? [], e.next_events);
-		Aa(V(this), {
+		ja(V(this), {
 			...e,
 			diagnostics: this._diagnosticsSnapshotAuthoritative ? this._latestDiagnostics : e.diagnostics ?? this._data?.diagnostics
 		}, t), this._markChangedNextEvents(n);
@@ -30738,13 +30994,13 @@ var $ = class extends Ve {
 		this._nextEventChangeTimeout !== void 0 && (window.clearTimeout(this._nextEventChangeTimeout), this._nextEventChangeTimeout = void 0), e && this._changedNextEventIds.size && (this._changedNextEventIds = /* @__PURE__ */ new Set());
 	}
 	_resetDraftBlocks() {
-		ja(V(this));
+		Ma(V(this));
 	}
 	_selectEntity(e) {
-		Ma(V(this), e);
+		Na(V(this), e);
 	}
 	_selectWeekday(e) {
-		Na(V(this), e);
+		Pa(V(this), e);
 	}
 	_confirmDiscardChanges() {
 		return window.confirm(this._t("discardUnsavedChanges"));
@@ -30763,34 +31019,34 @@ var $ = class extends Ve {
 		this._profileScheduleDirty = e;
 	}
 	_blocksForSource(e) {
-		return Pa(V(this), e);
+		return Fa(V(this), e);
 	}
 	_setBlocksForSource(e, t) {
-		Fa(V(this), e, t);
+		Ia(V(this), e, t);
 	}
 	_markBlocksDirty(e) {
-		Ia(V(this), e);
+		La(V(this), e);
 	}
 	_toggleTemplateApplyPanel() {
-		Lo(U(this));
+		Ro(U(this));
 	}
 	_templateApplyTargetKey(e, t) {
-		return Ro(e, t);
+		return zo(e, t);
 	}
 	_toggleTemplateApplyTarget(e, t, n) {
-		zo(U(this), e, t, n);
+		Bo(U(this), e, t, n);
 	}
 	async _applyTemplateToTargets(e) {
-		await Bo(U(this), e);
+		await Vo(U(this), e);
 	}
 	async _saveTemplate(e) {
-		await Uo(U(this), e);
+		await Wo(U(this), e);
 	}
 	_newTemplateKey() {
-		return Wo();
+		return Go();
 	}
 	async _deleteSelectedTemplate() {
-		await Go(U(this));
+		await Ko(U(this));
 	}
 	_closeSchedulerMenu() {
 		qr(I(this));
@@ -30805,22 +31061,22 @@ var $ = class extends Ve {
 		wi(bi(this));
 	}
 	_handleTimelineDragStart(e, t, n) {
-		oa(B(this), e, t, n);
+		sa(B(this), e, t, n);
 	}
 	_handleTimelineDrop(e, t = "schedule") {
-		ca(B(this), e, t);
+		la(B(this), e, t);
 	}
 	_handleTimelineResizeStart(e, t, n, r) {
-		da(B(this), e, t, n, r);
+		fa(B(this), e, t, n, r);
 	}
 	_resizeTimelineBlock(e, t, n, r = "schedule") {
-		ma(B(this), e, t, n, r);
+		ha(B(this), e, t, n, r);
 	}
 	_setDraftBlockStart(e, t, n = {}, r = "schedule") {
 		Ti(bi(this), e, t, n, r);
 	}
 	_sortDraftBlocksByStart(e = "schedule") {
-		ha(B(this), e);
+		ga(B(this), e);
 	}
 	_toggleCopyTarget(e, t) {
 		Ei(bi(this), e, t);
@@ -30853,22 +31109,22 @@ var $ = class extends Ve {
 		return ji(ki(this), e, t);
 	}
 	async _saveSelectedDay() {
-		await Sa(xa(this));
+		await Ca(Sa(this));
 	}
 	async _copySelectedDay() {
-		await Ca(xa(this));
+		await wa(Sa(this));
 	}
 	async _applySelectedDayToZones() {
-		await wa(xa(this));
+		await Ta(Sa(this));
 	}
 	_normalizeDraftBlocks(e = "schedule") {
-		return Ta(xa(this), e);
+		return Ea(Sa(this), e);
 	}
 	_clampBlocksForEntity(e, t) {
-		return Ea(xa(this), e, t);
+		return Da(Sa(this), e, t);
 	}
 	_unsupportedModeError(e, t) {
-		return Da(xa(this), e, t);
+		return Oa(Sa(this), e, t);
 	}
 	_pauseExpirationMs() {
 		return Xr(I(this));
@@ -30886,7 +31142,7 @@ var $ = class extends Ve {
 		ei(I(this));
 	}
 	_timelineBlocks(e = "schedule") {
-		return ga(B(this), e);
+		return _a(B(this), e);
 	}
 	_inputValue(e) {
 		return rn(e);
@@ -31030,6 +31286,9 @@ var $ = class extends Ve {
 	async _saveZoneComfort(e, t) {
 		await Zi(z(this), e, t);
 	}
+	async _saveZoneLimits(e, t) {
+		await Qi(z(this), e, t);
+	}
 	_togglePreconditioningZone(e) {
 		let t = new Set(this._expandedPreconditioningZones);
 		t.has(e) ? t.delete(e) : t.add(e), this._expandedPreconditioningZones = t;
@@ -31039,10 +31298,10 @@ var $ = class extends Ve {
 		t.has(e) ? t.delete(e) : t.add(e), this._expandedComfortZones = t;
 	}
 	async _resetZonePreconditioningLearning(e, t, n) {
-		await Qi(z(this), e, t, n);
+		await $i(z(this), e, t, n);
 	}
 	async _resetZonePreconditioningSettings(e) {
-		await $i(z(this), e);
+		await ea(z(this), e);
 	}
 	_togglePortableSection(e, t, n) {
 		Li(R(this), e, t, n);
@@ -31078,112 +31337,112 @@ var $ = class extends Ve {
 		qi(e);
 	}
 	_moveSettingsZone(e, t) {
-		ea(z(this), e, t);
-	}
-	_handleSettingsZoneDragStart(e, t) {
 		ta(z(this), e, t);
 	}
+	_handleSettingsZoneDragStart(e, t) {
+		na(z(this), e, t);
+	}
 	_handleSettingsZoneDragOver(e) {
-		na(e);
+		ra(e);
 	}
 	_handleSettingsZoneDrop(e, t) {
-		ra(z(this), e, t);
+		ia(z(this), e, t);
 	}
 	_updateSettingsZoneOrder(e) {
-		aa(z(this), e);
+		oa(z(this), e);
 	}
 	_temperatureLimits(e = "schedule", t = this._selectedEntity) {
-		return Ja(H(this), e, t);
+		return Ya(H(this), e, t);
 	}
 	_entityTemperatureLimits(e) {
-		return Ya(H(this), e);
+		return Xa(H(this), e);
 	}
 	_templateTemperatureLimits() {
-		return Xa(H(this));
+		return Za(H(this));
 	}
 	_temperatureStep(e = "schedule", t = this._selectedEntity) {
-		return Za(H(this), e, t);
+		return Qa(H(this), e, t);
 	}
 	_entityTemperatureStep(e) {
-		return Qa(H(this), e);
+		return $a(H(this), e);
 	}
 	_formatTemperatureLimit(e) {
 		return tn(e);
 	}
 	_entityExists(e) {
-		return $a(H(this), e);
-	}
-	_entityFanModeOptions(e) {
-		return io(H(this), e);
-	}
-	_entityPresetModeOptions(e) {
-		return oo(H(this), e);
-	}
-	_entitySwingModeOptions(e) {
-		return co(H(this), e);
-	}
-	_entitySwingHorizontalModeOptions(e) {
-		return uo(H(this), e);
-	}
-	_entityHumidityLimits(e) {
-		return po(H(this), e);
-	}
-	_friendlyEntityName(e) {
 		return eo(H(this), e);
 	}
-	_climateSupportedModes(e) {
-		return to(H(this), e);
-	}
-	_hvacModeOptions(e = "schedule") {
-		return no(H(this), e);
-	}
-	_fanModeOptions(e = "schedule") {
-		return ro(H(this), e);
-	}
-	_presetModeOptions(e = "schedule") {
+	_entityFanModeOptions(e) {
 		return ao(H(this), e);
 	}
-	_swingModeOptions(e = "schedule") {
+	_entityPresetModeOptions(e) {
 		return so(H(this), e);
 	}
-	_swingHorizontalModeOptions(e = "schedule") {
+	_entitySwingModeOptions(e) {
 		return lo(H(this), e);
 	}
-	_humidityLimits(e = "schedule") {
+	_entitySwingHorizontalModeOptions(e) {
 		return fo(H(this), e);
 	}
+	_entityHumidityLimits(e) {
+		return mo(H(this), e);
+	}
+	_friendlyEntityName(e) {
+		return to(H(this), e);
+	}
+	_climateSupportedModes(e) {
+		return no(H(this), e);
+	}
+	_hvacModeOptions(e = "schedule") {
+		return ro(H(this), e);
+	}
+	_fanModeOptions(e = "schedule") {
+		return io(H(this), e);
+	}
+	_presetModeOptions(e = "schedule") {
+		return oo(H(this), e);
+	}
+	_swingModeOptions(e = "schedule") {
+		return co(H(this), e);
+	}
+	_swingHorizontalModeOptions(e = "schedule") {
+		return uo(H(this), e);
+	}
+	_humidityLimits(e = "schedule") {
+		return po(H(this), e);
+	}
 	_uniqueModes(e) {
-		return mo(e);
+		return ho(e);
 	}
 	_entityDiagnostic(e) {
-		return go(H(this), e);
-	}
-	_climateProvidedData(e) {
 		return _o(H(this), e);
 	}
-	_formatDateTime(e) {
+	_climateProvidedData(e) {
 		return vo(H(this), e);
 	}
-	_formatScheduleTime(e) {
+	_formatDateTime(e) {
 		return yo(H(this), e);
 	}
+	_formatScheduleTime(e) {
+		return bo(H(this), e);
+	}
 	_dateLocale() {
-		return bo(H(this));
+		return xo(H(this));
 	}
 	_formatRemaining(e) {
-		return Ua(e);
+		return Wa(e);
 	}
 	_formatTemperature(e, t) {
-		return xo(H(this), e, t);
+		return So(H(this), e, t);
 	}
 	_formatEventAction(e) {
-		return So(H(this), e);
-	}
-	_formatEventMode(e) {
 		return Co(H(this), e);
 	}
-	_temperatureUnit(e) {
+	_formatEventMode(e) {
 		return wo(H(this), e);
+	}
+	_temperatureUnit(e) {
+		return To(H(this), e);
 	}
 	static {
 		this.styles = Yn;
@@ -31192,14 +31451,14 @@ var $ = class extends Ve {
 J([D({ type: String })], $.prototype, "view", void 0), J([O()], $.prototype, "_config", void 0), J([O()], $.prototype, "_changedNextEventIds", void 0), J([O()], $.prototype, "_data", void 0), J([O()], $.prototype, "_error", void 0), J([O()], $.prototype, "_loading", void 0), J([O()], $.prototype, "_showInitialLoading", void 0), J([O()], $.prototype, "_saving", void 0), J([O()], $.prototype, "_saveMessage", void 0), J([O()], $.prototype, "_selectedEntity", void 0), J([O()], $.prototype, "_scheduleSource", void 0), J([O()], $.prototype, "_profileScheduleDirty", void 0), J([O()], $.prototype, "_selectedWeekday", void 0), J([O()], $.prototype, "_draftBlocks", void 0), J([O()], $.prototype, "_dirty", void 0), J([O()], $.prototype, "_dismissedOperationId", void 0), J([O()], $.prototype, "_dirtyEntityId", void 0), J([O()], $.prototype, "_copyTargets", void 0), J([O()], $.prototype, "_copying", void 0), J([O()], $.prototype, "_zoneTargets", void 0), J([O()], $.prototype, "_applyingZones", void 0), J([O()], $.prototype, "_selectedTemplateKey", void 0), J([O()], $.prototype, "_templateNameDraft", void 0), J([O()], $.prototype, "_templateNameDraftKey", void 0), J([O()], $.prototype, "_templateDraftBlocks", void 0), J([O()], $.prototype, "_templateDraftKey", void 0), J([O()], $.prototype, "_templateDirty", void 0), J([O()], $.prototype, "_templateApplyOpen", void 0), J([O()], $.prototype, "_templateApplyTargets", void 0), J([O()], $.prototype, "_applyingTemplateTargets", void 0), J([O()], $.prototype, "_templateListCanScrollUp", void 0), J([O()], $.prototype, "_templateListCanScrollDown", void 0), J([O()], $.prototype, "_templateAction", void 0), J([O()], $.prototype, "_settingsSaving", void 0), J([O()], $.prototype, "_selectedDiagnosticEntity", void 0), J([O()], $.prototype, "_diagnosticsHistorySaving", void 0), J([O()], $.prototype, "_diagnosticsHistoryFilters", void 0), J([O()], $.prototype, "_diagnosticsSourceFilterOpen", void 0), J([O()], $.prototype, "_diagnosticsSourcePlacement", void 0), J([O()], $.prototype, "_diagnosticsSourceMaxHeight", void 0), J([O()], $.prototype, "_diagnosticsLogColumns", void 0), J([O()], $.prototype, "_diagnosticsLogAvailableWidth", void 0), J([O()], $.prototype, "_diagnosticsExportOpen", void 0), J([O()], $.prototype, "_diagnosticsRedactEntityIds", void 0), J([O()], $.prototype, "_temperatureMigrationAction", void 0), J([O()], $.prototype, "_maintenanceAction", void 0), J([O()], $.prototype, "_portabilityAction", void 0), J([O()], $.prototype, "_exportSections", void 0), J([O()], $.prototype, "_expandedComfortZones", void 0), J([O()], $.prototype, "_expandedPreconditioningZones", void 0), J([O()], $.prototype, "_importSections", void 0), J([O()], $.prototype, "_importPayload", void 0), J([O()], $.prototype, "_importFileName", void 0), J([O()], $.prototype, "_pauseDurationMinutes", void 0), J([O()], $.prototype, "_controlAction", void 0), J([O()], $.prototype, "_manualControlActions", void 0), J([O()], $.prototype, "_schedulerMenuOpen", void 0), J([O()], $.prototype, "_nextEventsOpen", void 0), J([O()], $.prototype, "_nextEventChangeRevision", void 0), J([O()], $.prototype, "_overviewTimelineDetail", void 0), J([O()], $.prototype, "_overviewTimelineDetailAnchor", void 0), J([O()], $.prototype, "_overviewTimelineDetailEntityId", void 0), J([O()], $.prototype, "_successNoticeStartedAt", void 0), J([O()], $.prototype, "_timelineNow", void 0);
 //#endregion
 //#region src/velair/registration.ts
-function Jp(e) {
+function Qp(e) {
 	Object.entries(e.elements).forEach(([e, t]) => {
 		customElements.get(e) || customElements.define(e, t);
 	}), window.velairFrontendBuild = e.build, window.velairFrontendVersion = e.version || void 0, window.customCards = window.customCards ?? [], window.customCards.some((t) => t.type === e.customCard.type) || window.customCards.push(e.customCard);
 }
 //#endregion
 //#region src/velair/views/card-editor.ts
-var Yp = new Set(["schedules"]), Xp = new Set(["active-setup"]), Zp = new Set([
+var $p = new Set(["schedules"]), em = new Set(["active-setup"]), tm = new Set([
 	"comfort",
 	"overview",
 	"overview-boosts",
@@ -31211,19 +31470,19 @@ var Yp = new Set(["schedules"]), Xp = new Set(["active-setup"]), Zp = new Set([
 	"sensors",
 	"preconditioning",
 	"settings"
-]), Qp = new Set(["comfort"]), $p = [
+]), nm = new Set(["comfort"]), rm = [
 	["show_comfort_configuration", "comfortCardShowConfiguration"],
 	["show_comfort_temperature", "comfortCardShowTemperature"],
 	["show_comfort_humidity", "comfortCardShowHumidity"],
 	["show_comfort_co2", "comfortCardShowCo2"]
-], em = new Set(["sensors"]), tm = [
+], im = new Set(["sensors"]), am = [
 	["show_room_assist_switch", "roomAssistShowSwitch"],
 	["show_room_assist_sensor", "roomAssistShowSensor"],
 	["show_room_assist_deadband", "roomAssistShowDeadband"],
 	["show_room_assist_max_delta", "roomAssistShowMaxDelta"],
 	["show_room_assist_debounce", "roomAssistShowDebounce"],
 	["show_room_assist_live_status", "roomAssistShowLiveStatus"]
-], nm = class extends Ve {
+], om = class extends Ve {
 	constructor(...e) {
 		super(...e), this._config = {}, this._entities = [], this._loading = !1, this._loaded = !1, this._handleZoneDragEnd = () => {
 			this._draggedEntity = void 0;
@@ -31315,7 +31574,7 @@ var Yp = new Set(["schedules"]), Xp = new Set(["active-setup"]), Zp = new Set([
                   <p>${this._t("comfortCardVisibilityDescription")}</p>
                 </div>
                 <div class="visibility-list">
-                  ${$p.map(([e, t]) => this._renderVisibilityOption(e, t))}
+                  ${rm.map(([e, t]) => this._renderVisibilityOption(e, t))}
                 </div>
               </section>
             ` : E}
@@ -31327,7 +31586,7 @@ var Yp = new Set(["schedules"]), Xp = new Set(["active-setup"]), Zp = new Set([
                   <p>${this._t("roomAssistCardVisibilityDescription")}</p>
                 </div>
                 <div class="visibility-list">
-                  ${tm.map(([e, t]) => this._renderVisibilityOption(e, t))}
+                  ${am.map(([e, t]) => this._renderVisibilityOption(e, t))}
                 </div>
               </section>
             ` : E}
@@ -31521,19 +31780,19 @@ var Yp = new Set(["schedules"]), Xp = new Set(["active-setup"]), Zp = new Set([
 		return e && $e.includes(e) ? e : "overview-status";
 	}
 	_showsFirstWeekdayOption() {
-		return Yp.has(this._selectedView());
+		return $p.has(this._selectedView());
 	}
 	_showsActiveSetupControls() {
-		return Xp.has(this._selectedView());
+		return em.has(this._selectedView());
 	}
 	_showsComfortVisibilityOptions() {
-		return Qp.has(this._selectedView());
+		return nm.has(this._selectedView());
 	}
 	_showsThermostatOptions() {
-		return Zp.has(this._selectedView());
+		return tm.has(this._selectedView());
 	}
 	_showsRoomAssistVisibilityOptions() {
-		return em.has(this._selectedView());
+		return im.has(this._selectedView());
 	}
 	_friendlyEntityName(e) {
 		return this.hass?.states?.[e]?.attributes?.friendly_name ?? e;
@@ -31700,10 +31959,10 @@ var Yp = new Set(["schedules"]), Xp = new Set(["active-setup"]), Zp = new Set([
   `;
 	}
 };
-J([D({ attribute: !1 })], nm.prototype, "hass", void 0), J([O()], nm.prototype, "_config", void 0), J([O()], nm.prototype, "_entities", void 0), J([O()], nm.prototype, "_loading", void 0), J([O()], nm.prototype, "_loaded", void 0), J([O()], nm.prototype, "_error", void 0);
+J([D({ attribute: !1 })], om.prototype, "hass", void 0), J([O()], om.prototype, "_config", void 0), J([O()], om.prototype, "_entities", void 0), J([O()], om.prototype, "_loading", void 0), J([O()], om.prototype, "_loaded", void 0), J([O()], om.prototype, "_error", void 0);
 //#endregion
 //#region src/velair/views/tabs.ts
-var rm = [
+var sm = [
 	{
 		icon: "mdi:view-dashboard-outline",
 		labelKey: "overview",
@@ -31750,12 +32009,12 @@ var rm = [
 		view: "settings"
 	}
 ];
-function im(e) {
-	return rm.find((t) => t.view === e)?.icon ?? "mdi:circle";
+function cm(e) {
+	return sm.find((t) => t.view === e)?.icon ?? "mdi:circle";
 }
 //#endregion
 //#region src/velair/views/panel.ts
-var am = class extends Ve {
+var lm = class extends Ve {
 	constructor(...e) {
 		super(...e), this.narrow = !1, this._activeView = "overview", this._activeViewDirty = !1;
 	}
@@ -31791,7 +32050,7 @@ var am = class extends Ve {
     `;
 	}
 	_renderActiveView() {
-		return _u(this._activeView, T`<velair-panel-card
+		return vu(this._activeView, T`<velair-panel-card
         .hass=${this.hass}
         .view=${this._activeView}
         view=${this._activeView}
@@ -31823,7 +32082,7 @@ var am = class extends Ve {
 		return typeof e == "string" && Qe.includes(e);
 	}
 	_viewIcon(e) {
-		return im(e);
+		return cm(e);
 	}
 	_t(e, t = {}) {
 		return Ct(this._language(), e, t);
@@ -32033,7 +32292,7 @@ var am = class extends Ve {
   `;
 	}
 };
-J([D({ attribute: !1 })], am.prototype, "hass", void 0), J([D({ type: Boolean })], am.prototype, "narrow", void 0), J([D({ attribute: !1 })], am.prototype, "panel", void 0), J([D({ attribute: !1 })], am.prototype, "route", void 0), J([O()], am.prototype, "_activeView", void 0), J([O()], am.prototype, "_activeViewDirty", void 0), Jp({
+J([D({ attribute: !1 })], lm.prototype, "hass", void 0), J([D({ type: Boolean })], lm.prototype, "narrow", void 0), J([D({ attribute: !1 })], lm.prototype, "panel", void 0), J([D({ attribute: !1 })], lm.prototype, "route", void 0), J([O()], lm.prototype, "_activeView", void 0), J([O()], lm.prototype, "_activeViewDirty", void 0), Qp({
 	build: n,
 	customCard: {
 		type: "velair-card",
@@ -32042,9 +32301,9 @@ J([D({ attribute: !1 })], am.prototype, "hass", void 0), J([D({ type: Boolean })
 	},
 	elements: {
 		"velair-card": $,
-		"velair-card-editor": nm,
+		"velair-card-editor": om,
 		"velair-panel-card": class extends $ {},
-		"velair-sidebar-panel": am
+		"velair-sidebar-panel": lm
 	},
 	version: ""
 });

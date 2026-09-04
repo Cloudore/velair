@@ -121,6 +121,10 @@ The response includes a runtime-only `zone_runtime` mapping. It is derived by th
         "co2_attention": 1000,
         "co2_poor": 1500,
         "stale_after_minutes": 120
+      },
+      "limits": {
+        "min_temperature": 21.0,
+        "max_temperature": null
       }
     }
   },
@@ -752,6 +756,36 @@ await hass.connection.sendMessagePromise({
 ```
 
 Comfort settings are per managed climate. The scheduler only listens to comfort-related entities for climates where `comfort.enabled` is true. See [Environmental Comfort internals](comfort.md) for source selection, assessment calculation, runtime listener behavior, and event payloads.
+
+## Zone Limits
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/update_zone_limits",
+  entity_id: "climate.living_room",
+  limits: {
+    min_temperature: 21,
+    max_temperature: null
+  }
+});
+```
+
+Both keys are optional; an omitted key keeps its stored value and `null`
+clears that limit. Each value must be inside the climate entity's own
+`min_temp`/`max_temp` range, the minimum cannot exceed the maximum, and values
+are aligned to the climate's `target_temp_step`. Invalid input returns
+`invalid_limits`. Limits are stored in the runtime unit, exported inside each
+zone (`limits` is optional in imports; an absent key means no limit), and
+converted with the other absolute temperatures.
+
+The scheduler clamps every delivered set-temperature target to these limits
+right before the physical climate call, including Room Assist output. When a
+limit changes the target, `climate_target_applied` carries
+`limited_by: "zone_limits"` together with `requested_temperature` or
+`requested_target_temp_low`/`requested_target_temp_high`. Saving limits that
+change the currently delivered target reapplies it with
+`source: "zone_limits_updated"`. Manual adjustments are not clamped; see
+[External Changes and Manual Adjustment](../user/manual-control.md).
 
 ## Climate Profiles
 

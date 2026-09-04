@@ -6,6 +6,7 @@ import {
   resetZonePreconditioningLearning,
   resetZonePreconditioningSettings,
   saveSettings,
+  saveZoneLimits,
   saveZonePreconditioning,
 } from "../../src/velair/controllers/settings-actions";
 import type { ScheduleResponse } from "../../src/velair/types";
@@ -29,6 +30,7 @@ function host(externalConfig = false) {
     resetZonePreconditioningLearning: vi.fn(async () => scheduleResponse()),
     resetZonePreconditioningSettings: vi.fn(async () => scheduleResponse()),
     updateSettings: vi.fn(async () => scheduleResponse()),
+    updateZoneLimits: vi.fn(async () => scheduleResponse()),
     updateZonePreconditioning: vi.fn(async () => scheduleResponse()),
   };
   const state = {
@@ -77,6 +79,31 @@ describe("settings actions", () => {
     expect(state._applyScheduleData).toHaveBeenCalledWith(expect.objectContaining({
       configured_entities: ["climate.office"],
     }));
+  });
+
+  it("persists zone temperature limits and confirms the save", async () => {
+    const { api, state } = host();
+
+    await saveZoneLimits(state, "climate.office", { min_temperature: 21 });
+
+    expect(api.updateZoneLimits).toHaveBeenCalledWith("climate.office", { min_temperature: 21 });
+    expect(state._applyScheduleData).toHaveBeenCalledWith(expect.objectContaining({
+      configured_entities: ["climate.office"],
+    }));
+    expect(state._showSuccess).toHaveBeenCalledWith("zoneLimitsSaved");
+    expect(state._settingsSaving).toBe(false);
+    expect(state._error).toBeUndefined();
+  });
+
+  it("surfaces backend validation errors for zone temperature limits", async () => {
+    const { api, state } = host();
+    api.updateZoneLimits.mockRejectedValueOnce(new Error("min_temperature must be between 5 and 35"));
+
+    await saveZoneLimits(state, "climate.office", { min_temperature: 3 });
+
+    expect(state._error).toBe("min_temperature must be between 5 and 35");
+    expect(state._applyScheduleData).not.toHaveBeenCalled();
+    expect(state._settingsSaving).toBe(false);
   });
 
   it("persists preconditioning resets from externally configured Lovelace cards", async () => {

@@ -573,6 +573,9 @@ def _snap_migrated_editable_temperatures(
         if isinstance(override, dict):
             for key in ("temperature", "target_temp_low", "target_temp_high"):
                 snap_target(override.get("previous_state"), key)
+        limits = zone.get("limits")
+        for key in ("min_temperature", "max_temperature"):
+            snap_target(limits, key)
 
         comfort = zone.get("comfort")
         if isinstance(comfort, dict):
@@ -634,6 +637,11 @@ def _convert_scheduler_temperatures(
                 for key in ("temperature_min", "temperature_max"):
                     if isinstance(comfort.get(key), (int, float)):
                         comfort[key] = round(absolute_temperature(comfort[key], source, target), 6)
+            limits = zone.get("limits")
+            if isinstance(limits, dict):
+                for key in ("min_temperature", "max_temperature"):
+                    if isinstance(limits.get(key), (int, float)):
+                        limits[key] = round(absolute_temperature(limits[key], source, target), 6)
     templates = data.get("templates", [])
     if isinstance(templates, list):
         for template in templates:

@@ -190,7 +190,15 @@ Velair does not automatically:
 - copy the adjustment into a schedule;
 - change the policy of another climate;
 - remove independent zone pauses;
-- wait for the room to reach the requested temperature.
+- wait for the room to reach the requested temperature;
+- clamp the external adjustment to the zone's
+  [temperature limits](usage.md#zone-temperature-limits).
+
+Zone temperature limits apply only to targets Velair delivers itself. A Manual
+adjustment preserves the exact external setpoint, even when it is below the
+zone minimum or above the zone maximum. The limits apply again as soon as
+automatic control resumes and Velair delivers its own target, and the
+**Keep automatic** policy reasserts a clamped target.
 
 ## What Happens When Automatic Scheduling Resumes
 

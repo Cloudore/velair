@@ -183,6 +183,45 @@ class TemperatureCodecTests(unittest.TestCase):
             (41.0, 95.0, None),
         )
 
+    def test_zone_limits_convert_as_absolute_temperatures(self) -> None:
+        data = {
+            "zones": {
+                "climate.room": {
+                    "schedule": {},
+                    "limits": {"min_temperature": 21, "max_temperature": None},
+                },
+                "climate.bedroom": {
+                    "schedule": {},
+                    "limits": {"min_temperature": 19, "max_temperature": 24},
+                },
+            }
+        }
+
+        fahrenheit = convert_portable_temperature_data(
+            data, CELSIUS, FAHRENHEIT, None
+        )
+        round_trip = convert_portable_temperature_data(
+            fahrenheit, FAHRENHEIT, CELSIUS, None
+        )
+
+        self.assertEqual(
+            fahrenheit["zones"]["climate.room"]["limits"],
+            {"min_temperature": 69.8, "max_temperature": None},
+        )
+        self.assertEqual(
+            fahrenheit["zones"]["climate.bedroom"]["limits"],
+            {"min_temperature": 66.2, "max_temperature": 75.2},
+        )
+        self.assertEqual(
+            round_trip["zones"]["climate.bedroom"]["limits"],
+            {"min_temperature": 19, "max_temperature": 24},
+        )
+        self.assertEqual(
+            data["zones"]["climate.bedroom"]["limits"],
+            {"min_temperature": 19, "max_temperature": 24},
+            "conversion must not mutate the source payload",
+        )
+
     def test_new_range_and_learning_fields_round_trip_between_units(self) -> None:
         data = {
             "zones": {

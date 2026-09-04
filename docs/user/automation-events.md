@@ -239,7 +239,8 @@ source: scheduled_event
 
 Common `source` values are `scheduled_event`, `current_schedule`,
 `schedule_saved`, `scheduler_resumed`, `startup`, `service_set_temperature`,
-`boost_ended`, `zone_paused`, `zone_resumed`, and `zone_pause_expired`.
+`boost_ended`, `zone_paused`, `zone_resumed`, `zone_pause_expired`, and
+`zone_limits_updated`.
 
 For a range target, `temperature` is omitted and the event contains both limits:
 
@@ -247,6 +248,19 @@ For a range target, `temperature` is omitted and the event contains both limits:
 target_temp_low: 20
 target_temp_high: 24
 hvac_mode: heat_cool
+```
+
+When the zone's [temperature limits](usage.md#zone-temperature-limits) changed
+the delivered value, the payload reports the applied target as usual and adds
+`limited_by: zone_limits` plus the requested value. A scalar target adds
+`requested_temperature`; a range adds `requested_target_temp_low` and/or
+`requested_target_temp_high` for each end that was clamped. These keys are
+absent when nothing was limited.
+
+```yaml
+temperature: 21
+limited_by: zone_limits
+requested_temperature: 19
 ```
 
 ## Preconditioning Plan Updated

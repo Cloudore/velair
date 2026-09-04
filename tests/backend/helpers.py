@@ -42,6 +42,7 @@ def _install_homeassistant_stubs() -> None:
         SENSOR="sensor",
         SELECT="select",
         SWITCH="switch",
+        NUMBER="number",
     )
     sys.modules["homeassistant.const"] = const
 
@@ -217,6 +218,7 @@ normalize_schedule_data = models_module.normalize_schedule_data
 normalize_panel_settings = models_module.normalize_panel_settings
 normalize_comfort_data = models_module.normalize_comfort_data
 normalize_preconditioning_data = models_module.normalize_preconditioning_data
+normalize_zone_limits = models_module.normalize_zone_limits
 ACTION_SET_TEMPERATURE = const_module.ACTION_SET_TEMPERATURE
 ACTION_TURN_OFF = const_module.ACTION_TURN_OFF
 EVENT_TYPE_BOOST_ENDED = const_module.EVENT_TYPE_BOOST_ENDED

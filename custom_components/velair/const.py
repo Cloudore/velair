@@ -155,6 +155,7 @@ PLATFORMS: tuple[Platform, ...] = (
     Platform.SENSOR,
     Platform.SELECT,
     Platform.SWITCH,
+    Platform.NUMBER,
 )
 
 ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
@@ -164,4 +165,9 @@ ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
     "override_state",
     "preconditioning_start",
     "room_assist_state",
+)
+
+ZONE_NUMBER_UNIQUE_ID_SUFFIXES = (
+    "min_temperature_limit",
+    "max_temperature_limit",
 )
