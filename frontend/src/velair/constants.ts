@@ -36,6 +36,7 @@ export const PANEL_VIEWS: VelairPanelView[] = [
   "sensors",
   "comfort",
   "humidity",
+  "presence",
   "preconditioning",
   "diagnostics",
   "settings",
@@ -51,6 +52,7 @@ export const LOVELACE_CARD_VIEWS: VelairCardView[] = [
   "sensors",
   "comfort",
   "humidity",
+  "presence",
   "preconditioning",
 ];
 export const PORTABLE_FORMAT = "velair_portable_data";
