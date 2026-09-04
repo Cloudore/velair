@@ -6,7 +6,7 @@ var e = Object.defineProperty, t = (t, n) => {
 		enumerable: !0
 	});
 	return n || e(r, Symbol.toStringTag, { value: "Module" }), r;
-}, n = "20260904190714", r = globalThis, i = r.ShadowRoot && (r.ShadyCSS === void 0 || r.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, a = Symbol(), o = /* @__PURE__ */ new WeakMap(), s = class {
+}, n = "20260904190805", r = globalThis, i = r.ShadowRoot && (r.ShadyCSS === void 0 || r.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, a = Symbol(), o = /* @__PURE__ */ new WeakMap(), s = class {
 	constructor(e, t, n) {
 		if (this._$cssResult$ = !0, n !== a) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
 		this.cssText = e, this.t = t;
@@ -1784,7 +1784,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -3069,7 +3069,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -4354,7 +4354,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -5639,7 +5639,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -6924,7 +6924,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -8209,7 +8209,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -9494,7 +9494,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -10779,7 +10779,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -12064,7 +12064,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",
@@ -13349,7 +13349,7 @@ var T = [
 	presenceGuardStateRecovering: "Relighting",
 	presenceGuardStateManualWatch: "Watching manual adjustment",
 	presenceGuardStateActivityHold: "Activity hold",
-	presenceGuardStateFloorHold: "Holding at the floor",
+	presenceGuardStateFloorHold: "At the floor",
 	presenceZoneBelowMinimumAction: "When owners are away and the setpoint is below the minimum",
 	presenceZoneBelowMinimumActionHelp: "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
 	presenceBelowMinimumActionRelease: "Release to the schedule",

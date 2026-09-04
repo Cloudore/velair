@@ -211,7 +211,7 @@ describe("guards settings", () => {
   });
 
   it("normalizes activity holds with their defaults", () => {
-    expect(guardsZoneSettings(undefined, "°C")).toEqual({ never_off_enabled: true, activity_holds: [] });
+    expect(guardsZoneSettings(undefined, "°C")).toEqual({ never_off_enabled: true, manual_release_below_minimum_action: "release", activity_holds: [] });
     expect(activityHold({ entity_id: "input_boolean.kitchen_cooking_mode" }, "°C")).toEqual({
       entity_id: "input_boolean.kitchen_cooking_mode",
       temperature: 25,

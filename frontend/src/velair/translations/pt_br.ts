@@ -1158,7 +1158,7 @@ export const pt_br = {
   "presenceGuardStateRecovering": "Relighting",
   "presenceGuardStateManualWatch": "Watching manual adjustment",
   "presenceGuardStateActivityHold": "Activity hold",
-  "presenceGuardStateFloorHold": "Holding at the floor",
+  "presenceGuardStateFloorHold": "At the floor",
   "presenceZoneBelowMinimumAction": "When owners are away and the setpoint is below the minimum",
   "presenceZoneBelowMinimumActionHelp": "Release hands the zone back to the schedule. Floor hold keeps the room exactly at its minimum temperature until an owner returns, like a classic floor clamp.",
   "presenceBelowMinimumActionRelease": "Release to the schedule",
