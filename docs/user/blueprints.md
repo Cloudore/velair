@@ -11,6 +11,7 @@ HACS integration packages do not copy automation blueprints into Home Assistant'
 Blueprints are listed alphabetically.
 
 - [Home and Away from occupancy](#home-and-away-from-occupancy)
+- [Occupancy setback ladder](#occupancy-setback-ladder)
 - [Pause a zone while windows are open](#pause-a-zone-while-windows-are-open)
 
 <hr>
@@ -24,6 +25,19 @@ Run your chosen Home Assistant actions when one consolidated occupancy entity be
 <p>
   <a href="blueprints/home-away-from-occupancy.md"><img src="https://img.shields.io/badge/Documentation-View-24292F?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="View the Home and Away from occupancy documentation"></a>
   <a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fcgonfer%2Fvelair%2Fmain%2Fblueprints%2Fautomation%2Fvelair%2Foccupancy_home_away.yaml"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Open Home Assistant and import the Home and Away from occupancy blueprint" height="28"></a>
+</p>
+
+<hr>
+
+### Occupancy setback ladder
+
+Move one Velair-managed climate through up to three setback stages after its room has been empty for configurable times, using Velair zone holds that never edit the schedule, and release the hold when the room is occupied again. Optional helper entities let a dashboard tune the stages, blocking entities suspend the ladder, and a delayed notification reports when occupancy becomes unavailable.
+
+**Version:** 1.0.0 · **Requires:** Home Assistant 2024.6.0+ and Velair 1.8.0+
+
+<p>
+  <a href="blueprints/occupancy-setback-ladder.md"><img src="https://img.shields.io/badge/Documentation-View-24292F?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="View the Occupancy setback ladder documentation"></a>
+  <a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fcgonfer%2Fvelair%2Fmain%2Fblueprints%2Fautomation%2Fvelair%2Foccupancy_setback.yaml"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Open Home Assistant and import the Occupancy setback ladder blueprint" height="28"></a>
 </p>
 
 <hr>
@@ -48,6 +62,7 @@ Pause one or more Velair-managed climates while any selected window or door rema
 - `unknown` and `unavailable` states are handled conservatively.
 - The occupancy blueprint reports sustained occupancy availability problems and dismisses the warning after recovery.
 - The window blueprint reports persistent contact availability problems without delaying control of contacts that still work.
+- The setback blueprint owns one hold per automation, updates it in place as stages advance, and reconciles from the occupancy entity's own age after a restart or a Velair resume.
 - Blueprint configuration remains in Home Assistant, not in Velair storage.
 - Re-importing the same URL updates the blueprint used by existing automations.
 

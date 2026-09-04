@@ -36,6 +36,131 @@
         }
       }
     },
+    "automation/velair/occupancy_setback.yaml": {
+      "major_version": 1,
+      "inputs": {
+        "climate_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      domain: climate",
+          "required": true
+        },
+        "occupancy": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: binary_sensor\n      - domain: input_boolean\n      - domain: group",
+          "required": true
+        },
+        "stage1_minutes": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  number:\n    min: 1\n    max: 1440\n    step: 1\n    unit_of_measurement: min\n    mode: box",
+          "default": "10"
+        },
+        "stage1_temperature": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  number:\n    min: 5\n    max: 95\n    step: 0.5\n    mode: box",
+          "default": "23"
+        },
+        "stage2_enabled": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  boolean: {}",
+          "default": "true"
+        },
+        "stage2_minutes": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  number:\n    min: 1\n    max: 1440\n    step: 1\n    unit_of_measurement: min\n    mode: box",
+          "default": "30"
+        },
+        "stage2_temperature": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  number:\n    min: 5\n    max: 95\n    step: 0.5\n    mode: box",
+          "default": "25"
+        },
+        "stage3_enabled": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  boolean: {}",
+          "default": "true"
+        },
+        "stage3_minutes": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  number:\n    min: 1\n    max: 1440\n    step: 1\n    unit_of_measurement: min\n    mode: box",
+          "default": "90"
+        },
+        "stage3_temperature": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  number:\n    min: 5\n    max: 95\n    step: 0.5\n    mode: box",
+          "default": "26"
+        },
+        "stage1_minutes_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: input_number\n      - domain: number\n      - domain: sensor",
+          "default": "\"\""
+        },
+        "stage1_temperature_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: input_number\n      - domain: number\n      - domain: sensor",
+          "default": "\"\""
+        },
+        "stage2_minutes_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: input_number\n      - domain: number\n      - domain: sensor",
+          "default": "\"\""
+        },
+        "stage2_temperature_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: input_number\n      - domain: number\n      - domain: sensor",
+          "default": "\"\""
+        },
+        "stage3_minutes_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: input_number\n      - domain: number\n      - domain: sensor",
+          "default": "\"\""
+        },
+        "stage3_temperature_entity": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    filter:\n      - domain: input_number\n      - domain: number\n      - domain: sensor",
+          "default": "\"\""
+        },
+        "constraint": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  select:\n    options:\n      - value: raise_only\n      - value: lower_only\n      - value: absolute\n    mode: dropdown",
+          "default": "raise_only"
+        },
+        "hvac_mode": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  select:\n    options:\n      - value: keep\n      - value: cool\n      - value: heat\n      - value: dry\n      - value: fan_only\n      - value: auto\n    mode: dropdown",
+          "default": "keep"
+        },
+        "fan_mode": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  text:",
+          "default": "\"\""
+        },
+        "release_on_occupancy": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  boolean: {}",
+          "default": "true"
+        },
+        "pause_id": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  text:",
+          "default": "velair_occupancy_setback"
+        },
+        "blocking_entities": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  entity:\n    multiple: true",
+          "default": "[]"
+        },
+        "occupied_delay": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  duration: {}",
+          "default": "seconds: 0"
+        },
+        "availability_warning_delay": {
+          "introduced_in": "1.0.0",
+          "selector": "selector:\n  duration: {}",
+          "default": "minutes: 5"
+        }
+      }
+    },
     "automation/velair/window_pause.yaml": {
       "major_version": 1,
       "inputs": {

@@ -125,8 +125,9 @@ For development builds, see [docs/developer/development.md](docs/developer/devel
 
 See [docs/user/usage.md](docs/user/usage.md) for the full workflow.
 
-Optional Home Assistant blueprints can connect Velair to occupancy or pause a
-zone while windows remain open. They keep the automation logic in Home
+Optional Home Assistant blueprints can connect Velair to occupancy, step an
+empty room through setback stages with zone holds, or pause a zone while
+windows remain open. They keep the automation logic in Home
 Assistant and run from state changes rather than polling. See
 [Automation Blueprints](docs/user/blueprints.md).
 
