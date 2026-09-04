@@ -62,10 +62,22 @@ class AutomaticSchedulingSwitch(VelairEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs) -> None:
         """Enable automatic scheduling."""
         await self.scheduler.async_set_mode(MODE_AUTO, apply_current_schedule=True)
+        self._publish_state()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Pause automatic scheduling indefinitely."""
         await self.scheduler.async_set_mode(MODE_PAUSED)
+        self._publish_state()
+
+    def _publish_state(self) -> None:
+        """Publish the new state at once.
+
+        Front ends (and state-echo helpers such as optimistic_feedback) expect the entity
+        to confirm within seconds, while the scheduler only notifies listeners on its next
+        delivery event. Skipped for entities not yet added to Home Assistant.
+        """
+        if getattr(self, "hass", None) is not None and hasattr(self, "async_write_ha_state"):
+            self.async_write_ha_state()
 
 
 class _ZoneHumidityAssistSwitch(VelairEntity, SwitchEntity):
