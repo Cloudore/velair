@@ -32,6 +32,7 @@ GUARDS_STATE_SNOOZED = "snoozed"
 GUARDS_STATE_RECOVERING = "recovering"
 GUARDS_STATE_MANUAL_WATCH = "manual_watch"
 GUARDS_STATE_ACTIVITY_HOLD = "activity_hold"
+GUARDS_STATE_FLOOR_HOLD = "floor_hold"
 GUARDS_STATES = (
     GUARDS_STATE_IDLE,
     GUARDS_STATE_OFF_GRACE,
@@ -39,6 +40,7 @@ GUARDS_STATES = (
     GUARDS_STATE_RECOVERING,
     GUARDS_STATE_MANUAL_WATCH,
     GUARDS_STATE_ACTIVITY_HOLD,
+    GUARDS_STATE_FLOOR_HOLD,
 )
 
 # Pause ids from the cross-module contract (home policy spec, section 7).
@@ -46,6 +48,12 @@ PAUSE_ID_NEVER_OFF_SNOOZE = "neveroff_snooze"
 PAUSE_ID_NEVER_OFF_RECOVER = "neveroff_recover"
 PAUSE_ID_WATCHDOG = "watchdog"
 PAUSE_ID_TRAVEL_OFF = "travel_off"
+PAUSE_ID_FLOOR = "floor"
+
+# Rule (c) outcome when every owner is away and the setpoint sits below the floor.
+BELOW_MINIMUM_ACTION_RELEASE = "release"
+BELOW_MINIMUM_ACTION_FLOOR_HOLD = "floor_hold"
+BELOW_MINIMUM_ACTIONS = (BELOW_MINIMUM_ACTION_RELEASE, BELOW_MINIMUM_ACTION_FLOOR_HOLD)
 DEFAULT_ACTIVITY_PAUSE_ID = "activity"
 
 DEFAULT_GUARDS_NEVER_OFF_GRACE_MINUTES = 10
@@ -106,6 +114,7 @@ class GuardsZoneData(TypedDict):
     """Stored per-zone Guards settings."""
 
     never_off_enabled: bool
+    manual_release_below_minimum_action: str
     activity_holds: list[GuardsActivityHoldData]
 
 
@@ -136,6 +145,10 @@ class GuardsRuntimeData(TypedDict, total=False):
     previous_target: float | None
     previous_hvac_mode: str | None
     relight_requested_at: str | None
+    snooze_started_at: str | None
+    floor_since: str | None
+    floor_manual_since: str | None
+    floor_manual_active: bool
     last_action: str | None
     last_action_at: str | None
 
@@ -152,8 +165,12 @@ def normalize_guards_zone_data(raw_data: Any) -> GuardsZoneData:
                 holds.append(hold)
             if len(holds) >= MAX_ACTIVITY_HOLDS:
                 break
+    action = data.get("manual_release_below_minimum_action")
+    if action not in BELOW_MINIMUM_ACTIONS:
+        action = BELOW_MINIMUM_ACTION_RELEASE
     return {
         "never_off_enabled": bool(data.get("never_off_enabled", True)),
+        "manual_release_below_minimum_action": str(action),
         "activity_holds": holds,
     }
 
@@ -241,7 +258,15 @@ def normalize_guards_runtime_data(
         record: GuardsRuntimeData = {
             "state": state if state in GUARDS_STATES else GUARDS_STATE_IDLE,
         }
-        for key in ("grace_started_at", "grace_ends_at", "relight_requested_at", "last_action_at"):
+        for key in (
+            "grace_started_at",
+            "grace_ends_at",
+            "relight_requested_at",
+            "last_action_at",
+            "snooze_started_at",
+            "floor_since",
+            "floor_manual_since",
+        ):
             value = raw_record.get(key)
             record[key] = (
                 value
@@ -259,6 +284,7 @@ def normalize_guards_runtime_data(
         record["last_action"] = (
             last_action if isinstance(last_action, str) and last_action.strip() else None
         )
+        record["floor_manual_active"] = bool(raw_record.get("floor_manual_active", False))
         if record["grace_ends_at"] is None:
             record["grace_started_at"] = None
         runtime[entity_id] = record

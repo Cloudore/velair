@@ -684,10 +684,96 @@ class SnoozeTest(GuardsTestCase):
         self.assertEqual(self._pause_ids(GUEST), ["neveroff_snooze"])
 
 
+    async def test_already_vacant_room_keeps_a_fresh_snooze_for_the_full_window(self) -> None:
+        await self._start()
+        self.hass.states[OCC_GUEST] = _state("off", changed=NOW - timedelta(hours=5))
+        await self._turn_off(GUEST)
+        await self.scheduler.async_snooze_off(GUEST)
+        await self.guards.async_drain()
+        self.assertEqual(self._pause_ids(GUEST), ["neveroff_snooze"])
+        self.assertEqual(self._status(GUEST)["snooze_started_at"], NOW.isoformat())
+
+        await self._evaluate(NOW + MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), ["neveroff_snooze"])
+        self.assertEqual(self._status(GUEST)["next_transition_at"], (NOW + 30 * MINUTE).isoformat())
+        await self._evaluate(NOW + 29 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), ["neveroff_snooze"])
+
+        await self._evaluate(NOW + 30 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), [])
+        self.assertEqual(self._status(GUEST)["last_action"], "snooze_released_vacant")
+        self.assertIsNone(self._status(GUEST)["snooze_started_at"])
+
+    async def test_already_empty_house_keeps_a_fresh_snooze_for_the_full_window(self) -> None:
+        await self._start()
+        self.hass.states[OWNER_1] = _state("not_home", changed=NOW - timedelta(hours=5))
+        self.hass.states[OWNER_2] = _state("not_home", changed=NOW - timedelta(hours=5))
+        await self._turn_off(KITCHEN)
+        await self.scheduler.async_snooze_off(KITCHEN)
+        await self.guards.async_drain()
+
+        await self._evaluate(NOW + 29 * MINUTE)
+        self.assertEqual(self._pause_ids(KITCHEN), ["neveroff_snooze"])
+
+        await self._evaluate(NOW + 30 * MINUTE)
+        self.assertEqual(self._pause_ids(KITCHEN), [])
+        self.assertEqual(self._status(KITCHEN)["last_action"], "snooze_released_house_empty")
+
+    async def test_restart_keeps_the_snooze_start_with_and_without_the_persisted_record(self) -> None:
+        for persisted_start in (True, False):
+            with self.subTest(persisted_start=persisted_start):
+                self.setUp()
+                await self._start()
+                self.hass.states[OCC_GUEST] = _state("off", changed=NOW - timedelta(hours=5))
+                await self._turn_off(GUEST)
+                await self.scheduler.async_snooze_off(GUEST)
+                await self.guards.async_drain()
+                persisted = models_module.serialize_schedule_data(deepcopy(self.data))
+                self.assertEqual(
+                    persisted["settings"]["guards_runtime"][GUEST]["snooze_started_at"],
+                    NOW.isoformat(),
+                )
+                if not persisted_start:
+                    del persisted["settings"]["guards_runtime"][GUEST]["snooze_started_at"]
+
+                restarted_hass = FakeHass()
+                restarted_hass.states.update(self.hass.states)
+                restarted_climate = FakeClimateManager()
+                restarted_data = normalize_schedule_data(persisted, list(self.zones))
+                restarted_data["zones"][GUEST]["occupancy_assist"] = deepcopy(
+                    self.data["zones"][GUEST]["occupancy_assist"]
+                )
+                restarted_data["settings"]["house_modes"] = deepcopy(self.data["settings"]["house_modes"])
+                restarted = VelairScheduler(
+                    restarted_hass, restarted_data, restarted_climate, self._async_save
+                )
+                for entity_id in self.zones:
+                    restarted_climate.hvac_modes[entity_id] = ["off", "heat", "cool"]
+                guards = restarted._guards
+                self._set_time(NOW + 5 * MINUTE)
+                await restarted.async_start()
+                await guards.async_drain()
+                self.assertEqual(guards.status(GUEST)["snooze_started_at"], NOW.isoformat())
+
+                self._set_time(NOW + 29 * MINUTE)
+                await guards.async_evaluate()
+                await guards.async_drain()
+                self.assertIn("neveroff_snooze", [
+                    p.get("pause_id") for p in restarted_data["zones"][GUEST]["pauses"]
+                ])
+
+                self._set_time(NOW + 30 * MINUTE)
+                await guards.async_evaluate()
+                await guards.async_drain()
+                self.assertEqual(restarted_data["zones"][GUEST]["pauses"], [])
+                self.assertIn(("set_temperature", GUEST, 24.0, True, "cool"), restarted_climate.calls)
+
+
 class ManualReleaseTest(GuardsTestCase):
     """Rules (a) vacancy, (b) travel and (c) owners away below the floor."""
 
     async def test_vacancy_releases_the_manual_once_the_lease_has_passed(self) -> None:
+        self._settings(manual_release_vacant_minutes=10)
         await self._start()
         self.hass.states[OCC_GUEST] = _state("off", changed=NOW - 70 * MINUTE)
         await self._adjust(GUEST, 22.0)
@@ -828,6 +914,131 @@ class ManualReleaseTest(GuardsTestCase):
         await self._evaluate(NOW + timedelta(hours=2))
         self.assertEqual(self._control_mode(GUEST), "manual")
         self.assertEqual(self._state_of(GUEST), "idle")
+
+
+    async def test_manual_in_an_already_vacant_room_gets_the_full_vacancy_window(self) -> None:
+        await self._start()
+        self.hass.states[OCC_GUEST] = _state("off", changed=NOW - timedelta(hours=5))
+        await self._adjust(GUEST, 22.0)
+
+        # Lease over, but the vacancy window counts from the adjustment.
+        await self._evaluate(NOW + 30 * MINUTE)
+        self.assertEqual(self._control_mode(GUEST), "manual")
+        self.assertEqual(self._status(GUEST)["manual_release_at"], (NOW + 60 * MINUTE).isoformat())
+        await self._evaluate(NOW + 59 * MINUTE)
+        self.assertEqual(self._control_mode(GUEST), "manual")
+
+        await self._evaluate(NOW + 60 * MINUTE)
+        self.assertEqual(self._control_mode(GUEST), "automatic")
+        self.assertEqual(self._events("manual_hold_released")[0]["reason"], "vacant")
+        self.assertEqual(self._events("manual_hold_released")[0]["action"], "release")
+        self.assertEqual(self._events("manual_hold_released")[0]["age_minutes"], 60.0)
+
+
+class FloorHoldTest(GuardsTestCase):
+    """Rule (c) with ``manual_release_below_minimum_action: floor_hold``."""
+
+    async def _floor_zone(self) -> None:
+        await self.scheduler.async_update_zone_guards(
+            GUEST, {"manual_release_below_minimum_action": "floor_hold"}
+        )
+        await self.guards.async_drain()
+
+    async def _place_floor(self) -> None:
+        await self._adjust(GUEST, 21.0)
+        self.hass.states[OWNER_1] = _state("not_home", changed=NOW + MINUTE)
+        self.hass.states[OWNER_2] = _state("not_home", changed=NOW + MINUTE)
+        self.climate.calls.clear()
+        await self._evaluate(NOW + 30 * MINUTE)
+
+    async def test_floor_hold_lands_the_room_on_the_floor_instead_of_the_schedule(self) -> None:
+        await self._start()
+        await self._floor_zone()
+        self.assertEqual(
+            self.scheduler.get_guards_config(GUEST)["manual_release_below_minimum_action"],
+            "floor_hold",
+        )
+        await self._place_floor()
+
+        floor = self._pause(GUEST, "floor")
+        self.assertIsNotNone(floor)
+        self.assertEqual(floor["temperature"], 22.0)
+        self.assertEqual(floor["constraint"], "absolute")
+        self.assertEqual(floor["label"], "Floor")
+        self.assertEqual(self._control_mode(GUEST), "automatic")
+        # Exactly the floor, not the 24 degree schedule target.
+        self.assertEqual(self._delivered(GUEST), [("set_temperature", GUEST, 22.0, True, "cool")])
+        self.assertEqual(self._state_of(GUEST), "floor_hold")
+        self.assertEqual(self._status(GUEST)["floor_since"], (NOW + 30 * MINUTE).isoformat())
+        released = self._events("manual_hold_released")
+        self.assertEqual(len(released), 1)
+        self.assertEqual(released[0]["reason"], "below_minimum")
+        self.assertEqual(released[0]["action"], "floor_hold")
+        self.assertEqual(released[0]["floor_temperature"], 22.0)
+        self.assertEqual(released[0]["age_minutes"], 30.0)
+        runtime = self.data["settings"]["guards_runtime"][GUEST]
+        self.assertEqual(runtime["floor_since"], (NOW + 30 * MINUTE).isoformat())
+        self.assertEqual(runtime["floor_manual_since"], NOW.isoformat())
+
+        # The default action keeps releasing to the schedule.
+        await self.scheduler.async_update_zone_guards(
+            KITCHEN, {"manual_release_below_minimum_action": "release"}
+        )
+        self.data["zones"][KITCHEN]["limits"]["min_temperature"] = 22.0
+        self.climate.calls.clear()
+        await self._adjust(KITCHEN, 21.0, when=NOW + 31 * MINUTE)
+        await self._evaluate(NOW + 61 * MINUTE)
+        self.assertIsNone(self._pause(KITCHEN, "floor"))
+        self.assertEqual(self._delivered(KITCHEN)[-1], ("set_temperature", KITCHEN, 27.0, True, "cool"))
+
+    async def test_floor_hold_is_released_when_an_owner_is_back_for_the_away_minutes(self) -> None:
+        await self._start()
+        await self._floor_zone()
+        await self._place_floor()
+        self.climate.calls.clear()
+
+        self.hass.states[OWNER_1] = _state("home", changed=NOW + 40 * MINUTE)
+        await self._evaluate(NOW + 43 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), ["floor"])
+        self.assertEqual(self._status(GUEST)["manual_release_at"], (NOW + 44 * MINUTE).isoformat())
+
+        await self._evaluate(NOW + 44 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), [])
+        self.assertEqual(self._delivered(GUEST), [("set_temperature", GUEST, 24.0, True, "cool")])
+        self.assertEqual(self._status(GUEST)["last_action"], "floor_hold_released_owner_present")
+        self.assertEqual(self._state_of(GUEST), "idle")
+        self.assertIsNone(self._status(GUEST)["floor_since"])
+
+    async def test_floor_hold_is_released_when_a_newer_manual_adjustment_ends(self) -> None:
+        await self._start()
+        await self._floor_zone()
+        await self._place_floor()
+
+        await self._adjust(GUEST, 23.0, when=NOW + 35 * MINUTE)
+        self.assertEqual(sorted(self._pause_ids(GUEST)), ["floor", "velair.manual_adjustment"])
+        self.assertEqual(self._state_of(GUEST), "manual_watch")
+        self.assertTrue(self.data["settings"]["guards_runtime"][GUEST]["floor_manual_active"])
+
+        await self.scheduler.async_resume_automatic_control(GUEST)
+        await self.guards.async_drain()
+        await self._evaluate(NOW + 36 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), [])
+        self.assertEqual(self._status(GUEST)["last_action"], "floor_hold_released_manual_ended")
+
+    async def test_floor_hold_follows_the_vacancy_rule_of_the_adjustment_it_replaced(self) -> None:
+        await self._start()
+        await self._floor_zone()
+        await self._place_floor()
+        self.hass.states[OCC_GUEST] = _state("off", changed=NOW + 31 * MINUTE)
+
+        # Vacancy window from max(off at +31, manual at +0) = +91 minutes.
+        await self._evaluate(NOW + 90 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), ["floor"])
+        self.assertEqual(self._status(GUEST)["manual_release_at"], (NOW + 91 * MINUTE).isoformat())
+
+        await self._evaluate(NOW + 91 * MINUTE)
+        self.assertEqual(self._pause_ids(GUEST), [])
+        self.assertEqual(self._status(GUEST)["last_action"], "floor_hold_released_vacant")
 
 
 class ActivityHoldTest(GuardsTestCase):
@@ -1141,7 +1352,7 @@ class EntityTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sensor._attr_device_class, "enum")
         self.assertEqual(
             sensor._attr_options,
-            ["idle", "off_grace", "snoozed", "recovering", "manual_watch", "activity_hold"],
+            ["idle", "off_grace", "snoozed", "recovering", "manual_watch", "activity_hold", "floor_hold"],
         )
         self.assertEqual(sensor.native_value, "off_grace")
         self.assertEqual(
@@ -1397,7 +1608,23 @@ class NormalizationTest(unittest.TestCase):
         self.assertEqual(len(hold["label"]), 64)
         self.assertEqual(
             guards_models.normalize_guards_zone_data("garbage"),
-            {"never_off_enabled": True, "activity_holds": []},
+            {
+                "never_off_enabled": True,
+                "manual_release_below_minimum_action": "release",
+                "activity_holds": [],
+            },
+        )
+        self.assertEqual(
+            guards_models.normalize_guards_zone_data(
+                {"manual_release_below_minimum_action": "clamp"}
+            )["manual_release_below_minimum_action"],
+            "release",
+        )
+        self.assertEqual(
+            guards_models.normalize_guards_zone_data(
+                {"manual_release_below_minimum_action": "floor_hold"}
+            )["manual_release_below_minimum_action"],
+            "floor_hold",
         )
 
     def test_settings_repair_garbage_and_defaults(self) -> None:
@@ -1457,6 +1684,8 @@ class NormalizationTest(unittest.TestCase):
         self.assertIsNone(records[GUEST]["grace_started_at"])
         self.assertEqual(records[GUEST]["grace_ends_at"], NOW.isoformat())
         self.assertEqual(records[GUEST]["previous_target"], 24.5)
+        self.assertIsNone(records[GUEST]["snooze_started_at"])
+        self.assertFalse(records[GUEST]["floor_manual_active"])
         self.assertEqual(records[KITCHEN]["state"], "idle")
         # A start without an end is meaningless: both are dropped.
         self.assertIsNone(records[KITCHEN]["grace_started_at"])

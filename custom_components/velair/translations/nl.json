@@ -144,7 +144,8 @@
           "snoozed": "Snoozed",
           "recovering": "Recovering",
           "manual_watch": "Watching manual adjustment",
-          "activity_hold": "Activity hold"
+          "activity_hold": "Activity hold",
+          "floor_hold": "Floor hold"
         }
       },
       "zone_occupancy_assist": {

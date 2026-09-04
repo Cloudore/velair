@@ -53,6 +53,8 @@ ZONE_GUARD_ATTRIBUTES = (
     "manual_since",
     "manual_release_at",
     "activity_entity_id",
+    "floor_since",
+    "snooze_started_at",
     "grace_started_at",
     "previous_target",
     "occupancy_entity_id",

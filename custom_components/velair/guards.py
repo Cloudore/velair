@@ -45,6 +45,7 @@ from .const import (
     EVENT_TYPE_NEVER_OFF_GRACE_STARTED,
     EVENT_TYPE_NEVER_OFF_RECOVERED,
     EVENT_TYPE_NEVER_OFF_SNOOZED,
+    HOLD_CONSTRAINT_ABSOLUTE,
     HOLD_CONSTRAINT_RAISE_ONLY,
     HVAC_MODE_OFF,
     HVAC_MODE_OPTIONS,
@@ -54,13 +55,17 @@ from .const import (
     ZONE_PAUSE_ACTION_TURN_OFF,
 )
 from .guards_models import (
+    BELOW_MINIMUM_ACTION_FLOOR_HOLD,
+    BELOW_MINIMUM_ACTION_RELEASE,
     GUARDS_STATE_ACTIVITY_HOLD,
+    GUARDS_STATE_FLOOR_HOLD,
     GUARDS_STATE_IDLE,
     GUARDS_STATE_MANUAL_WATCH,
     GUARDS_STATE_OFF_GRACE,
     GUARDS_STATE_RECOVERING,
     GUARDS_STATE_SNOOZED,
     MAX_SNOOZE_MINUTES,
+    PAUSE_ID_FLOOR,
     PAUSE_ID_NEVER_OFF_RECOVER,
     PAUSE_ID_NEVER_OFF_SNOOZE,
     PAUSE_ID_TRAVEL_OFF,
@@ -82,6 +87,7 @@ _LOGGER = logging.getLogger(__name__)
 
 SOURCE = "guards"
 RECOVERY_LABEL = "Never-off recovery"
+FLOOR_LABEL = "Floor"
 # Rule (c): the live setpoint must sit clearly below the zone floor.
 BELOW_MINIMUM_TOLERANCE_C = 0.31
 
@@ -89,6 +95,8 @@ REASON_VACANT = "vacant"
 REASON_TRAVEL = "travel"
 REASON_BELOW_MINIMUM = "below_minimum"
 REASON_HOUSE_EMPTY = "house_empty"
+REASON_OWNER_PRESENT = "owner_present"
+REASON_MANUAL_ENDED = "manual_ended"
 
 _UNCERTAIN = (None, "unknown", "unavailable", "")
 _HOME_STATES = ("home", "on")
@@ -104,6 +112,10 @@ class _ZoneRuntime:
     previous_target: float | None = None
     previous_hvac_mode: str | None = None
     relight_requested_at: datetime | None = None
+    snooze_started_at: datetime | None = None
+    floor_since: datetime | None = None
+    floor_manual_since: datetime | None = None
+    floor_manual_active: bool = False
     last_action: str | None = None
     last_action_at: datetime | None = None
     next_transition_at: datetime | None = None
@@ -206,6 +218,10 @@ class GuardsCoordinator:
             runtime.relight_requested_at = _parse_timestamp(
                 record.get("relight_requested_at")
             )
+            runtime.snooze_started_at = _parse_timestamp(record.get("snooze_started_at"))
+            runtime.floor_since = _parse_timestamp(record.get("floor_since"))
+            runtime.floor_manual_since = _parse_timestamp(record.get("floor_manual_since"))
+            runtime.floor_manual_active = bool(record.get("floor_manual_active", False))
             runtime.last_action = record.get("last_action")
             runtime.last_action_at = _parse_timestamp(record.get("last_action_at"))
 
@@ -267,6 +283,8 @@ class GuardsCoordinator:
             "grace_ends_at": _isoformat(runtime.grace_ends_at if runtime else None),
             "previous_target": runtime.previous_target if runtime else None,
             "snooze_until": facts.get("snooze_until"),
+            "snooze_started_at": _isoformat(runtime.snooze_started_at if runtime else None),
+            "floor_since": _isoformat(runtime.floor_since if runtime else None),
             "manual_since": facts.get("manual_since"),
             "manual_release_at": facts.get("manual_release_at"),
             "activity_entity_id": facts.get("activity_entity_id"),
@@ -354,6 +372,7 @@ class GuardsCoordinator:
         await scheduler.async_resume_automatic_control(entity_id)
         runtime = self._runtime(entity_id)
         self._clear_grace(runtime)
+        runtime.snooze_started_at = now
         self._record_action(runtime, "snoozed", now)
         runtime.state = GUARDS_STATE_SNOOZED
         self._persist_runtime(entity_id)
@@ -601,6 +620,18 @@ class GuardsCoordinator:
             changed = True
 
         # 3. Vacancy or house-empty release of the snooze (and the watchdog).
+        #    The window counts from the later of the room going empty and the
+        #    pause starting, so an already-empty room keeps a fresh snooze.
+        if facts.snoozed:
+            if runtime.snooze_started_at is None:
+                # Unknown after a restart: the pause's own start is the truth.
+                runtime.snooze_started_at = (
+                    _pause_started_at(facts.pauses, PAUSE_ID_NEVER_OFF_SNOOZE) or now
+                )
+                changed = True
+        elif runtime.snooze_started_at is not None:
+            runtime.snooze_started_at = None
+            changed = True
         releasable = [
             pause_id
             for pause_id in (PAUSE_ID_WATCHDOG, PAUSE_ID_NEVER_OFF_SNOOZE)
@@ -610,23 +641,32 @@ class GuardsCoordinator:
             release_after = timedelta(
                 minutes=settings["never_off_snooze_release_vacant_minutes"]
             )
-            due_reason: str | None = None
-            for since, why in (
-                (facts.occupancy_off_since, REASON_VACANT),
-                (house.empty_since, REASON_HOUSE_EMPTY),
-            ):
-                if since is None:
-                    continue
-                due_at = since + release_after
-                if due_at <= now:
-                    due_reason = due_reason or why
-                else:
-                    candidates.append(due_at)
-            if due_reason is not None:
-                for pause_id in releasable:
-                    await self._async_resume(entity_id, pause_id, reason=f"guards_{due_reason}")
+            released: dict[str, str] = {}
+            for pause_id in releasable:
+                started = (
+                    runtime.snooze_started_at
+                    if pause_id == PAUSE_ID_NEVER_OFF_SNOOZE
+                    else None
+                ) or _pause_started_at(facts.pauses, pause_id)
+                for since, why in (
+                    (facts.occupancy_off_since, REASON_VACANT),
+                    (house.empty_since, REASON_HOUSE_EMPTY),
+                ):
+                    if since is None:
+                        continue
+                    anchor = max(since, started) if started is not None else since
+                    due_at = anchor + release_after
+                    if due_at <= now:
+                        released.setdefault(pause_id, why)
+                    else:
+                        candidates.append(due_at)
+            if released:
+                for pause_id, why in released.items():
+                    await self._async_resume(entity_id, pause_id, reason=f"guards_{why}")
                 runtime.relight_requested_at = now
-                self._record_action(runtime, f"snooze_released_{due_reason}", now)
+                self._record_action(
+                    runtime, f"snooze_released_{next(iter(released.values()))}", now
+                )
                 changed = True
                 facts = self._zone_facts(entity_id, now)
 
@@ -642,11 +682,15 @@ class GuardsCoordinator:
             )
             options: list[tuple[datetime, str]] = []
             if facts.occupancy_off_since is not None:
+                # The vacancy window counts from the later of the room going
+                # empty and the adjustment itself, so a hand-set value made in
+                # an already-empty room gets its full window.
+                vacant_since = max(facts.occupancy_off_since, facts.manual_since)
                 options.append(
                     (
                         max(
                             lease_end,
-                            facts.occupancy_off_since
+                            vacant_since
                             + timedelta(minutes=settings["manual_release_vacant_minutes"]),
                         ),
                         REASON_VACANT,
@@ -679,12 +723,42 @@ class GuardsCoordinator:
                 )
             due = sorted(option for option in options if option[0] <= now)
             if due:
-                await self._async_release_manual(entity_id, runtime, facts, due[0][1], now)
+                reason = due[0][1]
+                if (
+                    reason == REASON_BELOW_MINIMUM
+                    and facts.config["manual_release_below_minimum_action"]
+                    == BELOW_MINIMUM_ACTION_FLOOR_HOLD
+                ):
+                    await self._async_floor_hold(entity_id, runtime, facts, now)
+                else:
+                    await self._async_release_manual(entity_id, runtime, facts, reason, now)
                 changed = True
                 facts = self._zone_facts(entity_id, now)
             elif options:
                 manual_release_at = min(option[0] for option in options)
                 candidates.append(manual_release_at)
+
+        # 4b. A floor hold stands in for the Manual adjustment it replaced: it
+        #     ends when an owner is back, when a newer Manual adjustment ends,
+        #     or when rules (a)/(b) would have ended the original one.
+        if PAUSE_ID_FLOOR in facts.pause_ids and facts.zone_enabled:
+            if facts.manual_since is not None and not runtime.floor_manual_active:
+                runtime.floor_manual_active = True
+                changed = True
+            floor_reason, floor_at = self._floor_release(runtime, facts, settings, house, now)
+            if floor_reason is not None:
+                await self._async_resume(entity_id, PAUSE_ID_FLOOR, reason=f"guards_{floor_reason}")
+                self._clear_floor(runtime)
+                self._record_action(runtime, f"floor_hold_released_{floor_reason}", now)
+                changed = True
+                facts = self._zone_facts(entity_id, now)
+            elif floor_at is not None:
+                if manual_release_at is None or floor_at < manual_release_at:
+                    manual_release_at = floor_at
+                candidates.append(floor_at)
+        elif runtime.floor_since is not None:
+            self._clear_floor(runtime)
+            changed = True
 
         # 5. Activity holds.
         activity_entity_id: str | None = None
@@ -734,6 +808,7 @@ class GuardsCoordinator:
             "manual_release_at": _isoformat(manual_release_at),
             "activity_entity_id": activity_entity_id,
             "occupancy_entity_id": facts.occupancy_entity_id,
+            "floor_since": _isoformat(runtime.floor_since),
         }
         runtime.state = self._project_state(runtime, facts, settings, activity_entity_id)
         if runtime.state != previous_state:
@@ -753,6 +828,8 @@ class GuardsCoordinator:
             return GUARDS_STATE_SNOOZED
         if facts.manual_since is not None and settings["manual_release_enabled"]:
             return GUARDS_STATE_MANUAL_WATCH
+        if PAUSE_ID_FLOOR in facts.pause_ids:
+            return GUARDS_STATE_FLOOR_HOLD
         if facts.recovering:
             return GUARDS_STATE_RECOVERING
         if activity_entity_id is not None and any(
@@ -927,11 +1004,126 @@ class GuardsCoordinator:
             {
                 "entity_id": entity_id,
                 "reason": reason,
+                "action": BELOW_MINIMUM_ACTION_RELEASE,
                 "manual_since": _isoformat(facts.manual_since),
                 "age_minutes": age_minutes,
                 "released_at": now.isoformat(),
             },
         )
+
+    async def _async_floor_hold(
+        self,
+        entity_id: str,
+        runtime: _ZoneRuntime,
+        facts: _ZoneFacts,
+        now: datetime,
+    ) -> None:
+        """Rule (c) with ``floor_hold``: land the room exactly on the floor.
+
+        The hold is ``absolute`` because Velair already clamps every delivery
+        to the floor: a raise-only hold would fold to the schedule target and
+        the room would not stay at the floor the way the legacy clamp kept it.
+        """
+        scheduler = self._scheduler
+        try:
+            await scheduler.async_pause_zone(
+                entity_id,
+                action=ZONE_PAUSE_ACTION_HOLD,
+                pause_id=PAUSE_ID_FLOOR,
+                temperature=facts.minimum_temperature,
+                constraint=HOLD_CONSTRAINT_ABSOLUTE,
+                label=FLOOR_LABEL,
+            )
+        except ValueError as err:
+            _LOGGER.warning("Guards could not hold %s at its floor: %s", entity_id, err)
+            return
+        try:
+            await scheduler.async_resume_automatic_control(entity_id)
+        except ValueError as err:
+            _LOGGER.warning("Guards could not resume %s for the floor: %s", entity_id, err)
+        runtime.floor_since = now
+        runtime.floor_manual_since = facts.manual_since
+        runtime.floor_manual_active = False
+        self._record_action(runtime, "floor_hold_placed", now)
+        age_minutes = (
+            round((now - facts.manual_since).total_seconds() / 60, 1)
+            if facts.manual_since is not None
+            else None
+        )
+        self._fire(
+            EVENT_TYPE_MANUAL_HOLD_RELEASED,
+            {
+                "entity_id": entity_id,
+                "reason": REASON_BELOW_MINIMUM,
+                "action": BELOW_MINIMUM_ACTION_FLOOR_HOLD,
+                "floor_temperature": facts.minimum_temperature,
+                "manual_since": _isoformat(facts.manual_since),
+                "age_minutes": age_minutes,
+                "released_at": now.isoformat(),
+            },
+        )
+
+    def _floor_release(
+        self,
+        runtime: _ZoneRuntime,
+        facts: _ZoneFacts,
+        settings: GuardsSettingsData,
+        house: _HouseFacts,
+        now: datetime,
+    ) -> tuple[str | None, datetime | None]:
+        """Return (reason due now, next candidate) for an active floor hold."""
+        options: list[tuple[datetime, str]] = []
+        present_since = self._present_since(settings["owner_entity_ids"], now)
+        if present_since is not None:
+            options.append(
+                (
+                    present_since + timedelta(minutes=settings["owner_away_minutes"]),
+                    REASON_OWNER_PRESENT,
+                )
+            )
+        if facts.manual_since is None:
+            if runtime.floor_manual_active:
+                return REASON_MANUAL_ENDED, None
+            origin = runtime.floor_manual_since or runtime.floor_since or now
+            lease_end = origin + timedelta(minutes=settings["manual_lease_minutes"])
+            if facts.occupancy_off_since is not None:
+                options.append(
+                    (
+                        max(
+                            lease_end,
+                            max(facts.occupancy_off_since, origin)
+                            + timedelta(minutes=settings["manual_release_vacant_minutes"]),
+                        ),
+                        REASON_VACANT,
+                    )
+                )
+            if (
+                settings["manual_release_on_travel"]
+                and house.travel_on
+                and (house.travel_since is None or origin <= house.travel_since)
+            ):
+                options.append((lease_end, REASON_TRAVEL))
+        due = sorted(option for option in options if option[0] <= now)
+        if due:
+            return due[0][1], None
+        return None, (min(option[0] for option in options) if options else None)
+
+    def _present_since(self, entity_ids: list[str], now: datetime) -> datetime | None:
+        """Return since when the longest-present owner has been home, or None."""
+        earliest: datetime | None = None
+        for entity_id in entity_ids:
+            state, changed_at = _state_of(self._hass, entity_id, now)
+            if state not in _HOME_STATES:
+                continue
+            changed_at = changed_at or now
+            earliest = changed_at if earliest is None or changed_at < earliest else earliest
+        return earliest
+
+    @staticmethod
+    def _clear_floor(runtime: _ZoneRuntime) -> None:
+        runtime.floor_since = None
+        runtime.floor_manual_since = None
+        runtime.floor_manual_active = False
 
     async def _async_engage_activity(
         self,
@@ -1246,6 +1438,10 @@ class GuardsCoordinator:
             "previous_target": runtime.previous_target,
             "previous_hvac_mode": runtime.previous_hvac_mode,
             "relight_requested_at": _isoformat(runtime.relight_requested_at),
+            "snooze_started_at": _isoformat(runtime.snooze_started_at),
+            "floor_since": _isoformat(runtime.floor_since),
+            "floor_manual_since": _isoformat(runtime.floor_manual_since),
+            "floor_manual_active": runtime.floor_manual_active,
             "last_action": runtime.last_action,
             "last_action_at": _isoformat(runtime.last_action_at),
         }
@@ -1275,6 +1471,14 @@ def _state_of(hass, entity_id: str | None, now: datetime) -> tuple[str | None, d
     if state is None:
         return None, None
     return getattr(state, "state", None), _as_datetime(getattr(state, "last_changed", None))
+
+
+def _pause_started_at(pauses: list[dict[str, Any]], pause_id: str) -> datetime | None:
+    """Return the start of one identified pause reason, when known."""
+    for pause in pauses:
+        if pause.get("pause_id") == pause_id:
+            return _parse_timestamp(pause.get("started_at"))
+    return None
 
 
 def _state_setpoint(state) -> float | None:

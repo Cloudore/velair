@@ -760,14 +760,17 @@ source: service
 `manual_hold_released` is emitted when a Guards rule ends a Manual adjustment
 through `resume_automatic_control`. `reason` is `vacant`, `travel` or
 `below_minimum`; `age_minutes` is the age of the adjustment when it was
-released and is always at least the lease. A matching `zone_control_changed`
-event with `reason: resumed` follows.
+released and is always at least the lease. `action` is `release`, or
+`floor_hold` when the zone's `manual_release_below_minimum_action` placed the
+`floor` hold instead (the payload then adds `floor_temperature`). A matching
+`zone_control_changed` event with `reason: resumed` follows.
 
 ```yaml
 domain: velair
 event: manual_hold_released
 entity_id: climate.guest_room
 reason: vacant
+action: release
 manual_since: "2026-09-04T19:00:00+02:00"
 age_minutes: 62.5
 released_at: "2026-09-04T20:02:30+02:00"

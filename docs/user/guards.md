@@ -37,9 +37,12 @@ is no polling.
 - **Lease**: a hand-set value is never released younger than this. Default
   30 minutes.
 - **Credible vacancy**: the zone's occupancy entity (from Occupancy Assist)
-  reports `off` continuously, measured from its `last_changed`, so a restart
-  does not reset the clock. An `unknown`/`unavailable` occupancy entity is
-  never evidence of vacancy.
+  reports `off` continuously. The vacancy window counts from the later of the
+  room going empty and the snooze or Manual adjustment starting, so a snooze
+  or a hand-set value made in an already-empty room still gets its full
+  window. Both clocks use `last_changed` and the persisted start, so a restart
+  does not reset them. An `unknown`/`unavailable` occupancy entity is never
+  evidence of vacancy.
 - **House empty**: every presence entity configured for House Modes reports
   away; any `unknown`/`unavailable` entity means the house is not empty.
 
@@ -54,11 +57,11 @@ generated entities, or `velair/update_settings`.
 | `never_off_enabled` | `true` | Enables the never-off rules. |
 | `never_off_grace_minutes` | `10` | Wait before relighting a head a person turned off. |
 | `never_off_snooze_minutes` | `1440` | Default duration of `velair.snooze_off`. |
-| `never_off_snooze_release_vacant_minutes` | `30` | Zone occupancy `off` this long releases `neveroff_snooze` and `watchdog`; the house being empty this long releases them everywhere. |
+| `never_off_snooze_release_vacant_minutes` | `30` | Zone occupancy `off` this long releases `neveroff_snooze` and `watchdog`; the house being empty this long releases them everywhere. Counted from the later of the vacancy and the snooze start. |
 | `never_off_respect_travel` | `true` | No relight while the travel entity is `on`. The grace stays pending and the head is recovered when travel ends if it is still off. |
 | `manual_release_enabled` | `true` | Enables the manual release rules. |
 | `manual_lease_minutes` | `30` | A Manual adjustment is never released younger than this. |
-| `manual_release_vacant_minutes` | `60` | Continuous zone vacancy that ends a Manual adjustment. |
+| `manual_release_vacant_minutes` | `60` | Continuous zone vacancy that ends a Manual adjustment, counted from the later of the vacancy and the adjustment. |
 | `manual_release_on_travel` | `true` | Travel turning on releases every Manual adjustment that predates it once it is older than the lease. |
 | `owner_entity_ids` | `[]` | Presence entities whose absence enables the sub-floor rule. |
 | `owner_away_minutes` | `4` | How long every owner must be away. |
@@ -72,6 +75,7 @@ Stored under each zone's `guards` key and edited through
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `never_off_enabled` | `true` | Never-off rules apply to this zone. |
+| `manual_release_below_minimum_action` | `release` | What rule (c) does: `release` returns the zone to Velair's schedule; `floor_hold` lands the room exactly on the zone's minimum temperature instead (see below). |
 | `activity_holds` | `[]` | Up to ten holds `{entity_id, temperature, constraint, hvac_mode, release_delay_minutes, pause_id, label}`. |
 
 An activity hold defaults to `constraint: lower_only`, `hvac_mode: cool`,
@@ -126,6 +130,20 @@ Uncertain inputs (`unknown`, `unavailable`, missing entities, an empty owner
 list) never release anything. A zone without an occupancy entity is never
 considered vacant.
 
+#### Floor hold instead of a release
+
+With the per-zone setting `manual_release_below_minimum_action: floor_hold`,
+rule (c) does not hand the zone back to the schedule. Velair places the hold
+`floor` (constraint `absolute`, label "Floor") at the zone's minimum
+temperature and resumes automatic control, so the room lands exactly on the
+floor the way the legacy clamp kept it. The `manual_hold_released` event
+carries `action: floor_hold` and `floor_temperature`; the state sensor shows
+`floor_hold`. The hold is released when any owner has been home again for
+`owner_away_minutes`, when a newer Manual adjustment made on top of it ends
+for any reason, or when the vacancy or travel rule would have ended the
+original adjustment (counted from that adjustment's start). Velair then
+delivers its normal target again.
+
 ### Activity holds
 
 - Entity `on` → hold `pause_id` at `temperature` with the configured
@@ -140,9 +158,10 @@ considered vacant.
 
 For a climate named "Guest room" Velair creates
 `sensor.velair_guest_room_guard` with state `idle`, `off_grace`, `snoozed`,
-`recovering`, `manual_watch` or `activity_hold` and the attributes
-`grace_ends_at`, `snooze_until`, `manual_since`, `manual_release_at`,
-`activity_entity_id`, `next_transition_at`, `last_action` and `pause_ids`.
+`recovering`, `manual_watch`, `floor_hold` or `activity_hold` and the attributes
+`grace_ends_at`, `snooze_until`, `snooze_started_at`, `manual_since`,
+`manual_release_at`, `floor_since`, `activity_entity_id`, `next_transition_at`,
+`last_action` and `pause_ids`.
 
 Global entities:
 
@@ -220,8 +239,8 @@ actions:
 ## Restart Continuity
 
 The grace timestamps, the previous target and mode captured when the head
-was turned off, and the last action are persisted under
-`settings.guards_runtime`. A grace that was running when Home Assistant
+was turned off, the snooze and floor-hold starts, and the last action are
+persisted under `settings.guards_runtime`. A grace that was running when Home Assistant
 restarted continues from its original end time; a head found off at start
 without a persisted grace gets a fresh one. Vacancy, owner-away and travel
 clocks use the entities' `last_changed`, so they survive restarts as well.

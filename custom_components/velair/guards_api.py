@@ -20,6 +20,7 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, HOLD_CONSTRAINT_OPTIONS, HVAC_MODE_OPTIONS
 from .guards_models import (
+    BELOW_MINIMUM_ACTIONS,
     GUARDS_BOOLEAN_SETTINGS,
     GUARDS_MINUTE_SETTINGS,
     MAX_ACTIVITY_HOLDS,
@@ -52,6 +53,7 @@ GUARDS_ACTIVITY_HOLD_SCHEMA = vol.Schema(
 GUARDS_ZONE_SCHEMA = vol.Schema(
     {
         vol.Optional("never_off_enabled"): bool,
+        vol.Optional("manual_release_below_minimum_action"): vol.In(BELOW_MINIMUM_ACTIONS),
         vol.Optional("activity_holds"): vol.All(
             cv.ensure_list,
             [GUARDS_ACTIVITY_HOLD_SCHEMA],
