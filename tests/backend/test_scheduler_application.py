@@ -1,4 +1,4 @@
-﻿"""Scheduler application, override, service, and portability behavior tests."""
+"""Scheduler application, override, service, and portability behavior tests."""
 
 from __future__ import annotations
 
@@ -1453,6 +1453,7 @@ class VelairSchedulerSavedScheduleTest(unittest.IsolatedAsyncioTestCase):
                 "min_temperature": 12.0,
                 "max_temperature": 28.0,
                 "delivery_stagger_seconds": 0,
+                "humidity_assist": normalize_panel_settings(None, [])["humidity_assist"],
             },
         )
 

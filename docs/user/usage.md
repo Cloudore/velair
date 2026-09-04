@@ -434,6 +434,13 @@ block target.
 Limits are absolute temperatures: they are exported with the zone data,
 converted when Home Assistant's unit changes, and can be set from automations
 with `number.set_value`.
+## Humidity Assist
+
+The Humidity tab lists managed climates in the order configured in Settings. For each climate it shows the Humidity Assist state, the live and median readings against the target, the next timer boundary, and lets you select the dew point or relative humidity sensor, target, priority flag, pulse temperature, pulse mode, and fan mode. The shared parameters (buffers, minimum and maximum on times, minimum off time, maximum simultaneous pulses, emergency margins, median window, initial pull-down, and the gate entity) are edited at the bottom of the same tab.
+
+Humidity Assist pulses a climate colder for a bounded run whenever its room drifts above the target, then re-applies the normal schedule target. Pulses never override a pause, Manual adjustment, or Boost. The Overview zone card shows **Drying** while a pulse runs.
+
+The decision ladder, entities, services, and travel automation examples are documented in [Humidity Assist](humidity-assist.md).
 
 ## Templates
 
@@ -782,6 +789,36 @@ Disable Room Sensor Assist for one managed climate. If Velair was applying an as
 action: velair.disable_room_sensor_assist
 data:
   entity_id: climate.living_room
+```
+
+### `velair.enable_humidity_assist`
+
+Enable Humidity Assist for one or more managed climates, or for every climate with a humidity sensor configured when `entity_id` is omitted.
+
+```yaml
+action: velair.enable_humidity_assist
+data:
+  entity_id: climate.guest_room
+```
+
+### `velair.disable_humidity_assist`
+
+Disable Humidity Assist for one or more managed climates, or for every configured climate when `entity_id` is omitted. An active pulse ends and the current target is restored.
+
+```yaml
+action: velair.disable_humidity_assist
+```
+
+### `velair.set_humidity_assist`
+
+Update the sensor, measure, target, priority, pulse temperature, pulse mode, or fan mode for one managed climate. Only the provided fields change.
+
+```yaml
+action: velair.set_humidity_assist
+data:
+  entity_id: climate.guest_room
+  target: 22
+  pulse_temperature: 24
 ```
 
 ### `velair.pause`

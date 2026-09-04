@@ -112,6 +112,18 @@
           "assisting": "In assistenza",
           "ready": "Pronto"
         }
+      },
+      "zone_humidity_assist": {
+        "name": "Humidity Assist {zone}",
+        "state": {
+          "disabled": "Disattivato",
+          "unavailable": "Non disponibile",
+          "blocked_manual": "Bloccato dal controllo manuale",
+          "blocked_gate": "Bloccato dal cancello",
+          "waiting": "In attesa",
+          "pulsing": "Impulso attivo",
+          "resting": "A riposo"
+        }
       }
     },
     "select": {
@@ -122,6 +134,58 @@
     "switch": {
       "automatic_scheduling": {
         "name": "Programmazione automatica"
+      },
+      "zone_humidity_assist": {
+        "name": "Humidity Assist {zone}"
+      },
+      "zone_humidity_priority": {
+        "name": "Priorità umidità {zone}"
+      }
+    },
+    "binary_sensor": {
+      "humidity_assist_compliant": {
+        "name": "Humidity Assist entro l'obiettivo"
+      }
+    },
+    "number": {
+      "zone_humidity_target": {
+        "name": "Obiettivo umidità {zone}"
+      },
+      "humidity_assist_start_buffer": {
+        "name": "Margine di avvio Humidity Assist"
+      },
+      "humidity_assist_stop_buffer": {
+        "name": "Margine di arresto Humidity Assist"
+      },
+      "humidity_assist_min_on_minutes": {
+        "name": "Durata minima di accensione Humidity Assist"
+      },
+      "humidity_assist_max_on_minutes": {
+        "name": "Durata massima di accensione Humidity Assist"
+      },
+      "humidity_assist_min_off_minutes": {
+        "name": "Durata minima di spegnimento Humidity Assist"
+      },
+      "humidity_assist_max_simultaneous_pulses": {
+        "name": "Impulsi simultanei massimi Humidity Assist"
+      },
+      "humidity_assist_emergency_margin_priority": {
+        "name": "Margine di emergenza Humidity Assist (priorità)"
+      },
+      "humidity_assist_emergency_margin_standard": {
+        "name": "Margine di emergenza Humidity Assist (standard)"
+      },
+      "humidity_assist_median_window_minutes": {
+        "name": "Finestra della mediana Humidity Assist"
+      },
+      "humidity_assist_initial_pull_down_window_minutes": {
+        "name": "Finestra di abbassamento iniziale Humidity Assist"
+      },
+      "humidity_assist_initial_pull_down_max_run_minutes": {
+        "name": "Durata massima di abbassamento iniziale Humidity Assist"
+      },
+      "humidity_assist_initial_pull_down_target_offset": {
+        "name": "Scostamento obiettivo di abbassamento iniziale Humidity Assist"
       }
     },
     "number": {

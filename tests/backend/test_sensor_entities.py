@@ -150,7 +150,7 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(sensor.available)
 
-    async def test_setup_creates_three_global_and_six_sensors_per_climate(
+    async def test_setup_creates_three_global_and_seven_sensors_per_climate(
         self,
     ) -> None:
         scheduler = SimpleNamespace(
@@ -163,6 +163,7 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
             get_next_event_for_zone=lambda entity_id: None,
             get_operational_status=lambda: "idle",
             get_room_sensor_assist_status=lambda entity_id: {},
+            get_humidity_assist_status=lambda entity_id: {"state": "disabled"},
             get_zone_override_status=lambda entity_id: {"state": "none"},
         )
         entry = self._entry(
@@ -192,7 +193,7 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
 
         await sensor_module.async_setup_entry(hass, entry, entities.extend)
 
-        self.assertEqual(len(entities), 15)
+        self.assertEqual(len(entities), 17)
         target_sensors = [
             entity
             for entity in entities
@@ -705,6 +706,7 @@ class SensorTranslationTest(unittest.TestCase):
                         "zone_override_state",
                         "zone_preconditioning_start",
                         "zone_room_assist_state",
+                        "zone_humidity_assist",
                     },
                 )
                 self.assertEqual(
@@ -721,7 +723,27 @@ class SensorTranslationTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     set(translation["entity"]["switch"]),
-                    {"automatic_scheduling"},
+                    {
+                        "automatic_scheduling",
+                        "zone_humidity_assist",
+                        "zone_humidity_priority",
+                    },
+                )
+                self.assertEqual(
+                    set(translation["entity"]["binary_sensor"]),
+                    {"humidity_assist_compliant"},
+                )
+                self.assertEqual(
+                    set(sensors["zone_humidity_assist"]["state"]),
+                    {
+                        "disabled",
+                        "unavailable",
+                        "blocked_manual",
+                        "blocked_gate",
+                        "waiting",
+                        "pulsing",
+                        "resting",
+                    },
                 )
 
         self.assertEqual(

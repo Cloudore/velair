@@ -781,6 +781,21 @@ await hass.connection.sendMessagePromise({
     confirm: true,
     confirm_timeout_seconds: 25,
     confirm_attempts: 3
+## Zone Humidity Assist
+
+```ts
+await hass.connection.sendMessagePromise({
+  type: "velair/update_zone_humidity_assist",
+  entity_id: "climate.guest_room",
+  humidity_assist: {
+    enabled: true,
+    sensor_entity_id: "sensor.guest_room_dew_point",
+    measure: "dew_point",
+    target: 22,
+    priority: false,
+    pulse_temperature: 24,
+    pulse_hvac_mode: "cool",
+    pulse_fan_mode: "auto"
   }
 });
 ```
@@ -811,6 +826,9 @@ the full schedule response. Errors are `not_loaded`,
 Each zone in `zone_runtime` includes `delivery` with `outcome`
 (`pending`, `confirmed`, `unconfirmed`, or `null`), `attempts`, `confirmed_at`,
 and `last_attempt_at`.
+Only provided fields change. Enabling requires a sensor, a target, and a pulse temperature inside the climate's supported range; violations return `invalid_humidity_assist`. The shared parameters are updated through `velair/update_settings` with a `humidity_assist` object containing any of `start_buffer`, `stop_buffer`, `min_on_minutes`, `max_on_minutes`, `min_off_minutes`, `max_simultaneous_pulses`, `emergency_margin_priority`, `emergency_margin_standard`, `median_window_minutes`, `initial_pull_down_window_minutes`, `initial_pull_down_max_run_minutes`, `initial_pull_down_target_offset`, and `gate_entity_id`.
+
+The schedule response includes `humidity_assist`, a runtime-only per-zone status (`state`, `decision`, `last_evaluation`, `reason`, `target`, `effective_target`, `raw`, `median`, `excess`, `priority`, `gate_active`, `pull_down_active`, `emergency_high`, phase timestamps, and `next_transition_at`), and `humidity_assist_compliant`. See [Humidity Assist internals](humidity-assist.md).
 
 ## Climate Profiles
 

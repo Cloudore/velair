@@ -43,6 +43,7 @@ def _install_homeassistant_stubs() -> None:
         SELECT="select",
         SWITCH="switch",
         NUMBER="number",
+        BINARY_SENSOR="binary_sensor",
     )
     sys.modules["homeassistant.const"] = const
 

@@ -23,6 +23,7 @@ const THERMOSTAT_FILTER_CARD_VIEWS = new Set<VelairCardView>([
   "schedules",
   "templates",
   "sensors",
+  "humidity",
   "preconditioning",
   "settings",
 ]);
@@ -487,6 +488,7 @@ export class VelairCardEditor extends LitElement {
       "templates": "templates",
       "sensors": "cardViewSensors",
       "comfort": "cardViewComfort",
+      "humidity": "cardViewHumidity",
       "preconditioning": "cardViewPreconditioning",
       "diagnostics": "diagnostics",
       "settings": "settings",

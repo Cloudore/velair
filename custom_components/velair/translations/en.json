@@ -112,6 +112,18 @@
           "assisting": "Assisting",
           "ready": "Ready"
         }
+      },
+      "zone_humidity_assist": {
+        "name": "{zone} Humidity Assist",
+        "state": {
+          "disabled": "Disabled",
+          "unavailable": "Unavailable",
+          "blocked_manual": "Blocked by manual control",
+          "blocked_gate": "Blocked by gate",
+          "waiting": "Waiting",
+          "pulsing": "Pulsing",
+          "resting": "Resting"
+        }
       }
     },
     "select": {
@@ -122,6 +134,58 @@
     "switch": {
       "automatic_scheduling": {
         "name": "Automatic scheduling"
+      },
+      "zone_humidity_assist": {
+        "name": "{zone} Humidity Assist"
+      },
+      "zone_humidity_priority": {
+        "name": "{zone} humidity priority"
+      }
+    },
+    "binary_sensor": {
+      "humidity_assist_compliant": {
+        "name": "Humidity Assist compliant"
+      }
+    },
+    "number": {
+      "zone_humidity_target": {
+        "name": "{zone} humidity target"
+      },
+      "humidity_assist_start_buffer": {
+        "name": "Humidity Assist start buffer"
+      },
+      "humidity_assist_stop_buffer": {
+        "name": "Humidity Assist stop buffer"
+      },
+      "humidity_assist_min_on_minutes": {
+        "name": "Humidity Assist minimum on time"
+      },
+      "humidity_assist_max_on_minutes": {
+        "name": "Humidity Assist maximum on time"
+      },
+      "humidity_assist_min_off_minutes": {
+        "name": "Humidity Assist minimum off time"
+      },
+      "humidity_assist_max_simultaneous_pulses": {
+        "name": "Humidity Assist maximum simultaneous pulses"
+      },
+      "humidity_assist_emergency_margin_priority": {
+        "name": "Humidity Assist emergency margin (priority)"
+      },
+      "humidity_assist_emergency_margin_standard": {
+        "name": "Humidity Assist emergency margin (standard)"
+      },
+      "humidity_assist_median_window_minutes": {
+        "name": "Humidity Assist median window"
+      },
+      "humidity_assist_initial_pull_down_window_minutes": {
+        "name": "Humidity Assist pull-down window"
+      },
+      "humidity_assist_initial_pull_down_max_run_minutes": {
+        "name": "Humidity Assist pull-down maximum run"
+      },
+      "humidity_assist_initial_pull_down_target_offset": {
+        "name": "Humidity Assist pull-down target offset"
       }
     },
     "number": {

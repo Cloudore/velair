@@ -578,7 +578,7 @@ class FrontendSourceContractTest(unittest.TestCase):
         self.assertIn('from "./velair/views/panel"', source)
         self.assertIn("export type ScheduleResponse", types_source)
         self.assertIn(
-            "export const cardStyles = [baseStyles, comfortStyles, diagnosticsStyles, inlineHelpStyles, loadingStyles, noticeStyles, operationStatusStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`",
+            "export const cardStyles = [baseStyles, comfortStyles, diagnosticsStyles, humidityStyles, inlineHelpStyles, loadingStyles, noticeStyles, operationStatusStyles, overviewStyles, portabilityStyles, preconditioningStyles, sensorsStyles, settingsStyles, templateStyles, timelineStyles, css`",
             styles_source,
         )
         self.assertIn("`, responsiveStyles];", styles_source)

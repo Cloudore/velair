@@ -8,6 +8,8 @@ from homeassistant.helpers import entity_registry as er
 
 from .const import (
     DOMAIN,
+    ZONE_ENTITY_DOMAIN_PREFIXES,
+    ZONE_ENTITY_UNIQUE_ID_SUFFIXES,
     ZONE_NUMBER_UNIQUE_ID_SUFFIXES,
     ZONE_SENSOR_UNIQUE_ID_SUFFIXES,
 )
@@ -24,17 +26,18 @@ def cleanup_entity_registry(
     climate_entities: list[str],
 ) -> None:
     """Remove retired controls, sensors, and numbers for climates no longer managed."""
+    """Remove retired controls and zone entities for climates no longer managed."""
     registry = er.async_get(hass)
     _migrate_mode_select(registry, entry.entry_id)
     expected_zone_unique_ids = {
         _zone_sensor_unique_id(entry.entry_id, entity_id, suffix)
         for entity_id in climate_entities
-        for suffix in ZONE_UNIQUE_ID_SUFFIXES
+        for suffix in (*ZONE_UNIQUE_ID_SUFFIXES, *ZONE_ENTITY_UNIQUE_ID_SUFFIXES)
     }
     zone_prefix = f"{entry.entry_id}_climate_"
     zone_suffixes = tuple(
         f"_{suffix}"
-        for suffix in ZONE_UNIQUE_ID_SUFFIXES
+        for suffix in (*ZONE_UNIQUE_ID_SUFFIXES, *ZONE_ENTITY_UNIQUE_ID_SUFFIXES)
     )
 
     for entity_id, registry_entry in list(registry.entities.items()):
@@ -46,7 +49,7 @@ def cleanup_entity_registry(
 
         unique_id = registry_entry.unique_id
         if (
-            entity_id.startswith(("sensor.", "number."))
+            entity_id.startswith(("sensor.", "number.", *ZONE_ENTITY_DOMAIN_PREFIXES))
             and unique_id.startswith(zone_prefix)
             and unique_id.endswith(zone_suffixes)
             and unique_id not in expected_zone_unique_ids

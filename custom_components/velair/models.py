@@ -83,6 +83,34 @@ DEFAULT_COMFORT_HUMIDITY_MAX = 60.0
 DEFAULT_COMFORT_CO2_ATTENTION = 1000
 DEFAULT_COMFORT_CO2_POOR = 1500
 DEFAULT_COMFORT_STALE_AFTER_MINUTES = 120
+DEFAULT_HUMIDITY_ASSIST_START_BUFFER = 0.2
+DEFAULT_HUMIDITY_ASSIST_STOP_BUFFER = 0.6
+DEFAULT_HUMIDITY_ASSIST_MIN_ON_MINUTES = 10
+DEFAULT_HUMIDITY_ASSIST_MAX_ON_MINUTES = 20
+DEFAULT_HUMIDITY_ASSIST_MIN_OFF_MINUTES = 10
+DEFAULT_HUMIDITY_ASSIST_MAX_SIMULTANEOUS_PULSES = 2
+DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_PRIORITY = 0.3
+DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_STANDARD = 0.5
+DEFAULT_HUMIDITY_ASSIST_MEDIAN_WINDOW_MINUTES = 15
+DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_WINDOW_MINUTES = 90
+DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_MAX_RUN_MINUTES = 45
+DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_TARGET_OFFSET = 0.6
+HUMIDITY_ASSIST_MEASURE_DEW_POINT = "dew_point"
+HUMIDITY_ASSIST_MEASURE_RELATIVE_HUMIDITY = "relative_humidity"
+HUMIDITY_ASSIST_MEASURES = (
+    HUMIDITY_ASSIST_MEASURE_DEW_POINT,
+    HUMIDITY_ASSIST_MEASURE_RELATIVE_HUMIDITY,
+)
+HUMIDITY_ASSIST_PULSE_HVAC_MODES = ("cool", "dry")
+HUMIDITY_ASSIST_STATES = (
+    "disabled",
+    "unavailable",
+    "blocked_manual",
+    "blocked_gate",
+    "waiting",
+    "pulsing",
+    "resting",
+)
 MAX_PRECONDITIONING_INVALID_OBSERVATIONS = 10
 MIN_PRECONDITIONING_COMPLETE_SAMPLES = 5
 PARTIAL_PRECONDITIONING_FLOOR_INCREMENT_RATIO = 0.2
@@ -240,6 +268,48 @@ class ZoneLimitsData(TypedDict):
 
     min_temperature: float | None
     max_temperature: float | None
+class HumidityAssistData(TypedDict):
+    """Stored Humidity Assist settings for one climate zone."""
+
+    enabled: bool
+    sensor_entity_id: str | None
+    measure: str
+    target: float | None
+    priority: bool
+    pulse_temperature: float | None
+    pulse_hvac_mode: str
+    pulse_fan_mode: str | None
+
+
+class HumidityAssistSettingsData(TypedDict):
+    """Stored global Humidity Assist parameters shared by every zone."""
+
+    start_buffer: float
+    stop_buffer: float
+    min_on_minutes: int
+    max_on_minutes: int
+    min_off_minutes: int
+    max_simultaneous_pulses: int
+    emergency_margin_priority: float
+    emergency_margin_standard: float
+    median_window_minutes: int
+    initial_pull_down_window_minutes: int
+    initial_pull_down_max_run_minutes: int
+    initial_pull_down_target_offset: float
+    gate_entity_id: str | None
+
+
+class HumidityAssistRuntimeData(TypedDict, total=False):
+    """Persisted Humidity Assist phase timestamps for restart continuity."""
+
+    state: str
+    decision: str | None
+    phase_started_at: str | None
+    last_pulse_started_at: str | None
+    last_pulse_ended_at: str | None
+    pull_down_started_at: str | None
+    last_median: float | None
+    previous_state: ClimateStateSnapshot | None
 
 
 class ExternalChangePolicyData(TypedDict):
@@ -358,6 +428,7 @@ class ZoneData(TypedDict):
     external_change_policy: ExternalChangePolicyData
     execution: NotRequired[ZoneExecutionData]
     delivery: DeliveryData
+    humidity_assist: NotRequired[HumidityAssistData]
 
 
 class ScheduleTemplateData(TypedDict):
@@ -376,6 +447,7 @@ class PanelSettingsData(TypedDict):
     min_temperature: float
     max_temperature: float
     delivery_stagger_seconds: int
+    humidity_assist: NotRequired[HumidityAssistSettingsData]
 
 
 class GlobalData(TypedDict):
@@ -446,6 +518,7 @@ class SchedulerData(TypedDict):
     preconditioning_learning: dict[str, PreconditioningLearningData]
     profiles: list[ClimateProfileData]
     modes: list[VelairModeData]
+    humidity_assist_runtime: NotRequired[dict[str, HumidityAssistRuntimeData]]
 
 
 DEFAULT_SCHEDULE_TEMPLATES: list[ScheduleTemplateData] = [
@@ -762,6 +835,9 @@ def normalize_schedule_data(
                 zone_data.get("external_change_policy")
             ),
             "delivery": normalize_zone_delivery(zone_data.get("delivery")),
+            "humidity_assist": normalize_humidity_assist_data(
+                zone_data.get("humidity_assist")
+            ),
         }
         execution = normalize_zone_execution(zone_data.get("execution"))
         if execution is not None:
@@ -780,6 +856,7 @@ def normalize_schedule_data(
                 "limits": normalize_zone_limits(None),
                 "external_change_policy": normalize_external_change_policy(None),
                 "delivery": normalize_zone_delivery(None),
+                "humidity_assist": normalize_humidity_assist_data(None),
             },
         )
 
@@ -884,6 +961,10 @@ def normalize_schedule_data(
         ),
         "profiles": profiles,
         "modes": modes,
+        "humidity_assist_runtime": normalize_humidity_assist_runtime_data(
+            data.get("humidity_assist_runtime"),
+            climate_entities,
+        ),
     }
 
 
@@ -926,6 +1007,7 @@ def serialize_schedule_data(data: SchedulerData) -> dict[str, Any]:
         ),
         "profiles": data.get("profiles", []),
         "modes": data.get("modes", []),
+        "humidity_assist_runtime": data.get("humidity_assist_runtime", {}),
     }
 
 
@@ -1359,6 +1441,9 @@ def normalize_panel_settings(
             minimum=0,
             maximum=MAX_DELIVERY_STAGGER_SECONDS,
         ),
+        "humidity_assist": normalize_humidity_assist_settings(
+            settings.get("humidity_assist")
+        ),
     }
 
 
@@ -1568,6 +1653,176 @@ def normalize_zone_limits(raw_data: Any) -> ZoneLimitsData:
         minimum = None
         maximum = None
     return {"min_temperature": minimum, "max_temperature": maximum}
+def normalize_humidity_assist_data(raw_data: Any) -> HumidityAssistData:
+    """Normalize stored per-zone Humidity Assist settings tolerantly."""
+    data = raw_data if isinstance(raw_data, dict) else {}
+    measure = data.get("measure")
+    if measure not in HUMIDITY_ASSIST_MEASURES:
+        measure = HUMIDITY_ASSIST_MEASURE_DEW_POINT
+    pulse_hvac_mode = data.get("pulse_hvac_mode")
+    if pulse_hvac_mode not in HUMIDITY_ASSIST_PULSE_HVAC_MODES:
+        pulse_hvac_mode = HUMIDITY_ASSIST_PULSE_HVAC_MODES[0]
+    pulse_fan_mode = data.get("pulse_fan_mode")
+    if not isinstance(pulse_fan_mode, str) or not pulse_fan_mode.strip():
+        pulse_fan_mode = None
+    else:
+        pulse_fan_mode = pulse_fan_mode.strip()
+    target = _optional_finite_float(data.get("target"))
+    if target is not None:
+        if measure == HUMIDITY_ASSIST_MEASURE_RELATIVE_HUMIDITY:
+            if not 0 <= target <= 100:
+                target = None
+        elif not -58 <= target <= 212:
+            target = None
+    pulse_temperature = _optional_finite_float(data.get("pulse_temperature"))
+    if pulse_temperature is not None and not -58 <= pulse_temperature <= 212:
+        pulse_temperature = None
+    return {
+        "enabled": bool(data.get("enabled", False)),
+        "sensor_entity_id": _normalize_optional_entity_id(
+            data.get("sensor_entity_id")
+        ),
+        "measure": str(measure),
+        "target": target,
+        "priority": bool(data.get("priority", False)),
+        "pulse_temperature": pulse_temperature,
+        "pulse_hvac_mode": str(pulse_hvac_mode),
+        "pulse_fan_mode": pulse_fan_mode,
+    }
+
+
+def normalize_humidity_assist_settings(raw_data: Any) -> HumidityAssistSettingsData:
+    """Normalize the global Humidity Assist parameters tolerantly."""
+    data = raw_data if isinstance(raw_data, dict) else {}
+    start_buffer = _normalize_float(
+        data.get("start_buffer"),
+        DEFAULT_HUMIDITY_ASSIST_START_BUFFER,
+        minimum=0.0,
+        maximum=10.0,
+    )
+    stop_buffer = _normalize_float(
+        data.get("stop_buffer"),
+        DEFAULT_HUMIDITY_ASSIST_STOP_BUFFER,
+        minimum=0.0,
+        maximum=10.0,
+    )
+    min_on_minutes = _normalize_int(
+        data.get("min_on_minutes"),
+        DEFAULT_HUMIDITY_ASSIST_MIN_ON_MINUTES,
+        minimum=1,
+        maximum=240,
+    )
+    max_on_minutes = _normalize_int(
+        data.get("max_on_minutes"),
+        DEFAULT_HUMIDITY_ASSIST_MAX_ON_MINUTES,
+        minimum=1,
+        maximum=720,
+    )
+    return {
+        "start_buffer": start_buffer,
+        "stop_buffer": stop_buffer,
+        "min_on_minutes": min_on_minutes,
+        "max_on_minutes": max(max_on_minutes, min_on_minutes),
+        "min_off_minutes": _normalize_int(
+            data.get("min_off_minutes"),
+            DEFAULT_HUMIDITY_ASSIST_MIN_OFF_MINUTES,
+            minimum=0,
+            maximum=720,
+        ),
+        "max_simultaneous_pulses": _normalize_int(
+            data.get("max_simultaneous_pulses"),
+            DEFAULT_HUMIDITY_ASSIST_MAX_SIMULTANEOUS_PULSES,
+            minimum=1,
+            maximum=50,
+        ),
+        "emergency_margin_priority": _normalize_float(
+            data.get("emergency_margin_priority"),
+            DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_PRIORITY,
+            minimum=0.0,
+            maximum=10.0,
+        ),
+        "emergency_margin_standard": _normalize_float(
+            data.get("emergency_margin_standard"),
+            DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_STANDARD,
+            minimum=0.0,
+            maximum=10.0,
+        ),
+        "median_window_minutes": _normalize_int(
+            data.get("median_window_minutes"),
+            DEFAULT_HUMIDITY_ASSIST_MEDIAN_WINDOW_MINUTES,
+            minimum=1,
+            maximum=240,
+        ),
+        "initial_pull_down_window_minutes": _normalize_int(
+            data.get("initial_pull_down_window_minutes"),
+            DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_WINDOW_MINUTES,
+            minimum=0,
+            maximum=1440,
+        ),
+        "initial_pull_down_max_run_minutes": _normalize_int(
+            data.get("initial_pull_down_max_run_minutes"),
+            DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_MAX_RUN_MINUTES,
+            minimum=1,
+            maximum=720,
+        ),
+        "initial_pull_down_target_offset": _normalize_float(
+            data.get("initial_pull_down_target_offset"),
+            DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_TARGET_OFFSET,
+            minimum=0.0,
+            maximum=10.0,
+        ),
+        "gate_entity_id": _normalize_optional_entity_id(data.get("gate_entity_id")),
+    }
+
+
+def normalize_humidity_assist_runtime_data(
+    raw_data: Any,
+    climate_entities: list[str],
+) -> dict[str, HumidityAssistRuntimeData]:
+    """Normalize persisted Humidity Assist phase records per managed climate."""
+    data = raw_data if isinstance(raw_data, dict) else {}
+    configured = set(climate_entities)
+    runtime: dict[str, HumidityAssistRuntimeData] = {}
+    for entity_id, raw_record in data.items():
+        if entity_id not in configured or not isinstance(raw_record, dict):
+            continue
+        state = raw_record.get("state")
+        record: HumidityAssistRuntimeData = {
+            "state": state if state in HUMIDITY_ASSIST_STATES else "disabled",
+        }
+        decision = raw_record.get("decision")
+        record["decision"] = (
+            decision if isinstance(decision, str) and decision.strip() else None
+        )
+        for key in (
+            "phase_started_at",
+            "last_pulse_started_at",
+            "last_pulse_ended_at",
+            "pull_down_started_at",
+        ):
+            value = raw_record.get(key)
+            record[key] = (
+                value
+                if isinstance(value, str) and _parse_datetime(value) is not None
+                else None
+            )
+        record["last_median"] = _optional_finite_float(raw_record.get("last_median"))
+        record["previous_state"] = _normalize_climate_state_snapshot(
+            raw_record.get("previous_state")
+        )
+        runtime[entity_id] = record
+    return runtime
+
+
+def _optional_finite_float(value: Any) -> float | None:
+    """Return a finite float or None for optional numeric fields."""
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if isfinite(number) else None
 
 
 def predict_preconditioning_lead(

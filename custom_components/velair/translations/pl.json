@@ -112,6 +112,18 @@
           "assisting": "Wspomaganie",
           "ready": "Gotowy"
         }
+      },
+      "zone_humidity_assist": {
+        "name": "Humidity Assist {zone}",
+        "state": {
+          "disabled": "Wyłączone",
+          "unavailable": "Niedostępne",
+          "blocked_manual": "Zablokowane przez sterowanie ręczne",
+          "blocked_gate": "Zablokowane przez bramkę",
+          "waiting": "Oczekiwanie",
+          "pulsing": "Impuls aktywny",
+          "resting": "Odpoczynek"
+        }
       }
     },
     "select": {
@@ -122,6 +134,58 @@
     "switch": {
       "automatic_scheduling": {
         "name": "Automatyczny harmonogram"
+      },
+      "zone_humidity_assist": {
+        "name": "Humidity Assist {zone}"
+      },
+      "zone_humidity_priority": {
+        "name": "Priorytet wilgotności {zone}"
+      }
+    },
+    "binary_sensor": {
+      "humidity_assist_compliant": {
+        "name": "Humidity Assist w celu"
+      }
+    },
+    "number": {
+      "zone_humidity_target": {
+        "name": "Cel wilgotności {zone}"
+      },
+      "humidity_assist_start_buffer": {
+        "name": "Margines startu Humidity Assist"
+      },
+      "humidity_assist_stop_buffer": {
+        "name": "Margines zatrzymania Humidity Assist"
+      },
+      "humidity_assist_min_on_minutes": {
+        "name": "Minimalny czas pracy Humidity Assist"
+      },
+      "humidity_assist_max_on_minutes": {
+        "name": "Maksymalny czas pracy Humidity Assist"
+      },
+      "humidity_assist_min_off_minutes": {
+        "name": "Minimalny czas przerwy Humidity Assist"
+      },
+      "humidity_assist_max_simultaneous_pulses": {
+        "name": "Maksymalna liczba jednoczesnych impulsów Humidity Assist"
+      },
+      "humidity_assist_emergency_margin_priority": {
+        "name": "Margines awaryjny Humidity Assist (priorytet)"
+      },
+      "humidity_assist_emergency_margin_standard": {
+        "name": "Margines awaryjny Humidity Assist (standard)"
+      },
+      "humidity_assist_median_window_minutes": {
+        "name": "Okno mediany Humidity Assist"
+      },
+      "humidity_assist_initial_pull_down_window_minutes": {
+        "name": "Okno wstępnego osuszania Humidity Assist"
+      },
+      "humidity_assist_initial_pull_down_max_run_minutes": {
+        "name": "Maksymalny czas wstępnego osuszania Humidity Assist"
+      },
+      "humidity_assist_initial_pull_down_target_offset": {
+        "name": "Przesunięcie celu wstępnego osuszania Humidity Assist"
       }
     },
     "number": {

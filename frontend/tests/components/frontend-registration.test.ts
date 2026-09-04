@@ -34,7 +34,7 @@ describe("frontend entrypoint", () => {
     expect(panel.shadowRoot?.querySelector(".main-title")?.textContent).toContain("Velair");
     expect(panel.shadowRoot?.querySelector(".version")).toBeNull();
     const tabs = [...(panel.shadowRoot?.querySelectorAll("ha-tab-group-tab") ?? [])];
-    expect(tabs).toHaveLength(9);
+    expect(tabs).toHaveLength(10);
     expect(tabs.map((tab) => tab.textContent?.trim())).toEqual([
       "Overview",
       "Schedules",
@@ -42,6 +42,7 @@ describe("frontend entrypoint", () => {
       "Templates",
       "Room Assist",
       "Comfort",
+      "Humidity",
       "Preconditioning",
       "Diagnostics",
       "Settings",
@@ -115,6 +116,7 @@ describe("frontend entrypoint", () => {
       { label: "Schedules: editor", value: "schedules" },
       { label: "Room Assist: configuration and status", value: "sensors" },
       { label: "Comfort: configuration and status", value: "comfort" },
+      { label: "Humidity: dew-point pulses and status", value: "humidity" },
       { label: "Preconditioning: configuration and status", value: "preconditioning" },
     ]);
     expect((viewSelect as HTMLSelectElement | null)?.value).toBe("preconditioning");

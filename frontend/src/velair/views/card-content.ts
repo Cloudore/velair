@@ -14,6 +14,7 @@ import {
   renderOverviewTimelines,
   renderOverviewZones,
 } from "./overview-view";
+import { renderHumidityView } from "./humidity-view";
 import { renderPreconditioningView } from "./preconditioning-view";
 import { renderSchedulesView } from "./schedule-view";
 import { renderSensorsView, type RoomSensorViewOptions } from "./sensors-view";
@@ -199,6 +200,10 @@ function renderViewContent(
 
   if (view === "comfort") {
     return renderComfortView(host, visibleZoneIds, comfortViewOptions(host));
+  }
+
+  if (view === "humidity") {
+    return renderHumidityView(host, visibleZoneIds);
   }
 
   if (view === "preconditioning") {

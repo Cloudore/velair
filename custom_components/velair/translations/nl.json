@@ -112,6 +112,18 @@
           "assisting": "Ondersteunt",
           "ready": "Gereed"
         }
+      },
+      "zone_humidity_assist": {
+        "name": "{zone} Humidity Assist",
+        "state": {
+          "disabled": "Uitgeschakeld",
+          "unavailable": "Niet beschikbaar",
+          "blocked_manual": "Geblokkeerd door handmatige bediening",
+          "blocked_gate": "Geblokkeerd door poort",
+          "waiting": "Wachten",
+          "pulsing": "Puls actief",
+          "resting": "Rust"
+        }
       }
     },
     "select": {
@@ -122,6 +134,58 @@
     "switch": {
       "automatic_scheduling": {
         "name": "Automatische planning"
+      },
+      "zone_humidity_assist": {
+        "name": "{zone} Humidity Assist"
+      },
+      "zone_humidity_priority": {
+        "name": "{zone} vochtprioriteit"
+      }
+    },
+    "binary_sensor": {
+      "humidity_assist_compliant": {
+        "name": "Humidity Assist binnen doel"
+      }
+    },
+    "number": {
+      "zone_humidity_target": {
+        "name": "{zone} vochtdoel"
+      },
+      "humidity_assist_start_buffer": {
+        "name": "Humidity Assist startmarge"
+      },
+      "humidity_assist_stop_buffer": {
+        "name": "Humidity Assist stopmarge"
+      },
+      "humidity_assist_min_on_minutes": {
+        "name": "Humidity Assist minimale aantijd"
+      },
+      "humidity_assist_max_on_minutes": {
+        "name": "Humidity Assist maximale aantijd"
+      },
+      "humidity_assist_min_off_minutes": {
+        "name": "Humidity Assist minimale uittijd"
+      },
+      "humidity_assist_max_simultaneous_pulses": {
+        "name": "Humidity Assist maximaal gelijktijdige pulsen"
+      },
+      "humidity_assist_emergency_margin_priority": {
+        "name": "Humidity Assist noodmarge (prioriteit)"
+      },
+      "humidity_assist_emergency_margin_standard": {
+        "name": "Humidity Assist noodmarge (standaard)"
+      },
+      "humidity_assist_median_window_minutes": {
+        "name": "Humidity Assist mediaanvenster"
+      },
+      "humidity_assist_initial_pull_down_window_minutes": {
+        "name": "Humidity Assist pull-downvenster"
+      },
+      "humidity_assist_initial_pull_down_max_run_minutes": {
+        "name": "Humidity Assist maximale pull-downduur"
+      },
+      "humidity_assist_initial_pull_down_target_offset": {
+        "name": "Humidity Assist pull-down doelverschuiving"
       }
     },
     "number": {

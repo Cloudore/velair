@@ -737,6 +737,7 @@ export const overviewStyles = css`
 .overview-zone-activity-icon { align-items: center; background: color-mix(in srgb, var(--primary-color) 10%, transparent); border-radius: 9px; color: var(--primary-color); display: inline-flex; height: 32px; justify-content: center; width: 32px; }
 .overview-zone-activity-icon ha-icon { --mdc-icon-size: 18px; }
 .overview-zone-activity.state-boost .overview-zone-activity-icon { background: color-mix(in srgb, var(--warning-color, #f9a825) 12%, transparent); color: var(--warning-color, #f9a825); }
+.overview-zone-activity.state-drying .overview-zone-activity-icon { background: color-mix(in srgb, var(--info-color, #039be5) 12%, transparent); color: var(--info-color, #039be5); }
 .overview-zone-activity.state-paused .overview-zone-activity-icon,
 .overview-zone-activity.state-stopped .overview-zone-activity-icon,
 .overview-zone-activity.state-idle .overview-zone-activity-icon { background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); color: var(--secondary-text-color); }

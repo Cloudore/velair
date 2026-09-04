@@ -47,6 +47,7 @@ EVENT_TYPE_ZONE_PAUSE_REMOVED = "zone_pause_removed"
 EVENT_TYPE_ZONE_RESUMED = "zone_resumed"
 EVENT_TYPE_ZONE_CONTROL_CHANGED = "zone_control_changed"
 EVENT_TYPE_DELIVERY_OUTCOME = "delivery_outcome"
+EVENT_TYPE_HUMIDITY_ASSIST_STATE_CHANGED = "humidity_assist_state_changed"
 
 SERVICE_APPLY_SCHEDULE = "apply_schedule"
 SERVICE_ACTIVATE_PROFILE = "activate_profile"
@@ -66,6 +67,9 @@ SERVICE_SET_TEMPERATURE = "set_temperature"
 SERVICE_SET_EXTERNAL_CHANGE_POLICY = "set_external_change_policy"
 SERVICE_ENTER_MANUAL_ADJUSTMENT = "enter_manual_adjustment"
 SERVICE_RESUME_AUTOMATIC_CONTROL = "resume_automatic_control"
+SERVICE_ENABLE_HUMIDITY_ASSIST = "enable_humidity_assist"
+SERVICE_DISABLE_HUMIDITY_ASSIST = "disable_humidity_assist"
+SERVICE_SET_HUMIDITY_ASSIST = "set_humidity_assist"
 
 ATTR_ACTION = "action"
 ATTR_APPLY_CURRENT_SCHEDULE = "apply_current_schedule"
@@ -166,6 +170,7 @@ PLATFORMS: tuple[Platform, ...] = (
     Platform.SELECT,
     Platform.SWITCH,
     Platform.NUMBER,
+    Platform.BINARY_SENSOR,
 )
 
 ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
@@ -175,9 +180,19 @@ ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
     "override_state",
     "preconditioning_start",
     "room_assist_state",
+    "humidity_assist_state",
 )
 
 ZONE_NUMBER_UNIQUE_ID_SUFFIXES = (
     "min_temperature_limit",
     "max_temperature_limit",
 )
+ZONE_CONTROL_UNIQUE_ID_SUFFIXES = (
+    "humidity_assist_enabled",
+    "humidity_priority",
+    "humidity_target",
+)
+ZONE_ENTITY_UNIQUE_ID_SUFFIXES = (
+    ZONE_SENSOR_UNIQUE_ID_SUFFIXES + ZONE_CONTROL_UNIQUE_ID_SUFFIXES
+)
+ZONE_ENTITY_DOMAIN_PREFIXES = ("sensor.", "switch.", "number.")

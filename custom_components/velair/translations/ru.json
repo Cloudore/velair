@@ -112,6 +112,18 @@
           "assisting": "Корректирует",
           "ready": "Готов"
         }
+      },
+      "zone_humidity_assist": {
+        "name": "Humidity Assist: {zone}",
+        "state": {
+          "disabled": "Отключено",
+          "unavailable": "Недоступно",
+          "blocked_manual": "Заблокировано ручным управлением",
+          "blocked_gate": "Заблокировано ограничителем",
+          "waiting": "Ожидание",
+          "pulsing": "Импульс",
+          "resting": "Пауза"
+        }
       }
     },
     "select": {
@@ -122,6 +134,58 @@
     "switch": {
       "automatic_scheduling": {
         "name": "Автоматическое расписание"
+      },
+      "zone_humidity_assist": {
+        "name": "Humidity Assist: {zone}"
+      },
+      "zone_humidity_priority": {
+        "name": "Приоритет влажности: {zone}"
+      }
+    },
+    "binary_sensor": {
+      "humidity_assist_compliant": {
+        "name": "Humidity Assist в пределах цели"
+      }
+    },
+    "number": {
+      "zone_humidity_target": {
+        "name": "Цель влажности: {zone}"
+      },
+      "humidity_assist_start_buffer": {
+        "name": "Humidity Assist: буфер запуска"
+      },
+      "humidity_assist_stop_buffer": {
+        "name": "Humidity Assist: буфер остановки"
+      },
+      "humidity_assist_min_on_minutes": {
+        "name": "Humidity Assist: минимальное время работы"
+      },
+      "humidity_assist_max_on_minutes": {
+        "name": "Humidity Assist: максимальное время работы"
+      },
+      "humidity_assist_min_off_minutes": {
+        "name": "Humidity Assist: минимальная пауза"
+      },
+      "humidity_assist_max_simultaneous_pulses": {
+        "name": "Humidity Assist: максимум одновременных импульсов"
+      },
+      "humidity_assist_emergency_margin_priority": {
+        "name": "Humidity Assist: аварийный запас (приоритет)"
+      },
+      "humidity_assist_emergency_margin_standard": {
+        "name": "Humidity Assist: аварийный запас (обычный)"
+      },
+      "humidity_assist_median_window_minutes": {
+        "name": "Humidity Assist: окно медианы"
+      },
+      "humidity_assist_initial_pull_down_window_minutes": {
+        "name": "Humidity Assist: окно начального осушения"
+      },
+      "humidity_assist_initial_pull_down_max_run_minutes": {
+        "name": "Humidity Assist: максимальная длительность начального осушения"
+      },
+      "humidity_assist_initial_pull_down_target_offset": {
+        "name": "Humidity Assist: смещение цели начального осушения"
       }
     },
     "number": {

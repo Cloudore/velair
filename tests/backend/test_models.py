@@ -17,6 +17,7 @@ from .helpers import (
     normalize_schedule_data,
 )
 from custom_components.velair.models import (
+    normalize_humidity_assist_settings,
     DEFAULT_PRECONDITIONING_MAX_LEAD_MINUTES,
     MIN_PRECONDITIONING_COMPLETE_SAMPLES,
     normalize_preconditioning_data,
@@ -378,6 +379,7 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
                 "min_temperature": 5.0,
                 "max_temperature": 35.0,
                 "delivery_stagger_seconds": 0,
+                "humidity_assist": normalize_humidity_assist_settings(None),
             },
         )
         self.assertEqual(data["global_"]["mode"], MODE_AUTO)
@@ -434,6 +436,7 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
                 "min_temperature": 12.0,
                 "max_temperature": 28.5,
                 "delivery_stagger_seconds": 0,
+                "humidity_assist": normalize_humidity_assist_settings(None),
             },
         )
 

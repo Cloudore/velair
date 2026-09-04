@@ -48,6 +48,7 @@ Contributions, testing, bug reports, and constructive feedback are always welcom
 - Dedicated Adaptive preconditioning tab with per-climate controls and local learning status.
 - Dedicated Room Assist tab for setups that need a separate room temperature sensor, including width-preserving assistance for native `heat_cool` ranges.
 - Dedicated Comfort tab with readable temperature/humidity conditions, independent CO2 air quality, data-quality warnings, and responsive live visualizations.
+- Dedicated Humidity tab for Humidity Assist: dew-point or relative-humidity duty cycles that pulse zones colder for bounded runs while a rest schedule holds, with priority rooms, compressor rests, an initial pull-down, an external gate, and a compliance sensor.
 - Optional climate controls per block where supported, including fan mode, preset mode, swing mode, horizontal swing mode, and target humidity.
 - Dedicated Diagnostics tab with live runtime health, bounded history, filters, and privacy-aware issue reports.
 - Settings tab with climate ordering, startup behavior, portability tools, and maintenance information.
@@ -56,6 +57,7 @@ Contributions, testing, bug reports, and constructive feedback are always welcom
 - Velair-scoped services for activating climate profiles, starting and cancelling boosts, pauses, schedule application, schedule editing, day cloning, and schedule clearing.
 - Automation events through `velair_event` for Profile changes, scheduler mode changes, Adaptive Preconditioning plans, cancellations and observations, Room Assist state and target changes, Comfort assessments, applied climate targets, boosts, and per-zone pause/resume lifecycle changes.
 - Optional verified delivery per climate: after a call is accepted, Velair watches the entity's own reported mode and target and re-sends the current intent up to a configured number of attempts, plus an optional global stagger between commands to different climates for gateways that drop back-to-back writes.
+- Automation events through `velair_event` for Profile changes, scheduler mode changes, Adaptive Preconditioning plans, cancellations and observations, Room Assist state and target changes, Comfort assessments, Humidity Assist state changes, applied climate targets, boosts, and per-zone pause/resume lifecycle changes.
 - Push updates through Home Assistant WebSocket events, without frontend polling.
 - Complete English, Spanish, German, French, Italian, Dutch, Polish, Brazilian Portuguese, European Portuguese, and community-reviewed Russian UI coverage, with English fallback for unsupported languages.
 - Native Celsius and Fahrenheit workflows using Home Assistant's configured unit, including unit-aware defaults, explicit stored-data migration, and legacy backup conversion.
@@ -241,6 +243,7 @@ Supported `view` values:
 - `schedules`: full schedule editor.
 - `sensors`: Room Assist configuration and live status.
 - `comfort`: environmental comfort configuration and status.
+- `humidity`: Humidity Assist configuration, live readings, and shared parameters.
 - `preconditioning`: adaptive preconditioning configuration and local learning status.
 - `diagnostics`: runtime health, bounded history, filters, and issue-report export.
 
@@ -262,6 +265,7 @@ If Home Assistant shows a custom element error, confirm that Velair is installed
 - [Room Assist](docs/user/room-assist.md)
 - [Resilient climate delivery](docs/user/resilient-climate-delivery.md)
 - [Environmental Comfort](docs/user/comfort.md)
+- [Humidity Assist](docs/user/humidity-assist.md)
 - [Temperature Units and Migration](docs/user/temperature-units.md)
 - [Installation](docs/user/installation.md)
 - [Troubleshooting](docs/user/troubleshooting.md)
@@ -274,6 +278,7 @@ If Home Assistant shows a custom element error, confirm that Velair is installed
 - [Room Assist internals](docs/developer/room-assist.md)
 - [Climate delivery internals](docs/developer/climate-delivery.md)
 - [Environmental Comfort internals](docs/developer/comfort.md)
+- [Humidity Assist internals](docs/developer/humidity-assist.md)
 - [Temperature unit internals](docs/developer/temperature-units.md)
 - [Frontend development](docs/developer/frontend.md)
 - [Development guide](docs/developer/development.md)

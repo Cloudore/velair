@@ -39,6 +39,8 @@ import type {
   ScheduleResponse,
   ScheduleTemplate,
   PreconditioningSettings,
+  HumidityAssistGlobalSettings,
+  HumidityAssistSettings,
   VelairCardConfig,
   VelairCardView,
   VelairPortablePayload,
@@ -121,8 +123,10 @@ import {
   handleSettingsZoneDrop,
   moveSettingsZone,
   saveSettings,
+  saveHumidityAssistSettings,
   saveZoneComfort,
   saveZoneDelivery,
+  saveZoneHumidityAssist,
   saveZonePreconditioning,
   saveZoneLimits,
   resetZonePreconditioningLearning,
@@ -314,6 +318,7 @@ export class VelairCard extends LitElement {
   @state() private _portabilityAction?: "export" | "import";
   @state() private _exportSections = new Set<PortableSection>(PORTABLE_SECTIONS);
   @state() private _expandedComfortZones = new Set<string>();
+  @state() private _expandedHumidityZones = new Set<string>();
   @state() private _expandedPreconditioningZones = new Set<string>();
   @state() private _importSections = new Set<PortableSection>();
   @state() private _importPayload?: VelairPortablePayload;
@@ -1481,6 +1486,29 @@ export class VelairCard extends LitElement {
       expandedZones.add(entityId);
     }
     this._expandedComfortZones = expandedZones;
+  }
+
+  private _toggleHumidityZone(entityId: string): void {
+    const expandedZones = new Set(this._expandedHumidityZones);
+    if (expandedZones.has(entityId)) {
+      expandedZones.delete(entityId);
+    } else {
+      expandedZones.add(entityId);
+    }
+    this._expandedHumidityZones = expandedZones;
+  }
+
+  private async _saveZoneHumidityAssist(
+    entityId: string,
+    humidityAssist: Partial<HumidityAssistSettings>,
+  ): Promise<void> {
+    await saveZoneHumidityAssist(asSettingsActionsHost(this), entityId, humidityAssist);
+  }
+
+  private async _saveHumidityAssistSettings(
+    settings: Partial<HumidityAssistGlobalSettings>,
+  ): Promise<void> {
+    await saveHumidityAssistSettings(asSettingsActionsHost(this), settings);
   }
 
   private async _resetZonePreconditioningLearning(

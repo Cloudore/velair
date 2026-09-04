@@ -160,7 +160,7 @@ class AutomaticSchedulingSwitchTest(unittest.IsolatedAsyncioTestCase):
     def test_platforms_include_the_native_mode_select(self) -> None:
         self.assertEqual(
             helpers.const_module.PLATFORMS,
-            ("sensor", "select", "switch", "number"),
+            ("sensor", "select", "switch", "number", "binary_sensor"),
         )
 
 

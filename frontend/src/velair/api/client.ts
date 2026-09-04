@@ -3,6 +3,7 @@ import type {
   HomeAssistant,
   ComfortSettings,
   DeliverySettings,
+  HumidityAssistSettings,
   DiagnosticsSnapshot,
   DiagnosticHistoryCategory,
   ClimateProfileInput,
@@ -254,6 +255,17 @@ export class VelairApiClient {
       type: "velair/update_zone_delivery",
       entity_id: entityId,
       delivery,
+    });
+  }
+
+  public updateZoneHumidityAssist(
+    entityId: string,
+    humidityAssist: Partial<HumidityAssistSettings>,
+  ): Promise<ScheduleResponse> {
+    return this.hass.connection.sendMessagePromise<ScheduleResponse>({
+      type: "velair/update_zone_humidity_assist",
+      entity_id: entityId,
+      humidity_assist: humidityAssist,
     });
   }
 
