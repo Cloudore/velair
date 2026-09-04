@@ -14,6 +14,7 @@ from . import VelairConfigEntry
 from .config_helpers import get_configured_climate_entities
 from .const import SIGNAL_DIAGNOSTICS_UPDATED
 from .entity import VelairEntity
+from .occupancy_assist_entities import build_occupancy_assist_sensors
 
 
 async def async_setup_entry(
@@ -70,6 +71,7 @@ async def async_setup_entry(
             ),
         )
     )
+    entities.extend(build_occupancy_assist_sensors(hass, entry))
     async_add_entities(entities)
 
 

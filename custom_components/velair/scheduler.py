@@ -147,6 +147,7 @@ from .zone_limit_notifications import (
     async_notify_zone_limit,
 )
 from .humidity_assist import HumidityAssistCoordinator
+from .occupancy_assist import OccupancyAssistCoordinator
 from .models import (
     HumidityAssistData,
     normalize_humidity_assist_data,
@@ -393,6 +394,7 @@ class VelairScheduler:
         self._profile_mutation_lock = asyncio.Lock()
         self._operation_status: OperationStatus | None = None
         self._humidity_assist = HumidityAssistCoordinator(self)
+        self._occupancy_assist = OccupancyAssistCoordinator(self)
 
     @property
     def mode(self) -> str:
@@ -426,6 +428,7 @@ class VelairScheduler:
         if apply_current_schedule and self.mode == MODE_AUTO:
             await self.async_apply_current_schedule(source="startup")
         await self._humidity_assist.async_start()
+        await self._occupancy_assist.async_start()
 
     async def async_stop(self) -> None:
         """Stop scheduling events."""
@@ -450,6 +453,7 @@ class VelairScheduler:
             self._clear_comfort_listener()
             self._preconditioning_plan_snapshots.clear()
             await self._humidity_assist.async_stop()
+            await self._occupancy_assist.async_stop()
 
     def handle_temperature_unit_change(self) -> None:
         """Discard unit-bound runtime caches and rebuild scheduler projections."""
@@ -470,6 +474,7 @@ class VelairScheduler:
                 self._async_refresh_room_sensor_assist_from_current_event(entity_id)
             )
         self._humidity_assist.handle_unit_change()
+        self._occupancy_assist.handle_unit_change()
 
     async def async_apply_current_schedule(
         self,
@@ -2685,6 +2690,7 @@ class VelairScheduler:
         await self._async_save_data()
         if "humidity_assist" in settings:
             await self._humidity_assist.async_settings_changed()
+        await self._occupancy_assist.async_settings_changed(settings)
         self._async_write_state()
         return next_settings
 
@@ -3149,6 +3155,11 @@ class VelairScheduler:
                 self._data["zones"][entity_id].get("humidity_assist")
             )["sensor_entity_id"]
         ]
+
+    def get_occupancy_assist_statuses(self) -> dict[str, dict[str, object]]: return self._occupancy_assist.statuses()
+    def get_occupancy_assist_status(self, entity_id: str) -> dict[str, object]: return self._occupancy_assist.status(entity_id)
+    def get_occupancy_assist_config(self, entity_id: str): return self._occupancy_assist.config(entity_id)
+    async def async_update_zone_occupancy_assist(self, entity_id: str, occupancy_assist: dict): return await self._occupancy_assist.async_update_config(entity_id, occupancy_assist)
 
     async def async_reset_zone_preconditioning_learning(
         self,

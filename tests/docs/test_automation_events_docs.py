@@ -36,6 +36,7 @@ PUBLIC_EVENTS = (
     "zone_resumed",
     "delivery_outcome",
     "humidity_assist_state_changed",
+    "occupancy_assist_state_changed",
 )
 
 

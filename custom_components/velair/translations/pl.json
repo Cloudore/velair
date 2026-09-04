@@ -124,6 +124,21 @@
           "pulsing": "Impuls aktywny",
           "resting": "Odpoczynek"
         }
+      },
+      "zone_occupancy_assist": {
+        "name": "{zone} Occupancy Assist",
+        "state": {
+          "disabled": "Disabled",
+          "unavailable": "Unavailable",
+          "occupied": "Occupied",
+          "arriving_1": "Arriving (stage 1)",
+          "comfort": "Comfort",
+          "vacant": "Vacant",
+          "setback_1": "Setback stage 1",
+          "setback_2": "Setback stage 2",
+          "setback_3": "Setback stage 3",
+          "blocked": "Blocked"
+        }
       }
     },
     "select": {
@@ -140,6 +155,9 @@
       },
       "zone_humidity_priority": {
         "name": "Priorytet wilgotności {zone}"
+      },
+      "zone_occupancy_assist": {
+        "name": "{zone} Occupancy Assist"
       }
     },
     "binary_sensor": {
@@ -192,6 +210,36 @@
       },
       "zone_max_temperature_limit": {
         "name": "{zone} temperatura maksymalna"
+      },
+      "zone_setback_1_minutes": {
+        "name": "{zone} setback 1 minutes"
+      },
+      "zone_setback_1_temperature": {
+        "name": "{zone} setback 1 temperature"
+      },
+      "zone_setback_2_minutes": {
+        "name": "{zone} setback 2 minutes"
+      },
+      "zone_setback_2_temperature": {
+        "name": "{zone} setback 2 temperature"
+      },
+      "zone_setback_3_minutes": {
+        "name": "{zone} setback 3 minutes"
+      },
+      "zone_setback_3_temperature": {
+        "name": "{zone} setback 3 temperature"
+      },
+      "zone_arrival_1_minutes": {
+        "name": "{zone} arrival 1 minutes"
+      },
+      "zone_arrival_2_minutes": {
+        "name": "{zone} arrival 2 minutes"
+      },
+      "zone_arrival_1_temperature": {
+        "name": "{zone} arrival 1 temperature"
+      },
+      "zone_comfort_temperature": {
+        "name": "{zone} comfort temperature"
       }
     }
   }

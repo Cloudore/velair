@@ -16,6 +16,7 @@ Velair documentation is grouped by audience and topic.
 - [Resilient climate delivery](user/resilient-climate-delivery.md): understand deferred retries, reconnection behavior, optional readback confirmation, and cross-climate stagger.
 - [Environmental Comfort](user/comfort.md): understand temperature, humidity, CO2 air quality, and reading freshness through local room assessments.
 - [Humidity Assist](user/humidity-assist.md): pulse zones colder for bounded runs whenever a room's dew point or humidity drifts above its target, with priority rooms, compressor rests, and an external gate.
+- [Occupancy Assist](user/occupancy-assist.md): warm empty rooms in raise-only stages and cool them back in stages when someone arrives, with blocking and corroboration entities, exit grace, and a comfort dial synced to the schedule.
 - [Temperature Units and Migration](user/temperature-units.md): understand Celsius/Fahrenheit defaults, upgrades, migration, import/export, and recovery.
 - [Troubleshooting](user/troubleshooting.md): common setup, frontend resource, and runtime issues.
 - [Diagnostics](user/diagnostics.md): local runtime health, bounded history, and redacted issue reports.

@@ -193,7 +193,7 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
 
         await sensor_module.async_setup_entry(hass, entry, entities.extend)
 
-        self.assertEqual(len(entities), 17)
+        self.assertEqual(len(entities), 19)  # + one Occupancy Assist sensor per climate
         target_sensors = [
             entity
             for entity in entities
@@ -707,6 +707,7 @@ class SensorTranslationTest(unittest.TestCase):
                         "zone_preconditioning_start",
                         "zone_room_assist_state",
                         "zone_humidity_assist",
+                        "zone_occupancy_assist",
                     },
                 )
                 self.assertEqual(
@@ -727,6 +728,7 @@ class SensorTranslationTest(unittest.TestCase):
                         "automatic_scheduling",
                         "zone_humidity_assist",
                         "zone_humidity_priority",
+                        "zone_occupancy_assist",
                     },
                 )
                 self.assertEqual(

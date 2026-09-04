@@ -655,6 +655,32 @@ median: 22.4
 next_transition_at: "2026-08-10T15:10:00+00:00"
 ```
 
+## Occupancy Assist State Changed
+
+`occupancy_assist_state_changed` is emitted whenever a zone's Occupancy Assist
+state machine enters a different state or stage: `disabled`, `unavailable`,
+`occupied`, `arriving_1`, `comfort`, `vacant`, `setback_1`, `setback_2`,
+`setback_3`, or `blocked`. Repeating the same state does not emit it.
+`previous` is the state that was left, `stage` the stage number inside the
+new state (setback 1–3, arrival 1) or `null`, `temperature` the hold target
+that state writes in the climate unit (or `null` when the state releases to
+the schedule or writes nothing), and `reason` the branch that produced it:
+`source_unavailable`, `occupied`, `awaiting_corroboration`, `arrival_stage`,
+`arrival_complete`, `exit_grace`, `vacant`, `setback_stage`,
+`blocking_entity`, or `disabled`. See [Occupancy Assist](occupancy-assist.md)
+for the complete state machine.
+
+```yaml
+domain: velair
+event: occupancy_assist_state_changed
+entity_id: climate.guest_room
+previous: vacant
+state: setback_1
+stage: 1
+temperature: 23
+reason: setback_stage
+```
+
 ## Boost Started
 
 `boost_started` is emitted after a boost target and override have been applied
