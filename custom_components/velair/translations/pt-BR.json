@@ -186,9 +186,7 @@
       },
       "humidity_assist_initial_pull_down_target_offset": {
         "name": "Deslocamento da meta na redução inicial do Humidity Assist"
-      }
-    },
-    "number": {
+      },
       "zone_min_temperature_limit": {
         "name": "Temperatura mínima de {zone}"
       },

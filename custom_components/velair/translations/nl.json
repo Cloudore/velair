@@ -186,9 +186,7 @@
       },
       "humidity_assist_initial_pull_down_target_offset": {
         "name": "Humidity Assist pull-down doelverschuiving"
-      }
-    },
-    "number": {
+      },
       "zone_min_temperature_limit": {
         "name": "{zone} minimumtemperatuur"
       },
