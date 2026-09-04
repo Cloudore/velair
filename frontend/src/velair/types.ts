@@ -91,7 +91,7 @@ export type VelairPanelRoute = {
   prefix?: string;
 };
 
-export type VelairPanelView = "overview" | "modes" | "schedules" | "templates" | "sensors" | "comfort" | "humidity" | "preconditioning" | "diagnostics" | "settings";
+export type VelairPanelView = "overview" | "modes" | "schedules" | "templates" | "sensors" | "comfort" | "humidity" | "presence" | "preconditioning" | "diagnostics" | "settings";
 export type VelairOverviewCardView =
   | "overview-status"
   | "active-setup"
@@ -282,6 +282,113 @@ export type HumidityAssistStatus = {
   next_transition_at?: string | null;
 };
 
+// --- Home policy modules (docs/dev/home-policy-spec.md §3–§5) ---------------
+export type HoldConstraint = "raise_only" | "lower_only" | "absolute";
+export type SetbackStage = { after_minutes: number; temperature: number };
+export type ArrivalStage = { after_minutes: number; temperature: number | null };
+export type OccupancyAssistSettings = {
+  enabled: boolean;
+  occupancy_entity_id: string | null;
+  blocking_entity_ids: string[];
+  corroboration_entity_ids: string[];
+  setback_stages: SetbackStage[];
+  setback_hvac_mode: string | null;
+  setback_fan_mode: string | null;
+  arrival_stages: ArrivalStage[];
+  arrival_exit_grace_minutes: number;
+  comfort_temperature: number;
+  sync_comfort_to_schedule: boolean;
+};
+export type OccupancyAssistState = "disabled" | "unavailable" | "occupied" | "arriving_1" | "comfort" | "vacant" | "setback_1" | "setback_2" | "setback_3" | "blocked";
+export type OccupancyAssistStatus = {
+  state: OccupancyAssistState;
+  occupancy_entity_id?: string | null;
+  occupied_since?: string | null;
+  vacant_since?: string | null;
+  stage?: number | null;
+  next_stage_at?: string | null;
+  next_temperature?: number | null;
+  blocked_by?: string | null;
+  last_action?: string | null;
+  last_action_at?: string | null;
+};
+export type HouseModesGlobalSettings = {
+  presence_entity_ids: string[];
+  presence_corroboration_entity_ids: string[];
+  presence_corroboration_quiet_minutes: number;
+  away_after_minutes: number;
+  away_deep_after_minutes: number;
+  arrival_release_minutes: number;
+  sleep_entity_id: string | null;
+  presleep_time: string | null;
+  presleep_duration_minutes: number;
+  travel_entity_id: string | null;
+  travel_park_temperature: number;
+  travel_park_hvac_mode: string | null;
+  travel_park_fan_mode: string | null;
+  travel_freeze_off_heads: boolean;
+  travel_enable_humidity_assist: boolean;
+  travel_auto_exit_on_arrival: boolean;
+};
+export type SleepConstraint = Extract<HoldConstraint, "raise_only" | "absolute">;
+export type HouseModesZoneSettings = {
+  away_enabled: boolean;
+  away_temperature: number;
+  away_deep_temperature: number | null;
+  sleep_enabled: boolean;
+  sleep_temperature: number;
+  sleep_constraint: SleepConstraint;
+  sleep_fan_mode: string | null;
+  sleep_minimum_temperature: number | null;
+  presleep_temperature: number | null;
+  travel_park_enabled: boolean;
+};
+export type HouseModeState = "home" | "away" | "away_deep" | "travel" | "sleep" | "disabled";
+export type HouseModeStatus = {
+  state: HouseModeState;
+  sleeping?: boolean;
+  empty_since?: string | null;
+  next_stage_at?: string | null;
+  travel_since?: string | null;
+  sleep_since?: string | null;
+  zones_parked?: string[];
+  zones_frozen?: string[];
+};
+export type GuardsGlobalSettings = {
+  never_off_enabled: boolean;
+  never_off_grace_minutes: number;
+  never_off_snooze_minutes: number;
+  never_off_snooze_release_vacant_minutes: number;
+  never_off_respect_travel: boolean;
+  manual_release_enabled: boolean;
+  manual_lease_minutes: number;
+  manual_release_vacant_minutes: number;
+  manual_release_on_travel: boolean;
+  owner_entity_ids: string[];
+  owner_away_minutes: number;
+  manual_release_below_minimum: boolean;
+};
+export type ActivityHold = {
+  entity_id: string;
+  temperature: number;
+  constraint: HoldConstraint;
+  hvac_mode: string | null;
+  release_delay_minutes: number;
+  pause_id: string;
+  label: string;
+};
+export type GuardsZoneSettings = { never_off_enabled: boolean; activity_holds: ActivityHold[] };
+export type GuardState = "idle" | "off_grace" | "snoozed" | "recovering" | "manual_watch" | "activity_hold";
+export type GuardStatus = {
+  state: GuardState;
+  grace_ends_at?: string | null;
+  snooze_until?: string | null;
+  manual_since?: string | null;
+  manual_release_at?: string | null;
+  activity_entity_id?: string | null;
+};
+// ---------------------------------------------------------------------------
+
 export type ComfortMetricAssessment = {
   attention?: number;
   availability: "current" | "missing" | "stale" | "not_monitored";
@@ -427,6 +534,9 @@ export type ScheduleZone = {
   comfort?: ComfortSettings;
   limits?: ZoneLimits;
   humidity_assist?: Partial<HumidityAssistSettings>;
+  occupancy_assist?: Partial<OccupancyAssistSettings>;
+  house_modes?: Partial<HouseModesZoneSettings>;
+  guards?: Partial<GuardsZoneSettings>;
   external_change_policy?: ExternalChangePolicy;
   execution?: { type: "external"; provider: string };
   delivery?: DeliverySettings;
@@ -565,6 +675,8 @@ export type PanelSettings = {
   apply_active_schedule_on_startup?: boolean;
   delivery_stagger_seconds?: number;
   humidity_assist?: Partial<HumidityAssistGlobalSettings>;
+  house_modes?: Partial<HouseModesGlobalSettings>;
+  guards?: Partial<GuardsGlobalSettings>;
 };
 
 export type OperationStatus = {
@@ -677,6 +789,9 @@ export type ScheduleResponse = {
   comfort?: Record<string, ComfortAssessment>;
   humidity_assist?: Record<string, HumidityAssistStatus>;
   humidity_assist_compliant?: boolean;
+  occupancy_assist?: Record<string, OccupancyAssistStatus>;
+  house_mode?: HouseModeStatus | HouseModeState | null;
+  guards?: Record<string, GuardStatus>;
   zone_runtime?: Record<string, ZoneRuntimeStatus>;
   preconditioning_learning?: Record<string, PreconditioningLearningSummary>;
   diagnostics?: DiagnosticsSnapshot;

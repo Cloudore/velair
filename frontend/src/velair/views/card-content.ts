@@ -15,6 +15,7 @@ import {
   renderOverviewZones,
 } from "./overview-view";
 import { renderHumidityView } from "./humidity-view";
+import { renderPresenceView } from "./presence-view";
 import { renderPreconditioningView } from "./preconditioning-view";
 import { renderSchedulesView } from "./schedule-view";
 import { renderSensorsView, type RoomSensorViewOptions } from "./sensors-view";
@@ -204,6 +205,10 @@ function renderViewContent(
 
   if (view === "humidity") {
     return renderHumidityView(host, visibleZoneIds);
+  }
+
+  if (view === "presence") {
+    return renderPresenceView(host, visibleZoneIds, selectedEntity);
   }
 
   if (view === "preconditioning") {

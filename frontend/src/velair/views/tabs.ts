@@ -43,6 +43,7 @@ export const PANEL_TABS: PanelTabDefinition[] = [
     labelKey: "humidity",
     view: "humidity",
   },
+  { icon: "mdi:home-account", labelKey: "presence", view: "presence" },
   {
     icon: "mdi:clock-fast",
     labelKey: "preconditioning",
