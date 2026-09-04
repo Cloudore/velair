@@ -414,6 +414,65 @@ export const settingsStyles = css`
   box-shadow: 0 0 0 1px var(--primary-color);
 }
 
+.settings-zone-limits {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+  position: relative;
+}
+
+.settings-zone-limit-controls { flex-wrap: wrap; }
+
+.settings-zone-limit {
+  align-items: center;
+  border: 1px solid var(--divider-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 1 190px;
+  gap: 4px;
+  height: 34px;
+  min-width: 150px;
+  overflow: hidden;
+  padding-inline-start: 8px;
+}
+
+.settings-zone-limit-label {
+  color: var(--secondary-text-color);
+  flex: 0 0 auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.settings-zone-limit input {
+  background: var(--card-background-color);
+  border: 0;
+  border-radius: 0;
+  box-sizing: border-box;
+  box-shadow: none;
+  flex: 1 1 auto;
+  font-size: 12px;
+  height: 100%;
+  margin: 0;
+  min-width: 0;
+  outline: 0;
+  padding-inline: 4px 2px;
+  width: 100%;
+}
+
+.settings-zone-limit:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.settings-zone-limit-unit {
+  color: var(--secondary-text-color);
+  font-size: 11px;
+  padding-inline-end: 7px;
+}
+
 .settings-policy-duration span {
   color: var(--secondary-text-color);
   font-size: 11px;
@@ -562,7 +621,8 @@ export const settingsStyles = css`
 
 @media (pointer: coarse) {
   .settings-policy-controls > .select-wrap,
-  .settings-policy-duration { height: 40px; }
+  .settings-policy-duration,
+  .settings-zone-limit { height: 40px; }
 }
 
 @media (max-width: 480px) {
@@ -572,5 +632,7 @@ export const settingsStyles = css`
   .settings-policy-controls { width: 100%; }
   .settings-policy-controls > .select-wrap { flex: 1 1 160px; height: 40px; max-width: 170px; width: auto; }
   .settings-policy-duration { flex: 0 1 105px; height: 40px; }
+  .settings-zone-limits { align-items: stretch; flex-direction: column; gap: 4px; }
+  .settings-zone-limit { flex: 1 1 auto; height: 40px; }
 }
 `;

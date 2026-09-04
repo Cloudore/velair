@@ -21,6 +21,7 @@ import type {
   VelairCardConfig,
   VelairCardView,
   VelairPortablePayload,
+  ZoneLimits,
 } from "./types";
 import type { DiagnosticHistoryFilters } from "./domain/diagnostics-history";
 import type { DiagnosticsLogColumns } from "./domain/diagnostics-log-layout";
@@ -195,6 +196,7 @@ export type VelairViewHost = {
   _resumeAutomaticControl(entityId: string): Promise<void>;
   _enterManualAdjustment(entityId: string): Promise<void>;
   _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;
+  _saveZoneLimits(entityId: string, limits: Partial<ZoneLimits>): Promise<void>;
   _saveZonePreconditioning(entityId: string, preconditioning: Partial<PreconditioningSettings>): Promise<void>;
   _saveTemplate(saveAsNew: boolean): Promise<void>;
   _scheduleTemplates(): ScheduleTemplate[];

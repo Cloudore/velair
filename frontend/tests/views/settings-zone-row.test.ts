@@ -51,6 +51,7 @@ function host(
     _modeLabel: () => "Heat",
     _moveSettingsZone: vi.fn(),
     _saveExternalChangePolicy: vi.fn(),
+    _saveZoneLimits: vi.fn(),
     _settingsSaving: false,
     _t: (key: string) => key,
     _temperatureUnit: () => "\u00b0C",
@@ -475,6 +476,72 @@ describe("settings climate row", () => {
     expect(tooltip.textContent).toBe("externalChangePolicyDescription");
     expect(container.querySelector('[role="dialog"]')).toBeNull();
     expect(container.querySelector(".popover-close")).toBeNull();
+  });
+
+  it("renders blank temperature limit inputs bounded by the climate range", () => {
+    const container = document.createElement("div");
+    render(renderSettingsZoneOrderRow(host(false), "climate.office", 0, 1), container);
+
+    const inputs = [...container.querySelectorAll<HTMLInputElement>(".settings-zone-limit input")];
+    expect(inputs).toHaveLength(2);
+    expect(inputs.map((input) => input.value)).toEqual(["", ""]);
+    expect(inputs.map((input) => input.getAttribute("placeholder"))).toEqual(["zoneLimitNone", "zoneLimitNone"]);
+    expect(inputs.map((input) => input.getAttribute("aria-label"))).toEqual(["zoneLimitMinimum", "zoneLimitMaximum"]);
+    expect(inputs[0].getAttribute("min")).toBe("7");
+    expect(inputs[0].getAttribute("max")).toBe("35");
+    expect(inputs[0].getAttribute("step")).toBe("0.5");
+    expect(container.querySelector(".settings-zone-limits .label")?.textContent).toBe("zoneLimits");
+    expect(container.querySelector(".settings-zone-limit-unit")?.textContent).toBe("\u00b0C");
+    const help = container.querySelector(".settings-zone-limits .inline-help");
+    expect(help?.getAttribute("aria-label")).toBe("zoneLimitsInfoAction");
+  });
+
+  it("shows stored limits and saves one bound at a time, blank meaning no limit", () => {
+    const container = document.createElement("div");
+    const viewHost = host(false);
+    viewHost._data!.zones["climate.office"].limits = { min_temperature: 21, max_temperature: null };
+    render(renderSettingsZoneOrderRow(viewHost, "climate.office", 0, 1), container);
+
+    const [minimum, maximum] = [...container.querySelectorAll<HTMLInputElement>(".settings-zone-limit input")];
+    expect(minimum.value).toBe("21");
+    expect(maximum.value).toBe("");
+
+    maximum.value = "24";
+    maximum.dispatchEvent(new Event("change"));
+    expect(viewHost._saveZoneLimits).toHaveBeenLastCalledWith("climate.office", { max_temperature: 24 });
+
+    minimum.value = "";
+    minimum.dispatchEvent(new Event("change"));
+    expect(viewHost._saveZoneLimits).toHaveBeenLastCalledWith("climate.office", { min_temperature: null });
+    expect(viewHost._saveZoneLimits).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses a step-agnostic limit input when the climate reports no step", () => {
+    const container = document.createElement("div");
+    const viewHost = host(false);
+    viewHost._entityTemperatureStep = () => undefined;
+    render(renderSettingsZoneOrderRow(viewHost, "climate.office", 0, 1), container);
+
+    expect(container.querySelector<HTMLInputElement>(".settings-zone-limit input")?.getAttribute("step")).toBe("any");
+  });
+
+  it("hides temperature limits for externally executed climates", () => {
+    const container = document.createElement("div");
+    const viewHost = host(false);
+    viewHost._data!.zones["climate.office"].execution = { type: "external", provider: "ramses_cc" };
+    render(renderSettingsZoneOrderRow(viewHost, "climate.office", 0, 1), container);
+
+    expect(container.querySelector(".settings-zone-limits")).toBeNull();
+    expect(container.querySelector(".settings-external-policy")).toBeNull();
+  });
+
+  it("explains that limits bound Velair deliveries but not outside adjustments", () => {
+    expect(en.zoneLimits).toBe("Temperature limits");
+    expect(en.zoneLimitMinimum).toBe("Minimum temperature");
+    expect(en.zoneLimitMaximum).toBe("Maximum temperature");
+    expect(en.zoneLimitsDescription).toContain("adjustments made outside Velair are not");
+    expect(en.zoneLimitsDescription).toContain("Leave a field empty for no limit");
+    expect(es.zoneLimitsDescription).toContain("fuera de Velair no");
   });
 
   it("keeps compact desktop controls and groups policy with duration below the mobile heading", () => {

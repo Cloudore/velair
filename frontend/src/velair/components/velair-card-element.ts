@@ -41,6 +41,7 @@ import type {
   VelairCardConfig,
   VelairCardView,
   VelairPortablePayload,
+  ZoneLimits,
 } from "../types";
 import { EMPTY_DIAGNOSTIC_HISTORY_FILTERS } from "../domain/diagnostics-history";
 import {
@@ -121,6 +122,7 @@ import {
   saveSettings,
   saveZoneComfort,
   saveZonePreconditioning,
+  saveZoneLimits,
   resetZonePreconditioningLearning,
   resetZonePreconditioningSettings,
   updateSettingsFirstWeekday,
@@ -1443,6 +1445,13 @@ export class VelairCard extends LitElement {
     comfort: Partial<ComfortSettings>,
   ): Promise<void> {
     await saveZoneComfort(asSettingsActionsHost(this), entityId, comfort);
+  }
+
+  private async _saveZoneLimits(
+    entityId: string,
+    limits: Partial<ZoneLimits>,
+  ): Promise<void> {
+    await saveZoneLimits(asSettingsActionsHost(this), entityId, limits);
   }
 
   private _togglePreconditioningZone(entityId: string): void {

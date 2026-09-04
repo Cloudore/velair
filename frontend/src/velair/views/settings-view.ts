@@ -9,7 +9,7 @@ import {
 import { unmatchedPreconditioningLearningEntities } from "../domain/portable";
 import type { VelairViewHost } from "../host-types";
 import { renderInlineHelp } from "./inline-help";
-import type { ExternalExecutionInfo, PortableSection } from "../types";
+import type { ExternalExecutionInfo, PortableSection, ZoneLimits } from "../types";
 
 type SettingsViewHost = VelairViewHost;
 
@@ -524,6 +524,7 @@ export function renderSettingsZoneOrderRow(
           <span>${entityId}</span>
         </div>
         ${renderSettingsExternalChangePolicy(host, entityId)}
+        ${renderSettingsZoneLimits(host, entityId)}
       </div>
       <div class="settings-row-actions">
         <button
@@ -611,6 +612,70 @@ export function renderSettingsExternalChangePolicy(host: SettingsViewHost, entit
             <span>${host._t("minutesShort")}</span>
           </label>
         ` : nothing}
+      </div>
+    </div>
+  `;
+}
+
+export function renderSettingsZoneLimits(host: SettingsViewHost, entityId: string) {
+  if (host._data?.zones[entityId]?.execution?.type === "external") {
+    return nothing;
+  }
+  const limits: ZoneLimits = host._data?.zones[entityId]?.limits ?? {
+    min_temperature: null,
+    max_temperature: null,
+  };
+  const [minimum, maximum] = host._entityTemperatureLimits(entityId);
+  const step = host._entityTemperatureStep(entityId);
+  const unit = host._temperatureUnit(entityId);
+  const key = entityId.replace(/[^a-z0-9_-]/gi, "-");
+  const labelId = `zone-limits-label-${key}`;
+  const helpId = `zone-limits-info-${key}`;
+  return html`
+    <div class="settings-zone-limits">
+      <div class="settings-policy-heading">
+        <span class="label" id=${labelId}>${host._t("zoneLimits")}</span>
+        ${renderInlineHelp(
+          helpId,
+          host._t("zoneLimitsInfoAction"),
+          host._t("zoneLimitsDescription"),
+        )}
+      </div>
+      <div class="settings-policy-controls settings-zone-limit-controls">
+        ${(["min_temperature", "max_temperature"] as const).map((field) => {
+          const label = host._t(field === "min_temperature" ? "zoneLimitMinimum" : "zoneLimitMaximum");
+          const value = limits[field];
+          return html`
+            <label class=${`settings-zone-limit ${field === "min_temperature" ? "minimum" : "maximum"}`}>
+              <span class="settings-zone-limit-label">${label}</span>
+              <input
+                type="number"
+                inputmode="decimal"
+                min=${minimum}
+                max=${maximum}
+                step=${step ?? "any"}
+                placeholder=${host._t("zoneLimitNone")}
+                aria-label=${label}
+                .value=${typeof value === "number" ? String(value) : ""}
+                ?disabled=${host._settingsSaving}
+                @change=${(event: Event) => {
+                  const raw = (event.target as HTMLInputElement).value.trim();
+                  const parsed = raw === "" ? null : Number(raw);
+                  if (parsed !== null && !Number.isFinite(parsed)) {
+                    return;
+                  }
+                  void host._saveZoneLimits(
+                    entityId,
+                    field === "min_temperature"
+                      ? { min_temperature: parsed }
+                      : { max_temperature: parsed },
+                  );
+                }}
+              />
+              <span class="settings-zone-limit-unit">${unit}</span>
+            </label>
+          `;
+        })}
       </div>
     </div>
   `;
