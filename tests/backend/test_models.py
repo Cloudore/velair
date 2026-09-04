@@ -377,6 +377,7 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
                 "zone_order": [],
                 "min_temperature": 5.0,
                 "max_temperature": 35.0,
+                "delivery_stagger_seconds": 0,
             },
         )
         self.assertEqual(data["global_"]["mode"], MODE_AUTO)
@@ -432,6 +433,7 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
                 "zone_order": ["climate.bedroom", "climate.salon"],
                 "min_temperature": 12.0,
                 "max_temperature": 28.5,
+                "delivery_stagger_seconds": 0,
             },
         )
 

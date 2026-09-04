@@ -5,6 +5,7 @@ import type { SupportedLanguage, TranslationKey } from "./translations";
 import type {
   BlockDraftSource,
   ComfortSettings,
+  DeliverySettings,
   DiagnosticsSnapshot,
   DraftScheduleBlock,
   EntityDiagnostic,
@@ -197,6 +198,7 @@ export type VelairViewHost = {
   _enterManualAdjustment(entityId: string): Promise<void>;
   _saveZoneComfort(entityId: string, comfort: Partial<ComfortSettings>): Promise<void>;
   _saveZoneLimits(entityId: string, limits: Partial<ZoneLimits>): Promise<void>;
+  _saveZoneDelivery(entityId: string, delivery: Partial<DeliverySettings>): Promise<void>;
   _saveZonePreconditioning(entityId: string, preconditioning: Partial<PreconditioningSettings>): Promise<void>;
   _saveTemplate(saveAsNew: boolean): Promise<void>;
   _scheduleTemplates(): ScheduleTemplate[];

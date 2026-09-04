@@ -25,6 +25,7 @@ import {
 import type {
   BlockDraftSource,
   ComfortSettings,
+  DeliverySettings,
   DraftScheduleBlock,
   DiagnosticsSnapshot,
   EntityDiagnostic,
@@ -121,6 +122,7 @@ import {
   moveSettingsZone,
   saveSettings,
   saveZoneComfort,
+  saveZoneDelivery,
   saveZonePreconditioning,
   saveZoneLimits,
   resetZonePreconditioningLearning,
@@ -1452,6 +1454,13 @@ export class VelairCard extends LitElement {
     limits: Partial<ZoneLimits>,
   ): Promise<void> {
     await saveZoneLimits(asSettingsActionsHost(this), entityId, limits);
+  }
+
+  private async _saveZoneDelivery(
+    entityId: string,
+    delivery: Partial<DeliverySettings>,
+  ): Promise<void> {
+    await saveZoneDelivery(asSettingsActionsHost(this), entityId, delivery);
   }
 
   private _togglePreconditioningZone(entityId: string): void {

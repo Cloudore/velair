@@ -325,6 +325,19 @@ export type RoomSensorAssistStatus = {
   target_when?: string | null;
 };
 
+export type DeliverySettings = {
+  confirm: boolean;
+  confirm_timeout_seconds: number;
+  confirm_attempts: number;
+};
+
+export type DeliveryConfirmationStatus = {
+  outcome?: "pending" | "confirmed" | "unconfirmed" | null;
+  attempts?: number;
+  confirmed_at?: string | null;
+  last_attempt_at?: string | null;
+};
+
 export type ScheduleZone = {
   enabled: boolean;
   schedule: Record<string, ScheduleBlock[]>;
@@ -347,6 +360,7 @@ export type ScheduleZone = {
   limits?: ZoneLimits;
   external_change_policy?: ExternalChangePolicy;
   execution?: { type: "external"; provider: string };
+  delivery?: DeliverySettings;
 };
 
 export type ExternalExecutionInfo = {
@@ -403,6 +417,7 @@ export type ManualControl = {
 
 export type ZoneRuntimeStatus = {
   state: "stopped" | "paused" | "hold" | "boost" | "preconditioning" | "scheduled" | "idle" | "externally_managed";
+  delivery?: DeliveryConfirmationStatus;
   room_temperature?: number | null;
   target_temperature?: number | null;
   target_temp_low?: number | null;
@@ -479,6 +494,7 @@ export type PanelSettings = {
   min_temperature?: number;
   max_temperature?: number;
   apply_active_schedule_on_startup?: boolean;
+  delivery_stagger_seconds?: number;
 };
 
 export type OperationStatus = {
