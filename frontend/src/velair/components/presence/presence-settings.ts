@@ -143,6 +143,7 @@ export function guardsZoneSettings(
 ): GuardsZoneSettings {
   return {
     never_off_enabled: booleanOr(raw?.never_off_enabled, true),
+    manual_release_below_minimum_action: raw?.manual_release_below_minimum_action === "floor_hold" ? "floor_hold" : "release",
     activity_holds: Array.isArray(raw?.activity_holds)
       ? raw.activity_holds.map((hold) => activityHold(hold, unit))
       : [],
@@ -222,6 +223,7 @@ export function guardStateLabelKey(state: GuardState | string | undefined): stri
     case "recovering": return "presenceGuardStateRecovering";
     case "manual_watch": return "presenceGuardStateManualWatch";
     case "activity_hold": return "presenceGuardStateActivityHold";
+    case "floor_hold": return "presenceGuardStateFloorHold";
     default: return "presenceGuardStateIdle";
   }
 }

@@ -377,8 +377,9 @@ export type ActivityHold = {
   pause_id: string;
   label: string;
 };
-export type GuardsZoneSettings = { never_off_enabled: boolean; activity_holds: ActivityHold[] };
-export type GuardState = "idle" | "off_grace" | "snoozed" | "recovering" | "manual_watch" | "activity_hold";
+export type BelowMinimumAction = "release" | "floor_hold";
+export type GuardsZoneSettings = { never_off_enabled: boolean; manual_release_below_minimum_action: BelowMinimumAction; activity_holds: ActivityHold[] };
+export type GuardState = "idle" | "off_grace" | "snoozed" | "recovering" | "manual_watch" | "activity_hold" | "floor_hold";
 export type GuardStatus = {
   state: GuardState;
   grace_ends_at?: string | null;

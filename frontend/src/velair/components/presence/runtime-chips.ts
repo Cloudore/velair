@@ -57,6 +57,7 @@ const GUARD_ICONS: Record<string, string> = {
   recovering: "mdi:shield-refresh-outline",
   manual_watch: "mdi:hand-back-right-outline",
   activity_hold: "mdi:stove",
+  floor_hold: "mdi:arrow-collapse-down",
 };
 
 const GUARD_TONES: Record<string, ChipTone> = {
@@ -66,6 +67,7 @@ const GUARD_TONES: Record<string, ChipTone> = {
   recovering: "primary",
   manual_watch: "warning",
   activity_hold: "primary",
+  floor_hold: "info",
 };
 
 export function minutesUntil(value: string | null | undefined, now: Date): number | undefined {

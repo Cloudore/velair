@@ -40,6 +40,17 @@ export function renderGuardsSection(ctx: PresenceFormContext, options: GuardsSec
           helpKey: "presenceZoneNeverOffEnabledHelp",
           onChange: (checked) => save({ never_off_enabled: checked }),
         })}
+        ${renderSelectRow(ctx, {
+          id: `guards-zone-below-minimum-action-${options.entityId}`,
+          label: ctx.t("presenceZoneBelowMinimumAction"),
+          value: settings.manual_release_below_minimum_action,
+          choices: [
+            { value: "release", label: ctx.t("presenceBelowMinimumActionRelease") },
+            { value: "floor_hold", label: ctx.t("presenceBelowMinimumActionFloorHold") },
+          ],
+          helpKey: "presenceZoneBelowMinimumActionHelp",
+          onChange: (value) => save({ manual_release_below_minimum_action: value === "floor_hold" ? "floor_hold" : "release" }),
+        })}
       </div>
 
       <div class="presence-subsection presence-activity-holds">
