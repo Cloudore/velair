@@ -623,6 +623,28 @@ set_humidity_assist:
       selector:
         text:
 
+snooze_off:
+  name: Snooze never-off
+  description: Keep a head that a person turned off from being relit by the Guards never-off rule. Velair freezes the zone with the neveroff_snooze pause for the duration, ends the Manual adjustment that protected the turn-off, and relights the head when the snooze expires, when the room stays empty, or when the house is empty for the configured time.
+  fields:
+    entity_id:
+      required: true
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
+    duration_minutes:
+      name: Duration
+      description: How long the head stays off. Defaults to the Guards never-off snooze setting (24 hours).
+      required: false
+      example: 1440
+      selector:
+        number:
+          min: 1
+          max: 10080
+          step: 5
+          unit_of_measurement: min
+
 set_external_change_policy:
   name: Set external change policy
   description: Choose whether Velair reapplies its current authority or starts Manual control when a managed climate changes outside Velair.

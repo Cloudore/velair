@@ -38,6 +38,11 @@ PUBLIC_EVENTS = (
     "humidity_assist_state_changed",
     "house_mode_changed",
     "house_zone_parked",
+    "never_off_grace_started",
+    "never_off_recovered",
+    "never_off_snoozed",
+    "manual_hold_released",
+    "activity_hold_changed",
 )
 
 

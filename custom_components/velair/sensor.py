@@ -15,6 +15,7 @@ from .config_helpers import get_configured_climate_entities
 from .const import SIGNAL_DIAGNOSTICS_UPDATED
 from .entity import VelairEntity
 from .house_modes_entities import build_house_modes_sensors
+from .guards_entities import build_guards_sensor_entities
 
 
 async def async_setup_entry(
@@ -72,6 +73,7 @@ async def async_setup_entry(
         )
     )
     entities.extend(build_house_modes_sensors(hass, entry))
+    entities.extend(build_guards_sensor_entities(hass, entry))
     async_add_entities(entities)
 
 

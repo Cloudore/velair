@@ -47,6 +47,7 @@ from .const import (
     MIN_DELIVERY_CONFIRM_ATTEMPTS,
     MIN_DELIVERY_CONFIRM_TIMEOUT_SECONDS,
 )
+from .guards_models import GuardsRuntimeData, GuardsSettingsData, GuardsZoneData, normalize_guards_runtime_data, normalize_guards_settings, normalize_guards_zone_data
 
 WEEKDAYS = (
     "monday",
@@ -431,6 +432,7 @@ class ZoneData(TypedDict):
     delivery: DeliveryData
     humidity_assist: NotRequired[HumidityAssistData]
     house_modes: NotRequired[HouseModesZoneData]
+    guards: NotRequired[GuardsZoneData]
 
 
 class ScheduleTemplateData(TypedDict):
@@ -452,6 +454,8 @@ class PanelSettingsData(TypedDict):
     humidity_assist: NotRequired[HumidityAssistSettingsData]
     house_modes: NotRequired[HouseModesSettingsData]
     house_modes_runtime: NotRequired[HouseModesRuntimeData]
+    guards: NotRequired[GuardsSettingsData]
+    guards_runtime: NotRequired[dict[str, GuardsRuntimeData]]
 
 
 class GlobalData(TypedDict):
@@ -843,6 +847,7 @@ def normalize_schedule_data(
                 zone_data.get("humidity_assist")
             ),
             **({"house_modes": normalize_house_modes_data(zone_data.get("house_modes"))} if isinstance(zone_data.get("house_modes"), dict) else {}),
+            "guards": normalize_guards_zone_data(zone_data.get("guards")),
         }
         execution = normalize_zone_execution(zone_data.get("execution"))
         if execution is not None:
@@ -862,6 +867,7 @@ def normalize_schedule_data(
                 "external_change_policy": normalize_external_change_policy(None),
                 "delivery": normalize_zone_delivery(None),
                 "humidity_assist": normalize_humidity_assist_data(None),
+                "guards": normalize_guards_zone_data(None),
             },
         )
 
@@ -1451,6 +1457,8 @@ def normalize_panel_settings(
         ),
         **({"house_modes": normalize_house_modes_settings(settings.get("house_modes"))} if isinstance(settings.get("house_modes"), dict) else {}),
         **({"house_modes_runtime": normalize_house_modes_runtime_data(settings.get("house_modes_runtime"))} if isinstance(settings.get("house_modes_runtime"), dict) else {}),
+        "guards": normalize_guards_settings(settings.get("guards")),
+        "guards_runtime": normalize_guards_runtime_data(settings.get("guards_runtime"), climate_entities),
     }
 
 

@@ -57,6 +57,7 @@ from .config_helpers import (
 )
 from .external_execution.models import ExternalScheduleRequiredError
 from .house_modes_api import HOUSE_MODES_SETTINGS_SCHEMA, export_zone_house_modes, house_modes_settings_payload, house_modes_status_payload, hydrate_house_modes_portable_defaults, merge_house_modes_settings, register_house_modes_ws
+from .guards_api import GUARDS_SETTINGS_SCHEMA, guards_status_payload, merge_guards_settings, register_guards_ws
 from .models import (
     DEFAULT_COMFORT_TEMPERATURE_MAX,
     DEFAULT_COMFORT_TEMPERATURE_MIN,
@@ -378,6 +379,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_update_zone_delivery)
     websocket_api.async_register_command(hass, ws_update_zone_humidity_assist)
     register_house_modes_ws(hass)
+    register_guards_ws(hass)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_learning)
     websocket_api.async_register_command(hass, ws_export_data)
@@ -970,6 +972,7 @@ async def ws_select_mode(
         ),
         vol.Optional("humidity_assist"): HUMIDITY_ASSIST_SETTINGS_SCHEMA,
         vol.Optional("house_modes"): HOUSE_MODES_SETTINGS_SCHEMA,
+        vol.Optional("guards"): GUARDS_SETTINGS_SCHEMA,
     }
 )
 @websocket_api.async_response
@@ -1019,6 +1022,7 @@ async def ws_update_settings(
             **msg["humidity_assist"],
         }
     if "house_modes" in msg: updates["house_modes"] = merge_house_modes_settings(runtime, msg["house_modes"])
+    if "guards" in msg: updates["guards"] = merge_guards_settings(runtime, msg["guards"])
 
     scheduler = runtime["scheduler"]
     try:
@@ -1802,6 +1806,7 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
             getattr(scheduler, "humidity_assist_compliant", False)
         ),
         "house_mode": house_modes_status_payload(runtime),
+        "guards": guards_status_payload(scheduler),
         "zone_runtime": (
             {} if getattr(scheduler, "temperature_migration_blocked", False)
             else getattr(scheduler, "get_zone_runtime_statuses", lambda: {})()
@@ -2120,6 +2125,7 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
             "delivery": deepcopy(zone.get("delivery", {})),
             "humidity_assist": deepcopy(zone.get("humidity_assist", {})),
             "house_modes": export_zone_house_modes(zone),
+            "guards": deepcopy(zone.get("guards", {})),
         }
         for entity_id, zone in zones.items()
     }

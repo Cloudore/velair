@@ -135,6 +135,17 @@
           "sleep": "Sleep",
           "disabled": "Disabled"
         }
+      },
+      "zone_guard": {
+        "name": "{zone} guard",
+        "state": {
+          "idle": "Idle",
+          "off_grace": "Off, grace period",
+          "snoozed": "Snoozed",
+          "recovering": "Recovering",
+          "manual_watch": "Watching manual adjustment",
+          "activity_hold": "Activity hold"
+        }
       }
     },
     "select": {
@@ -160,6 +171,9 @@
       },
       "zone_sleep_hold": {
         "name": "{zone} sleep hold"
+      },
+      "guards": {
+        "name": "Guards"
       }
     },
     "binary_sensor": {
@@ -239,6 +253,18 @@
       },
       "travel_park_temperature": {
         "name": "Travel park temperature"
+      },
+      "guards_never_off_grace_minutes": {
+        "name": "Guards never-off grace minutes"
+      },
+      "guards_never_off_snooze_minutes": {
+        "name": "Guards never-off snooze minutes"
+      },
+      "guards_manual_lease_minutes": {
+        "name": "Guards manual lease minutes"
+      },
+      "guards_manual_release_vacant_minutes": {
+        "name": "Guards manual release vacant minutes"
       }
     }
   }

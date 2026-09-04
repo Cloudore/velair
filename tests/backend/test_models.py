@@ -18,6 +18,7 @@ from .helpers import (
 )
 from custom_components.velair.models import (
     normalize_humidity_assist_settings,
+    normalize_guards_settings,
     DEFAULT_PRECONDITIONING_MAX_LEAD_MINUTES,
     MIN_PRECONDITIONING_COMPLETE_SAMPLES,
     normalize_preconditioning_data,
@@ -380,6 +381,8 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
                 "max_temperature": 35.0,
                 "delivery_stagger_seconds": 0,
                 "humidity_assist": normalize_humidity_assist_settings(None),
+                "guards": normalize_guards_settings(None),
+                "guards_runtime": {},
             },
         )
         self.assertEqual(data["global_"]["mode"], MODE_AUTO)
@@ -437,6 +440,8 @@ class ScheduleBlockNormalizationTest(unittest.TestCase):
                 "max_temperature": 28.5,
                 "delivery_stagger_seconds": 0,
                 "humidity_assist": normalize_humidity_assist_settings(None),
+                "guards": normalize_guards_settings(None),
+                "guards_runtime": {},
             },
         )
 

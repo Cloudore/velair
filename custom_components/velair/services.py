@@ -65,12 +65,14 @@ from .const import (
     SERVICE_DISABLE_HUMIDITY_ASSIST,
     SERVICE_ENABLE_HUMIDITY_ASSIST,
     SERVICE_SET_HUMIDITY_ASSIST,
+    SERVICE_SNOOZE_OFF,
     ZONE_PAUSE_ACTION_NONE,
     ZONE_PAUSE_ACTION_OPTIONS,
     EXTERNAL_CHANGE_POLICY_OPTIONS,
 )
 from .models import WEEKDAYS, normalize_schedule_blocks, validate_pause_id
 from .models import HUMIDITY_ASSIST_MEASURES, HUMIDITY_ASSIST_PULSE_HVAC_MODES
+from .guards_api import SNOOZE_OFF_SCHEMA
 
 
 def _validate_pause_id(value: str) -> str:
@@ -555,6 +557,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
 
+    async def async_snooze_off(call: ServiceCall) -> None:
+        scheduler = _get_scheduler(hass)
+        entity_id = call.data[ATTR_ENTITY_ID]
+        _ensure_managed_entity(scheduler, entity_id)
+        try:
+            await scheduler.async_snooze_off(entity_id, call.data.get(ATTR_DURATION_MINUTES))
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+
     async def async_set_external_change_policy(call: ServiceCall) -> None:
         scheduler = _get_scheduler(hass)
         entity_id = call.data[ATTR_ENTITY_ID]
@@ -691,6 +702,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         async_set_humidity_assist,
         schema=SET_HUMIDITY_ASSIST_SCHEMA,
     )
+    hass.services.async_register(DOMAIN, SERVICE_SNOOZE_OFF, async_snooze_off, schema=SNOOZE_OFF_SCHEMA)
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_EXTERNAL_CHANGE_POLICY,
@@ -732,6 +744,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_ENABLE_HUMIDITY_ASSIST,
         SERVICE_DISABLE_HUMIDITY_ASSIST,
         SERVICE_SET_HUMIDITY_ASSIST,
+        SERVICE_SNOOZE_OFF,
         SERVICE_SET_EXTERNAL_CHANGE_POLICY,
         SERVICE_ENTER_MANUAL_ADJUSTMENT,
         SERVICE_RESUME_AUTOMATIC_CONTROL,

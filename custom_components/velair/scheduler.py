@@ -148,6 +148,8 @@ from .zone_limit_notifications import (
 )
 from .humidity_assist import HumidityAssistCoordinator
 from .house_modes import HouseModesCoordinator
+from .guards import GuardsCoordinator
+from .guards_models import GuardsZoneData
 from .models import (
     HumidityAssistData,
     normalize_humidity_assist_data,
@@ -395,6 +397,7 @@ class VelairScheduler:
         self._operation_status: OperationStatus | None = None
         self._humidity_assist = HumidityAssistCoordinator(self)
         self.house_modes = HouseModesCoordinator(self)
+        self._guards = GuardsCoordinator(self)
 
     @property
     def mode(self) -> str:
@@ -429,6 +432,7 @@ class VelairScheduler:
             await self.async_apply_current_schedule(source="startup")
         await self._humidity_assist.async_start()
         await self.house_modes.async_start()
+        await self._guards.async_start()
 
     async def async_stop(self) -> None:
         """Stop scheduling events."""
@@ -454,6 +458,7 @@ class VelairScheduler:
             self._preconditioning_plan_snapshots.clear()
             await self._humidity_assist.async_stop()
             await self.house_modes.async_stop()
+            await self._guards.async_stop()
 
     def handle_temperature_unit_change(self) -> None:
         """Discard unit-bound runtime caches and rebuild scheduler projections."""
@@ -2214,6 +2219,7 @@ class VelairScheduler:
             },
         )
         self.house_modes.handle_external_change(entity_id, previous, current)
+        self._guards.observe_external_change(entity_id, previous=previous, current=current)
         if (
             existing_manual is None
             and session_policy["action"] == EXTERNAL_CHANGE_KEEP_AUTOMATIC
@@ -2691,6 +2697,7 @@ class VelairScheduler:
         if "humidity_assist" in settings:
             await self._humidity_assist.async_settings_changed()
         if "house_modes" in settings: await self.house_modes.async_settings_changed()
+        if "guards" in settings: await self._guards.async_settings_changed()
         self._async_write_state()
         return next_settings
 
@@ -3155,6 +3162,29 @@ class VelairScheduler:
                 self._data["zones"][entity_id].get("humidity_assist")
             )["sensor_entity_id"]
         ]
+
+    # Guards delegators (feat/guards); the logic lives in guards.py.
+    def get_guards_statuses(self) -> dict[str, dict[str, object]]:
+        """Return the Guards runtime status for every managed zone."""
+        return self._guards.statuses()
+
+    def get_guards_status(self, entity_id: str) -> dict[str, object]:
+        """Return the Guards runtime status for one zone."""
+        return self._guards.status(entity_id)
+
+    def get_guards_config(self, entity_id: str) -> GuardsZoneData:
+        """Return the normalized Guards configuration for one zone."""
+        return self._guards.config(entity_id)
+
+    async def async_update_zone_guards(self, entity_id: str, guards: dict) -> GuardsZoneData:
+        """Update persisted Guards settings for one zone."""
+        self._ensure_local_execution(entity_id)
+        return await self._guards.async_update_zone_config(entity_id, guards)
+
+    async def async_snooze_off(self, entity_id: str, duration_minutes: int | None = None) -> None:
+        """Keep a head off for a while instead of relighting it."""
+        self._ensure_local_execution(entity_id)
+        await self._guards.async_snooze(entity_id, duration_minutes)
 
     async def async_reset_zone_preconditioning_learning(
         self,
@@ -9225,6 +9255,7 @@ class VelairScheduler:
         humidity_assist = getattr(self, "_humidity_assist", None)
         if humidity_assist is not None:
             humidity_assist.schedule_refresh()
+        getattr(getattr(self, "_guards", None), "schedule_refresh", lambda: None)()
 
     def _begin_operation(
         self,
