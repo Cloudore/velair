@@ -57,11 +57,15 @@ from .const import (
     SERVICE_SET_EXTERNAL_CHANGE_POLICY,
     SERVICE_ENTER_MANUAL_ADJUSTMENT,
     SERVICE_RESUME_AUTOMATIC_CONTROL,
+    SERVICE_DISABLE_HUMIDITY_ASSIST,
+    SERVICE_ENABLE_HUMIDITY_ASSIST,
+    SERVICE_SET_HUMIDITY_ASSIST,
     ZONE_PAUSE_ACTION_NONE,
     ZONE_PAUSE_ACTION_OPTIONS,
     EXTERNAL_CHANGE_POLICY_OPTIONS,
 )
 from .models import WEEKDAYS, normalize_schedule_blocks, validate_pause_id
+from .models import HUMIDITY_ASSIST_MEASURES, HUMIDITY_ASSIST_PULSE_HVAC_MODES
 
 
 def _validate_pause_id(value: str) -> str:
@@ -246,6 +250,24 @@ RESUME_AUTOMATIC_CONTROL_SCHEMA = vol.Schema(
 ENTER_MANUAL_ADJUSTMENT_SCHEMA = vol.Schema(
     {vol.Required(ATTR_ENTITY_ID): cv.entity_id},
     extra=vol.PREVENT_EXTRA,
+)
+
+HUMIDITY_ASSIST_TOGGLE_SCHEMA = vol.Schema(
+    {vol.Optional(ATTR_ENTITY_ID): vol.All(cv.ensure_list, [cv.entity_id])}
+)
+
+SET_HUMIDITY_ASSIST_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Optional("enabled"): cv.boolean,
+        vol.Optional("sensor_entity_id"): vol.Any(None, cv.entity_id),
+        vol.Optional("measure"): vol.In(HUMIDITY_ASSIST_MEASURES),
+        vol.Optional("target"): vol.Any(None, vol.Coerce(float)),
+        vol.Optional("priority"): cv.boolean,
+        vol.Optional("pulse_temperature"): vol.Any(None, vol.Coerce(float)),
+        vol.Optional("pulse_hvac_mode"): vol.In(HUMIDITY_ASSIST_PULSE_HVAC_MODES),
+        vol.Optional("pulse_fan_mode"): vol.Any(None, cv.string),
+    }
 )
 
 
@@ -445,6 +467,41 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
 
+    async def _async_toggle_humidity_assist(call: ServiceCall, enabled: bool) -> None:
+        scheduler = _get_scheduler(hass)
+        raw_targets = call.data.get(ATTR_ENTITY_ID)
+        if raw_targets:
+            targets = list(raw_targets)
+            for entity_id in targets:
+                _ensure_managed_entity(scheduler, entity_id)
+        else:
+            targets = list(scheduler.humidity_assist_candidate_entities())
+        for entity_id in targets:
+            try:
+                await scheduler.async_set_humidity_assist(entity_id, enabled)
+            except ValueError as err:
+                raise HomeAssistantError(str(err)) from err
+
+    async def async_enable_humidity_assist(call: ServiceCall) -> None:
+        await _async_toggle_humidity_assist(call, True)
+
+    async def async_disable_humidity_assist(call: ServiceCall) -> None:
+        await _async_toggle_humidity_assist(call, False)
+
+    async def async_set_humidity_assist(call: ServiceCall) -> None:
+        scheduler = _get_scheduler(hass)
+        entity_id = call.data[ATTR_ENTITY_ID]
+        _ensure_managed_entity(scheduler, entity_id)
+        updates = {
+            key: value
+            for key, value in call.data.items()
+            if key != ATTR_ENTITY_ID
+        }
+        try:
+            await scheduler.async_update_zone_humidity_assist(entity_id, updates)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+
     async def async_set_external_change_policy(call: ServiceCall) -> None:
         scheduler = _get_scheduler(hass)
         entity_id = call.data[ATTR_ENTITY_ID]
@@ -565,6 +622,24 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(
         DOMAIN,
+        SERVICE_ENABLE_HUMIDITY_ASSIST,
+        async_enable_humidity_assist,
+        schema=HUMIDITY_ASSIST_TOGGLE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DISABLE_HUMIDITY_ASSIST,
+        async_disable_humidity_assist,
+        schema=HUMIDITY_ASSIST_TOGGLE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_HUMIDITY_ASSIST,
+        async_set_humidity_assist,
+        schema=SET_HUMIDITY_ASSIST_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
         SERVICE_SET_EXTERNAL_CHANGE_POLICY,
         async_set_external_change_policy,
         schema=EXTERNAL_CHANGE_POLICY_SCHEMA,
@@ -601,6 +676,9 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_CLEAR_SCHEDULE,
         SERVICE_ENABLE_ROOM_SENSOR_ASSIST,
         SERVICE_DISABLE_ROOM_SENSOR_ASSIST,
+        SERVICE_ENABLE_HUMIDITY_ASSIST,
+        SERVICE_DISABLE_HUMIDITY_ASSIST,
+        SERVICE_SET_HUMIDITY_ASSIST,
         SERVICE_SET_EXTERNAL_CHANGE_POLICY,
         SERVICE_ENTER_MANUAL_ADJUSTMENT,
         SERVICE_RESUME_AUTOMATIC_CONTROL,

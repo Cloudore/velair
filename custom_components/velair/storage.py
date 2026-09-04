@@ -28,6 +28,13 @@ from .temperature import (
 )
 
 STORAGE_VERSION = 1
+HUMIDITY_ASSIST_DELTA_SETTINGS = (
+    "start_buffer",
+    "stop_buffer",
+    "emergency_margin_priority",
+    "emergency_margin_standard",
+    "initial_pull_down_target_offset",
+)
 TEMPERATURE_FORMAT_KEY = "temperature_format"
 RUNTIME_TEMPERATURE_FORMAT = "runtime_v1"
 CANONICAL_TEMPERATURE_FORMAT = "celsius_v1"  # Published v1.1 compatibility.
@@ -290,7 +297,23 @@ class VelairStorage:
                 **default_zone["comfort"],
                 **(zone.get("comfort") if isinstance(zone.get("comfort"), dict) else {}),
             }
+            zone["humidity_assist"] = {
+                **default_zone.get("humidity_assist", {}),
+                **(
+                    zone.get("humidity_assist")
+                    if isinstance(zone.get("humidity_assist"), dict)
+                    else {}
+                ),
+            }
             zones[entity_id] = zone
+        hydrated["settings"]["humidity_assist"] = {
+            **(defaults.get("settings", {}).get("humidity_assist") or {}),
+            **(
+                hydrated["settings"].get("humidity_assist")
+                if isinstance(hydrated["settings"].get("humidity_assist"), dict)
+                else {}
+            ),
+        }
         if not isinstance(hydrated.get("templates"), list):
             hydrated["templates"] = defaults["templates"]
             hydrated["templates_seeded"] = True
@@ -367,6 +390,13 @@ def _round_fahrenheit_defaults(data: dict[str, Any]) -> None:
     if isinstance(settings, dict):
         settings["min_temperature"] = 41.0
         settings["max_temperature"] = 95.0
+        humidity_assist = settings.get("humidity_assist")
+        if isinstance(humidity_assist, dict):
+            humidity_assist["start_buffer"] = 0.4
+            humidity_assist["stop_buffer"] = 1.1
+            humidity_assist["emergency_margin_priority"] = 0.5
+            humidity_assist["emergency_margin_standard"] = 0.9
+            humidity_assist["initial_pull_down_target_offset"] = 1.1
 
     templates = data.get("templates")
     if isinstance(templates, list):
@@ -590,6 +620,15 @@ def _snap_migrated_editable_temperatures(
                 if isinstance(preconditioning.get(key), (int, float)):
                     preconditioning[key] = _nearest_step(preconditioning[key], 0.1)
 
+        humidity_assist = zone.get("humidity_assist")
+        if isinstance(humidity_assist, dict):
+            snap_target(humidity_assist, "pulse_temperature")
+            if (
+                humidity_assist.get("measure", "dew_point") == "dew_point"
+                and isinstance(humidity_assist.get("target"), (int, float))
+            ):
+                humidity_assist["target"] = _nearest_step(humidity_assist["target"], 0.1)
+
 
 def _convert_scheduler_temperatures(
     data: dict[str, Any],
@@ -634,6 +673,23 @@ def _convert_scheduler_temperatures(
                 for key in ("temperature_min", "temperature_max"):
                     if isinstance(comfort.get(key), (int, float)):
                         comfort[key] = round(absolute_temperature(comfort[key], source, target), 6)
+            humidity_assist = zone.get("humidity_assist")
+            if isinstance(humidity_assist, dict):
+                if isinstance(humidity_assist.get("pulse_temperature"), (int, float)):
+                    humidity_assist["pulse_temperature"] = round(
+                        absolute_temperature(
+                            humidity_assist["pulse_temperature"], source, target
+                        ),
+                        6,
+                    )
+                if (
+                    humidity_assist.get("measure", "dew_point") == "dew_point"
+                    and isinstance(humidity_assist.get("target"), (int, float))
+                ):
+                    humidity_assist["target"] = round(
+                        absolute_temperature(humidity_assist["target"], source, target),
+                        6,
+                    )
     templates = data.get("templates", [])
     if isinstance(templates, list):
         for template in templates:
@@ -655,6 +711,13 @@ def _convert_scheduler_temperatures(
         for key in ("min_temperature", "max_temperature"):
             if isinstance(settings.get(key), (int, float)):
                 settings[key] = round(absolute_temperature(settings[key], source, target), 6)
+        humidity_assist = settings.get("humidity_assist")
+        if isinstance(humidity_assist, dict):
+            for key in HUMIDITY_ASSIST_DELTA_SETTINGS:
+                if isinstance(humidity_assist.get(key), (int, float)):
+                    humidity_assist[key] = round(
+                        temperature_delta(humidity_assist[key], source, target), 6
+                    )
     learning = data.get("preconditioning_learning", {})
     if isinstance(learning, dict):
         for entity_id, directions in learning.items():

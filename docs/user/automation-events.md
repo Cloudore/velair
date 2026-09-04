@@ -583,6 +583,31 @@ Other reasons include `assist_disabled`, `boost_started`, `manual_target`,
 legacy scalar target that cannot be applied while the effective climate mode
 requires a native range; valid range blocks are supported.
 
+## Humidity Assist State Changed
+
+`humidity_assist_state_changed` is emitted whenever a zone's Humidity Assist
+state machine enters a different state, or when a transition decision such as
+`start`, `rest_low`, `rest_max`, `rest_budget`, or `rest_align` is applied.
+Repeating the same state without a transition does not emit it. `decision`
+names the ladder branch that produced the new state; `raw` and `median` are the
+readings in the zone's unit (dew point in the climate unit or relative humidity
+in percent) and `next_transition_at` is the next timer boundary Velair will
+evaluate, or `null` when no timer is armed. See
+[Humidity Assist](humidity-assist.md) for the complete decision ladder.
+
+```yaml
+domain: velair
+event: humidity_assist_state_changed
+entity_id: climate.guest_room
+previous_state: waiting
+state: pulsing
+decision: start
+target: 22
+raw: 22.6
+median: 22.4
+next_transition_at: "2026-08-10T15:10:00+00:00"
+```
+
 ## Boost Started
 
 `boost_started` is emitted after a boost target and override have been applied

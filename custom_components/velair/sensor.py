@@ -63,6 +63,11 @@ async def async_setup_entry(
                 entity_id,
                 zone_name=_climate_name(hass, entity_id),
             ),
+            ZoneHumidityAssistStateSensor(
+                entry,
+                entity_id,
+                zone_name=_climate_name(hass, entity_id),
+            ),
         )
     )
     async_add_entities(entities)
@@ -557,6 +562,73 @@ class ZoneRoomAssistStateSensor(_ZoneSensor):
         if isinstance(assist_delta, int | float) and assist_delta > 0:
             attributes["assist_delta"] = assist_delta
         return _compact_attributes(attributes)
+
+
+class ZoneHumidityAssistStateSensor(_ZoneSensor):
+    """Sensor exposing the Humidity Assist state machine for one zone."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [
+        "disabled",
+        "unavailable",
+        "blocked_manual",
+        "blocked_gate",
+        "waiting",
+        "pulsing",
+        "resting",
+    ]
+    _attr_translation_key = "zone_humidity_assist"
+
+    def __init__(
+        self,
+        entry: VelairConfigEntry,
+        climate_entity_id: str,
+        *,
+        zone_name: str | None = None,
+    ) -> None:
+        """Initialize the Humidity Assist state sensor."""
+        super().__init__(
+            entry,
+            climate_entity_id,
+            "humidity_assist_state",
+            zone_name=zone_name,
+        )
+
+    @property
+    def native_value(self) -> str:
+        """Return the current Humidity Assist state."""
+        status = self.scheduler.get_humidity_assist_status(self._climate_entity_id)
+        value = status.get("state")
+        return value if isinstance(value, str) else "disabled"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        """Return compact decision context."""
+        status = self.scheduler.get_humidity_assist_status(self._climate_entity_id)
+        return _compact_attributes(
+            {
+                key: status.get(key)
+                for key in (
+                    "decision",
+                    "reason",
+                    "target",
+                    "effective_target",
+                    "raw",
+                    "median",
+                    "excess",
+                    "priority",
+                    "phase_started_at",
+                    "next_transition_at",
+                    "pulse_temperature",
+                    "pulse_hvac_mode",
+                    "pulse_fan_mode",
+                    "sensor_entity_id",
+                    "measure",
+                    "gate_active",
+                    "pull_down_active",
+                )
+            }
+        )
 
 
 def _serialize_event(event) -> dict[str, str | float | None]:

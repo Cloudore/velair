@@ -1452,6 +1452,7 @@ class VelairSchedulerSavedScheduleTest(unittest.IsolatedAsyncioTestCase):
                 "zone_order": [self.entity_id],
                 "min_temperature": 12.0,
                 "max_temperature": 28.0,
+                "humidity_assist": normalize_panel_settings(None, [])["humidity_assist"],
             },
         )
 

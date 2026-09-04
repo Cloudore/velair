@@ -54,6 +54,13 @@ from .external_execution.models import ExternalScheduleRequiredError
 from .models import (
     DEFAULT_COMFORT_TEMPERATURE_MAX,
     DEFAULT_COMFORT_TEMPERATURE_MIN,
+    DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_PRIORITY,
+    DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_STANDARD,
+    DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_TARGET_OFFSET,
+    DEFAULT_HUMIDITY_ASSIST_START_BUFFER,
+    DEFAULT_HUMIDITY_ASSIST_STOP_BUFFER,
+    HUMIDITY_ASSIST_MEASURES,
+    HUMIDITY_ASSIST_PULSE_HVAC_MODES,
     DEFAULT_MAX_TEMPERATURE,
     DEFAULT_MIN_TEMPERATURE,
     DEFAULT_PRECONDITIONING_FALLBACK_MINUTES_PER_DEGREE,
@@ -246,6 +253,58 @@ COMFORT_SCHEMA = vol.Schema(
 )
 
 
+HUMIDITY_ASSIST_SCHEMA = vol.Schema(
+    {
+        vol.Optional("enabled"): bool,
+        vol.Optional("sensor_entity_id"): vol.Any(None, cv.entity_id),
+        vol.Optional("measure"): vol.In(HUMIDITY_ASSIST_MEASURES),
+        vol.Optional("target"): vol.Any(
+            None,
+            vol.All(_finite_float, vol.Range(min=-58, max=212)),
+        ),
+        vol.Optional("priority"): bool,
+        vol.Optional("pulse_temperature"): vol.Any(
+            None,
+            vol.All(_finite_float, vol.Range(min=-58, max=212)),
+        ),
+        vol.Optional("pulse_hvac_mode"): vol.In(HUMIDITY_ASSIST_PULSE_HVAC_MODES),
+        vol.Optional("pulse_fan_mode"): vol.Any(None, cv.string),
+    }
+)
+
+HUMIDITY_ASSIST_SETTINGS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("start_buffer"): vol.All(_finite_float, vol.Range(min=0, max=10)),
+        vol.Optional("stop_buffer"): vol.All(_finite_float, vol.Range(min=0, max=10)),
+        vol.Optional("min_on_minutes"): vol.All(vol.Coerce(int), vol.Range(min=1, max=240)),
+        vol.Optional("max_on_minutes"): vol.All(vol.Coerce(int), vol.Range(min=1, max=720)),
+        vol.Optional("min_off_minutes"): vol.All(vol.Coerce(int), vol.Range(min=0, max=720)),
+        vol.Optional("max_simultaneous_pulses"): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=50)
+        ),
+        vol.Optional("emergency_margin_priority"): vol.All(
+            _finite_float, vol.Range(min=0, max=10)
+        ),
+        vol.Optional("emergency_margin_standard"): vol.All(
+            _finite_float, vol.Range(min=0, max=10)
+        ),
+        vol.Optional("median_window_minutes"): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=240)
+        ),
+        vol.Optional("initial_pull_down_window_minutes"): vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=1440)
+        ),
+        vol.Optional("initial_pull_down_max_run_minutes"): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=720)
+        ),
+        vol.Optional("initial_pull_down_target_offset"): vol.All(
+            _finite_float, vol.Range(min=0, max=10)
+        ),
+        vol.Optional("gate_entity_id"): vol.Any(None, cv.entity_id),
+    }
+)
+
+
 def async_setup_api(hass: HomeAssistant) -> None:
     """Register WebSocket API commands."""
     if hass.data.get(API_REGISTERED):
@@ -276,6 +335,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_resume_automatic_control)
     websocket_api.async_register_command(hass, ws_update_zone_preconditioning)
     websocket_api.async_register_command(hass, ws_update_zone_comfort)
+    websocket_api.async_register_command(hass, ws_update_zone_humidity_assist)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_learning)
     websocket_api.async_register_command(hass, ws_export_data)
@@ -862,6 +922,7 @@ async def ws_select_mode(
         vol.Optional("min_temperature"): vol.Coerce(float),
         vol.Optional("max_temperature"): vol.Coerce(float),
         vol.Optional(CONF_APPLY_ACTIVE_SCHEDULE_ON_STARTUP): bool,
+        vol.Optional("humidity_assist"): HUMIDITY_ASSIST_SETTINGS_SCHEMA,
     }
 )
 @websocket_api.async_response
@@ -898,6 +959,17 @@ async def ws_update_settings(
         )
         if key in msg
     }
+    if "humidity_assist" in msg:
+        current_settings = runtime["storage"].data.get("settings", {})
+        current_humidity = (
+            current_settings.get("humidity_assist")
+            if isinstance(current_settings, dict)
+            else None
+        )
+        updates["humidity_assist"] = {
+            **(current_humidity if isinstance(current_humidity, dict) else {}),
+            **msg["humidity_assist"],
+        }
 
     scheduler = runtime["scheduler"]
     try:
@@ -1143,6 +1215,40 @@ async def ws_update_zone_comfort(
         )
     except ValueError as err:
         connection.send_error(msg["id"], "invalid_comfort", str(err))
+        return
+
+    connection.send_result(msg["id"], _build_schedule_response(runtime))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/update_zone_humidity_assist",
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required("humidity_assist"): HUMIDITY_ASSIST_SCHEMA,
+    }
+)
+@websocket_api.async_response
+async def ws_update_zone_humidity_assist(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle persisted zone Humidity Assist setting updates."""
+    runtime = _get_runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_loaded", "Integration is not loaded")
+        return
+
+    scheduler = runtime["scheduler"]
+    try:
+        if _reject_temperature_migration_mutation(runtime, connection, msg):
+            return
+        await scheduler.async_update_zone_humidity_assist(
+            msg[ATTR_ENTITY_ID],
+            msg["humidity_assist"],
+        )
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_humidity_assist", str(err))
         return
 
     connection.send_result(msg["id"], _build_schedule_response(runtime))
@@ -1570,6 +1676,13 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
             {} if getattr(scheduler, "temperature_migration_blocked", False)
             else scheduler.get_comfort_assessments()
         ),
+        "humidity_assist": (
+            {} if getattr(scheduler, "temperature_migration_blocked", False)
+            else getattr(scheduler, "get_humidity_assist_statuses", lambda: {})()
+        ),
+        "humidity_assist_compliant": bool(
+            getattr(scheduler, "humidity_assist_compliant", False)
+        ),
         "zone_runtime": (
             {} if getattr(scheduler, "temperature_migration_blocked", False)
             else getattr(scheduler, "get_zone_runtime_statuses", lambda: {})()
@@ -1759,6 +1872,27 @@ def _hydrate_portable_temperature_defaults(
             "max_temperature",
             absolute_temperature(DEFAULT_MAX_TEMPERATURE, CELSIUS, source_unit),
         )
+        humidity_assist = settings.setdefault("humidity_assist", {})
+        if isinstance(humidity_assist, dict):
+            for key, default in (
+                ("start_buffer", DEFAULT_HUMIDITY_ASSIST_START_BUFFER),
+                ("stop_buffer", DEFAULT_HUMIDITY_ASSIST_STOP_BUFFER),
+                (
+                    "emergency_margin_priority",
+                    DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_PRIORITY,
+                ),
+                (
+                    "emergency_margin_standard",
+                    DEFAULT_HUMIDITY_ASSIST_EMERGENCY_MARGIN_STANDARD,
+                ),
+                (
+                    "initial_pull_down_target_offset",
+                    DEFAULT_HUMIDITY_ASSIST_PULL_DOWN_TARGET_OFFSET,
+                ),
+            ):
+                humidity_assist.setdefault(
+                    key, temperature_delta(default, CELSIUS, source_unit)
+                )
 
     zones = sections.get("zones")
     if not isinstance(zones, dict):
@@ -1857,6 +1991,7 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
             "external_change_policy": deepcopy(
                 zone.get("external_change_policy", {})
             ),
+            "humidity_assist": deepcopy(zone.get("humidity_assist", {})),
         }
         for entity_id, zone in zones.items()
     }

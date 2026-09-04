@@ -458,6 +458,97 @@ disable_room_sensor_assist:
         entity:
           domain: climate
 
+enable_humidity_assist:
+  name: Enable Humidity Assist
+  description: Enable Humidity Assist dew-point pulses for one managed climate, or for every climate that already has a humidity sensor configured when no entity is given.
+  fields:
+    entity_id:
+      required: false
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
+          multiple: true
+
+disable_humidity_assist:
+  name: Disable Humidity Assist
+  description: Disable Humidity Assist for one managed climate, or for every climate that has a humidity sensor configured when no entity is given. An active pulse ends and the current schedule target is restored.
+  fields:
+    entity_id:
+      required: false
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
+          multiple: true
+
+set_humidity_assist:
+  name: Set Humidity Assist
+  description: Update Humidity Assist settings for one managed climate. Only the provided fields change.
+  fields:
+    entity_id:
+      required: true
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
+    enabled:
+      required: false
+      selector:
+        boolean:
+    sensor_entity_id:
+      required: false
+      description: Dew point or relative humidity sensor for the room.
+      example: sensor.living_room_dew_point
+      selector:
+        entity:
+          domain: sensor
+    measure:
+      required: false
+      description: Whether the sensor reports a dew point temperature or relative humidity.
+      selector:
+        select:
+          options:
+            - dew_point
+            - relative_humidity
+    target:
+      required: false
+      description: Dew point (in the climate unit) or relative humidity (%) the room should stay at or below.
+      example: 22
+      selector:
+        number:
+          min: -58
+          max: 212
+          step: 0.1
+          mode: box
+    priority:
+      required: false
+      description: Priority rooms pulse first and keep pulsing while the gate entity is on.
+      selector:
+        boolean:
+    pulse_temperature:
+      required: false
+      description: Setpoint applied to the climate while a pulse runs.
+      example: 24
+      selector:
+        number:
+          min: -58
+          max: 212
+          step: 0.5
+          mode: box
+    pulse_hvac_mode:
+      required: false
+      selector:
+        select:
+          options:
+            - cool
+            - dry
+    pulse_fan_mode:
+      required: false
+      example: auto
+      selector:
+        text:
+
 set_external_change_policy:
   name: Set external change policy
   description: Choose whether Velair reapplies its current authority or starts Manual control when a managed climate changes outside Velair.

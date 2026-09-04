@@ -34,6 +34,7 @@ PUBLIC_EVENTS = (
     "zone_pause_updated",
     "zone_pause_removed",
     "zone_resumed",
+    "humidity_assist_state_changed",
 )
 
 

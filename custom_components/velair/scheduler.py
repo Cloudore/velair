@@ -121,6 +121,11 @@ from .room_assist_notifications import (
     async_dismiss_room_assist_limit_notification,
     async_notify_room_assist_limit,
 )
+from .humidity_assist import HumidityAssistCoordinator
+from .models import (
+    HumidityAssistData,
+    normalize_humidity_assist_data,
+)
 
 _LOGGER = logging.getLogger(__name__)
 LOGBOOK_DOMAIN = "logbook"
@@ -358,6 +363,7 @@ class VelairScheduler:
         self._stopped = False
         self._profile_mutation_lock = asyncio.Lock()
         self._operation_status: OperationStatus | None = None
+        self._humidity_assist = HumidityAssistCoordinator(self)
 
     @property
     def mode(self) -> str:
@@ -390,6 +396,7 @@ class VelairScheduler:
         self.async_schedule_next_event()
         if apply_current_schedule and self.mode == MODE_AUTO:
             await self.async_apply_current_schedule(source="startup")
+        await self._humidity_assist.async_start()
 
     async def async_stop(self) -> None:
         """Stop scheduling events."""
@@ -413,6 +420,7 @@ class VelairScheduler:
             self._clear_room_sensor_assist_timer()
             self._clear_comfort_listener()
             self._preconditioning_plan_snapshots.clear()
+            await self._humidity_assist.async_stop()
 
     def handle_temperature_unit_change(self) -> None:
         """Discard unit-bound runtime caches and rebuild scheduler projections."""
@@ -432,6 +440,7 @@ class VelairScheduler:
             self._hass.async_create_task(
                 self._async_refresh_room_sensor_assist_from_current_event(entity_id)
             )
+        self._humidity_assist.handle_unit_change()
 
     async def async_apply_current_schedule(
         self,
@@ -995,6 +1004,8 @@ class VelairScheduler:
             state = "paused"
         elif _is_boost_override(override):
             state = "boost"
+        elif self._humidity_assist.is_pulsing(entity_id):
+            state = "drying"
         elif event is not None and event.target_when is not None and event.target_when > now:
             state = "preconditioning"
         elif scheduled_event is not None:
@@ -1016,6 +1027,10 @@ class VelairScheduler:
                 if "temperature" in override
                 else None
             )
+        if state == "drying":
+            pulse_event = self._humidity_assist.pulse_event(entity_id, now)
+            if pulse_event is not None:
+                target_temperature = pulse_event.temperature
         applied_temperature = assist.get("applied_temperature")
         if not isinstance(applied_temperature, int | float):
             applied_temperature = reported_target_temperature
@@ -2471,6 +2486,8 @@ class VelairScheduler:
         )
         self._data["settings"] = next_settings
         await self._async_save_data()
+        if "humidity_assist" in settings:
+            await self._humidity_assist.async_settings_changed()
         self._async_write_state()
         return next_settings
 
@@ -2716,6 +2733,85 @@ class VelairScheduler:
             entity_id,
             {"room_sensor_assist_enabled": enabled},
         )
+
+    def get_humidity_assist_statuses(self) -> dict[str, dict[str, object]]:
+        """Return the Humidity Assist runtime status for every managed zone."""
+        return self._humidity_assist.statuses()
+
+    def get_humidity_assist_status(self, entity_id: str) -> dict[str, object]:
+        """Return the Humidity Assist runtime status for one zone."""
+        return self._humidity_assist.status(entity_id)
+
+    @property
+    def humidity_assist_compliant(self) -> bool:
+        """Return whether every enabled Humidity Assist zone is at target."""
+        return self._humidity_assist.is_compliant()
+
+    def get_humidity_assist_config(self, entity_id: str) -> HumidityAssistData:
+        """Return the normalized Humidity Assist configuration for one zone."""
+        self.ensure_managed_entity(entity_id)
+        return normalize_humidity_assist_data(
+            self._data["zones"][entity_id].get("humidity_assist")
+        )
+
+    async def async_update_zone_humidity_assist(
+        self,
+        entity_id: str,
+        humidity_assist: dict,
+    ) -> HumidityAssistData:
+        """Update persisted Humidity Assist settings for one zone."""
+        self._ensure_local_execution(entity_id)
+        previous = normalize_humidity_assist_data(
+            self._data["zones"][entity_id].get("humidity_assist")
+        )
+        merged = {**previous, **humidity_assist}
+        if merged.get("enabled"):
+            if not merged.get("sensor_entity_id"):
+                raise ValueError(
+                    "Humidity Assist requires a configured dew point or humidity sensor"
+                )
+            if merged.get("target") is None:
+                raise ValueError("Humidity Assist requires a target")
+            if merged.get("pulse_temperature") is None:
+                raise ValueError("Humidity Assist requires a pulse temperature")
+        pulse_temperature = merged.get("pulse_temperature")
+        if pulse_temperature is not None:
+            minimum, maximum = self.get_temperature_limits(entity_id)
+            if not minimum <= float(pulse_temperature) <= maximum:
+                raise ValueError(
+                    f"pulse_temperature must be between {minimum} and {maximum}"
+                )
+        next_config = normalize_humidity_assist_data(merged)
+        if merged.get("target") is not None and next_config["target"] is None:
+            raise ValueError("Humidity Assist target is out of range")
+        self._data["zones"][entity_id]["humidity_assist"] = next_config
+        await self._async_save_data()
+        await self._humidity_assist.async_config_changed(
+            entity_id, previous, next_config
+        )
+        self._async_write_state()
+        return next_config
+
+    async def async_set_humidity_assist(
+        self,
+        entity_id: str,
+        enabled: bool,
+    ) -> HumidityAssistData:
+        """Enable or disable Humidity Assist for one zone."""
+        return await self.async_update_zone_humidity_assist(
+            entity_id,
+            {"enabled": enabled},
+        )
+
+    def humidity_assist_candidate_entities(self) -> list[str]:
+        """Return zones whose Humidity Assist sensor is configured."""
+        return [
+            entity_id
+            for entity_id in self._data["zones"]
+            if normalize_humidity_assist_data(
+                self._data["zones"][entity_id].get("humidity_assist")
+            )["sensor_entity_id"]
+        ]
 
     async def async_reset_zone_preconditioning_learning(
         self,
@@ -5015,6 +5111,12 @@ class VelairScheduler:
                 hvac_mode=override.get("hvac_mode"),
                 **_climate_options_from_mapping(override),
             )
+        # Humidity Assist pulses win over the effective schedule and Room
+        # Assist, but never over a pause with action none/turn_off, Manual
+        # adjustment, or Boost, which were resolved above.
+        pulse_event = self._humidity_assist.pulse_event(entity_id, now)
+        if pulse_event is not None:
+            return pulse_event
         behavior = self._profile_zone_behavior(entity_id)
         if behavior["behavior"] == "pause":
             if behavior.get("action") != ZONE_PAUSE_ACTION_TURN_OFF:
@@ -8420,6 +8522,9 @@ class VelairScheduler:
     def _async_write_state(self) -> None:
         """Notify entities that scheduler state changed."""
         async_dispatcher_send(self._hass, SIGNAL_SCHEDULER_UPDATED)
+        humidity_assist = getattr(self, "_humidity_assist", None)
+        if humidity_assist is not None:
+            humidity_assist.schedule_refresh()
 
     def _begin_operation(
         self,
