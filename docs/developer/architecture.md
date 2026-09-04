@@ -29,6 +29,7 @@ custom_components/velair/
   entity_registry.py   cleanup for retired and removed-climate entities
   frontend.py          panel and static frontend registration
   models.py            typed normalization, preconditioning prediction, serialization
+  number.py            per-zone temperature limit numbers
   runtime_diagnostics.py bounded runtime health/history projection and report redaction
   scheduler.py         event calculation, timers, overrides, preconditioning runtime
   sensor.py            scheduler and per-zone state sensors
@@ -37,6 +38,7 @@ custom_components/velair/
   storage.py           Home Assistant Store wrapper
   switch.py            automatic scheduling control
   translations/        Home Assistant translations
+  zone_limit_notifications.py persistent notification for clamped zone targets
 ```
 
 ## Data Model
@@ -82,6 +84,10 @@ The storage model is intentionally simple and versioned:
         "room_sensor_assist_enabled": true,
         "room_sensor_assist_deadband": 0.3,
         "room_sensor_assist_max_delta": 2.0
+      },
+      "limits": {
+        "min_temperature": 21.0,
+        "max_temperature": null
       },
       "external_change_policy": {
         "action": "for_duration",
@@ -299,6 +305,15 @@ When applying a temperature:
 3. If no mode is provided and the climate is off, Velair uses the first supported mode that is not `off`.
 
 This keeps schedule blocks useful across heating-only, cooling-only, and mixed systems.
+
+Every set-temperature delivery passes through one choke point in the scheduler
+that clamps the scalar target, or both ends of a range, to the zone's optional
+`limits` immediately before the physical call. Room Assist bounds its own
+corrections by the same effective range, while its runtime identity keeps
+following the scheduled target. Manual adjustments captured from external
+changes are deliberately not clamped. The stored schedule keeps the requested
+value; the delivered value, the requested value, and `limited_by` are published
+through the `climate_target_applied` event, the logbook, and Diagnostics.
 
 Physical delivery is coordinated in runtime memory per managed entity.
 Blocking Home Assistant calls expose invocation failures; generation

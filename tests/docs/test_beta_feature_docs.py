@@ -26,6 +26,7 @@ NEW_WEBSOCKET_COMMANDS = (
     "update_external_change_policy",
     "enter_manual_adjustment",
     "resume_automatic_control",
+    "update_zone_limits",
 )
 
 

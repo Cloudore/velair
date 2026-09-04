@@ -100,6 +100,12 @@ automation events:
   temperature, and HVAC mode.
 - **Room Assist** exposes the current Room Assist runtime state and compact
   target context without duplicating the original room and climate readings.
+- **Minimum temperature** and **Maximum temperature** are writable number
+  entities created once per managed climate. They edit the
+  [zone temperature limits](#zone-temperature-limits) that Velair applies to
+  every target it delivers. Setting the minimum to the climate's own minimum,
+  or the maximum to the climate's own maximum, clears that limit; the
+  `limit_active` attribute shows whether a limit is enforced.
 - **Automatic scheduling** and **Mode** are Velair's writable control entities.
   Turning Automatic scheduling off stops scheduling indefinitely; turning it
   on resumes the active schedule. Selecting a custom Mode activates its mapped
@@ -114,7 +120,8 @@ Home Assistant. Events are useful for reacting to transitions; entities are
 useful when an automation or dashboard needs to query the current state.
 
 When a climate is removed from the Velair integration options, Velair removes
-its generated zone sensors from the Home Assistant entity registry on reload.
+its generated zone sensors and limit numbers from the Home Assistant entity
+registry on reload.
 Global Velair entities and entities belonging to other integrations are not
 affected. Adding the climate again recreates its sensors with deterministic
 unique IDs.
@@ -369,6 +376,56 @@ Temperature can use a dedicated Comfort temperature sensor, the Room Assist room
 When Comfort is disabled for a climate, Velair does not register comfort sensor listeners for that climate. When enabled, it listens only to the relevant selected sensors and climate entity. There is no continuous polling.
 
 Detailed setup, heating, cooling, CO2, automation, and privacy examples are documented in [Environmental Comfort](comfort.md).
+
+## Zone temperature limits
+
+Each managed climate can carry an optional minimum and maximum temperature.
+Velair enforces them itself, immediately before every physical target it
+delivers, so a household rule such as "never below 21 °C in any room, 19 °C in
+the master bedroom" holds no matter which schedule, Profile, Mode, or automation
+asked for the target.
+
+Edit the limits per climate in the **Settings** tab (`Temperature limits`
+inside each climate row; leave a field empty for no limit) or through the
+**Minimum temperature** / **Maximum temperature** number entities. Limits must
+lie inside the climate entity's own supported range and the minimum cannot be
+above the maximum; Velair rejects other values. Values are aligned to the
+climate's target step. Saving a limit that changes the currently delivered
+target reapplies that target right away.
+
+What is clamped:
+
+- Default and Profile schedule blocks, including blocks started early by
+  Adaptive Preconditioning;
+- Boosts and `velair.set_temperature`;
+- Room Assist output: the corrected setpoint can never cross a limit, and the
+  scheduled target Room Assist restores is clamped as well;
+- both ends of a native `heat_cool` range;
+- targets reapplied by the **Keep automatic** external-change policy,
+  resume, restart, and every other scheduler path.
+
+What is not clamped:
+
+- adjustments made outside Velair. A Manual adjustment preserves the exact
+  external setpoint, even when it is outside the limits; the limits apply
+  again once automatic control resumes;
+- a live climate state restored after a Boost ends without a current schedule
+  block, because it repeats what the device was doing before the Boost;
+- `turn_off` actions and externally executed climates.
+
+The stored schedule keeps the requested value. When a limit changes a target,
+the `climate_target_applied` event carries `limited_by: zone_limits` and the
+requested value, the logbook records one line, Diagnostics shows the limit in
+the climate details and in the runtime log, and Velair keeps at most one
+persistent notification per climate for the same conflict until an unlimited
+target is delivered again. Overview and the **Active target temperature**
+sensor continue to show the scheduled intent; the applied value follows the
+climate state. Adaptive Preconditioning plans and learns against the scheduled
+block target.
+
+Limits are absolute temperatures: they are exported with the zone data,
+converted when Home Assistant's unit changes, and can be set from automations
+with `number.set_value`.
 
 ## Templates
 
@@ -628,6 +685,7 @@ This is a Velair-scoped convenience service, not a replacement for Home Assistan
 
 - it only accepts climate entities managed by Velair;
 - it validates the target against the capabilities and temperature limits known by Velair;
+- it applies the zone's [temperature limits](#zone-temperature-limits) before delivery, so a target outside them is clamped rather than rejected;
 - it uses Velair's HVAC mode fallback rules when a mode is provided or when the climate needs to be turned on.
 
 Use Home Assistant's native climate services when you want generic climate control. Use `velair.set_temperature` when an automation should only act on Velair-managed climates.
