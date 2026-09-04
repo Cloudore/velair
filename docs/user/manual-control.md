@@ -203,8 +203,12 @@ automatic control resumes and Velair delivers its own target, and the
 ## What Happens When Automatic Scheduling Resumes
 
 Manual adjustment can end because its duration expires, its next-block boundary
-arrives, the Overview button is pressed, or
-`velair.resume_automatic_control` is called.
+arrives, the Overview button is pressed, `velair.resume_automatic_control` is
+called, or a [Guards](guards.md) release rule fires: credible zone vacancy,
+travel turning on, or every owner away while the setpoint sits below the zone
+minimum, each only once the adjustment is older than the Guards lease. Guards
+also end a Manual adjustment that protected a turn-off when the never-off grace
+expires or `velair.snooze_off` takes over.
 
 Velair removes only its reserved Manual adjustment reason. It then resolves the
 authoritative intent at that moment:

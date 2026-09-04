@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
+from .guards_models import convert_guards_runtime_temperatures, convert_guards_zone_temperatures
 from .models import (
     DEFAULT_ROOM_SENSOR_ASSIST_DEADBAND,
     SchedulerData,
@@ -698,6 +699,7 @@ def _convert_scheduler_temperatures(
                         absolute_temperature(humidity_assist["target"], source, target),
                         6,
                     )
+            convert_guards_zone_temperatures(zone.get("guards"), source, target)
     templates = data.get("templates", [])
     if isinstance(templates, list):
         for template in templates:
@@ -726,6 +728,7 @@ def _convert_scheduler_temperatures(
                     humidity_assist[key] = round(
                         temperature_delta(humidity_assist[key], source, target), 6
                     )
+        convert_guards_runtime_temperatures(settings.get("guards_runtime"), source, target)
     learning = data.get("preconditioning_learning", {})
     if isinstance(learning, dict):
         for entity_id, directions in learning.items():

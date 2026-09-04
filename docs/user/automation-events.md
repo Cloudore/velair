@@ -655,6 +655,105 @@ median: 22.4
 next_transition_at: "2026-08-10T15:10:00+00:00"
 ```
 
+## Guards
+
+The [Guards](guards.md) emit five events. All are zone events with
+`entity_id`; none is emitted while the Guards master switch is off.
+
+### Never Off Grace Started
+
+`never_off_grace_started` is emitted when a managed climate is found `off`
+outside Velair's own intent (a person turned it off, or it was off when Velair
+started) and the never-off grace begins. `previous_target` and
+`previous_hvac_mode` are the values the head had before the turn-off when they
+are known; `snooze_minutes` is the default duration a `velair.snooze_off`
+action would use, so a notification can offer it. Re-evaluating an unchanged
+grace does not emit it again.
+
+```yaml
+domain: velair
+event: never_off_grace_started
+entity_id: climate.guest_room
+grace_started_at: "2026-09-04T21:00:00+02:00"
+grace_ends_at: "2026-09-04T21:10:00+02:00"
+grace_minutes: 10
+previous_target: 24
+previous_hvac_mode: cool
+snooze_minutes: 1440
+```
+
+### Never Off Recovered
+
+`never_off_recovered` is emitted when the grace ends with the head still off
+and Velair holds `neveroff_recover` raise-only, then resumes automatic control.
+`temperature` is the hold target (the warmest of the previous target, the
+zone's last setback stage and its minimum temperature); it is `null` when no
+usable value existed and Velair only resumed automatic control.
+
+```yaml
+domain: velair
+event: never_off_recovered
+entity_id: climate.guest_room
+temperature: 26
+hvac_mode: cool
+constraint: raise_only
+pause_id: neveroff_recover
+previous_target: 24
+recovered_at: "2026-09-04T21:10:00+02:00"
+```
+
+### Never Off Snoozed
+
+`never_off_snoozed` is emitted when `velair.snooze_off` freezes a zone with the
+`neveroff_snooze` pause. `source` is `service`.
+
+```yaml
+domain: velair
+event: never_off_snoozed
+entity_id: climate.guest_room
+snooze_until: "2026-09-05T21:03:00+02:00"
+duration_minutes: 1440
+source: service
+```
+
+### Manual Hold Released
+
+`manual_hold_released` is emitted when a Guards rule ends a Manual adjustment
+through `resume_automatic_control`. `reason` is `vacant`, `travel` or
+`below_minimum`; `age_minutes` is the age of the adjustment when it was
+released and is always at least the lease. A matching `zone_control_changed`
+event with `reason: resumed` follows.
+
+```yaml
+domain: velair
+event: manual_hold_released
+entity_id: climate.guest_room
+reason: vacant
+manual_since: "2026-09-04T19:00:00+02:00"
+age_minutes: 62.5
+released_at: "2026-09-04T20:02:30+02:00"
+```
+
+### Activity Hold Changed
+
+`activity_hold_changed` is emitted when an activity entity turning `on` engages
+a hold (`active: true`) and when the entity has been `off` for the release
+delay and the hold is released (`active: false`). `resumed_automatic` is
+`true` only when the release also ended a Manual adjustment older than the
+lease.
+
+```yaml
+domain: velair
+event: activity_hold_changed
+entity_id: climate.kitchen
+activity_entity_id: input_boolean.cooking
+pause_id: activity
+active: false
+temperature: 25
+constraint: lower_only
+resumed_automatic: true
+```
+
 ## Boost Started
 
 `boost_started` is emitted after a boost target and override have been applied

@@ -124,6 +124,17 @@
           "pulsing": "Em impulso",
           "resting": "Em repouso"
         }
+      },
+      "zone_guard": {
+        "name": "{zone} guard",
+        "state": {
+          "idle": "Idle",
+          "off_grace": "Off, grace period",
+          "snoozed": "Snoozed",
+          "recovering": "Recovering",
+          "manual_watch": "Watching manual adjustment",
+          "activity_hold": "Activity hold"
+        }
       }
     },
     "select": {
@@ -140,6 +151,9 @@
       },
       "zone_humidity_priority": {
         "name": "Prioridade de humidade de {zone}"
+      },
+      "guards": {
+        "name": "Guards"
       }
     },
     "binary_sensor": {
@@ -192,6 +206,18 @@
       },
       "zone_max_temperature_limit": {
         "name": "Temperatura máxima de {zone}"
+      },
+      "guards_never_off_grace_minutes": {
+        "name": "Guards never-off grace minutes"
+      },
+      "guards_never_off_snooze_minutes": {
+        "name": "Guards never-off snooze minutes"
+      },
+      "guards_manual_lease_minutes": {
+        "name": "Guards manual lease minutes"
+      },
+      "guards_manual_release_vacant_minutes": {
+        "name": "Guards manual release vacant minutes"
       }
     }
   }

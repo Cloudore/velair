@@ -10,6 +10,7 @@ from . import VelairConfigEntry
 from .config_helpers import get_configured_climate_entities
 from .const import MODE_AUTO, MODE_PAUSED
 from .entity import VelairEntity
+from .guards_entities import build_guards_switch_entities
 
 
 async def async_setup_entry(
@@ -20,6 +21,7 @@ async def async_setup_entry(
     """Set up Velair switches."""
     entities: list[SwitchEntity] = [AutomaticSchedulingSwitch(entry)]
     entities.extend(_humidity_assist_switches(hass, entry))
+    entities.extend(build_guards_switch_entities(hass, entry))
     async_add_entities(entities)
 
 

@@ -15,6 +15,7 @@ Velair documentation is grouped by audience and topic.
 - [Room Assist](user/room-assist.md): use a separate room temperature sensor for TRVs, thermostats, and AC units.
 - [Resilient climate delivery](user/resilient-climate-delivery.md): understand deferred retries, reconnection behavior, optional readback confirmation, and cross-climate stagger.
 - [Environmental Comfort](user/comfort.md): understand temperature, humidity, CO2 air quality, and reading freshness through local room assessments.
+- [Guards](user/guards.md): relight heads a person turned off after a grace period unless snoozed, release stale Manual adjustments on credible vacancy, travel or owner absence, and hold zones while an activity entity is on.
 - [Humidity Assist](user/humidity-assist.md): pulse zones colder for bounded runs whenever a room's dew point or humidity drifts above its target, with priority rooms, compressor rests, and an external gate.
 - [Temperature Units and Migration](user/temperature-units.md): understand Celsius/Fahrenheit defaults, upgrades, migration, import/export, and recovery.
 - [Troubleshooting](user/troubleshooting.md): common setup, frontend resource, and runtime issues.

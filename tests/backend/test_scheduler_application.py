@@ -1454,6 +1454,8 @@ class VelairSchedulerSavedScheduleTest(unittest.IsolatedAsyncioTestCase):
                 "max_temperature": 28.0,
                 "delivery_stagger_seconds": 0,
                 "humidity_assist": normalize_panel_settings(None, [])["humidity_assist"],
+                "guards": normalize_panel_settings(None, [])["guards"],
+                "guards_runtime": {},
             },
         )
 

@@ -36,6 +36,11 @@ PUBLIC_EVENTS = (
     "zone_resumed",
     "delivery_outcome",
     "humidity_assist_state_changed",
+    "never_off_grace_started",
+    "never_off_recovered",
+    "never_off_snoozed",
+    "manual_hold_released",
+    "activity_hold_changed",
 )
 
 

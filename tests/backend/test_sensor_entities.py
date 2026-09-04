@@ -150,7 +150,7 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(sensor.available)
 
-    async def test_setup_creates_three_global_and_seven_sensors_per_climate(
+    async def test_setup_creates_three_global_and_eight_sensors_per_climate(
         self,
     ) -> None:
         scheduler = SimpleNamespace(
@@ -193,7 +193,7 @@ class SensorEntitiesTest(unittest.IsolatedAsyncioTestCase):
 
         await sensor_module.async_setup_entry(hass, entry, entities.extend)
 
-        self.assertEqual(len(entities), 17)
+        self.assertEqual(len(entities), 19)
         target_sensors = [
             entity
             for entity in entities
@@ -707,6 +707,7 @@ class SensorTranslationTest(unittest.TestCase):
                         "zone_preconditioning_start",
                         "zone_room_assist_state",
                         "zone_humidity_assist",
+                        "zone_guard",
                     },
                 )
                 self.assertEqual(
@@ -727,6 +728,7 @@ class SensorTranslationTest(unittest.TestCase):
                         "automatic_scheduling",
                         "zone_humidity_assist",
                         "zone_humidity_priority",
+                        "guards",
                     },
                 )
                 self.assertEqual(

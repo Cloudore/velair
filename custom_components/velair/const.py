@@ -48,6 +48,11 @@ EVENT_TYPE_ZONE_RESUMED = "zone_resumed"
 EVENT_TYPE_ZONE_CONTROL_CHANGED = "zone_control_changed"
 EVENT_TYPE_DELIVERY_OUTCOME = "delivery_outcome"
 EVENT_TYPE_HUMIDITY_ASSIST_STATE_CHANGED = "humidity_assist_state_changed"
+EVENT_TYPE_NEVER_OFF_GRACE_STARTED = "never_off_grace_started"
+EVENT_TYPE_NEVER_OFF_RECOVERED = "never_off_recovered"
+EVENT_TYPE_NEVER_OFF_SNOOZED = "never_off_snoozed"
+EVENT_TYPE_MANUAL_HOLD_RELEASED = "manual_hold_released"
+EVENT_TYPE_ACTIVITY_HOLD_CHANGED = "activity_hold_changed"
 
 SERVICE_APPLY_SCHEDULE = "apply_schedule"
 SERVICE_ACTIVATE_PROFILE = "activate_profile"
@@ -70,6 +75,7 @@ SERVICE_RESUME_AUTOMATIC_CONTROL = "resume_automatic_control"
 SERVICE_ENABLE_HUMIDITY_ASSIST = "enable_humidity_assist"
 SERVICE_DISABLE_HUMIDITY_ASSIST = "disable_humidity_assist"
 SERVICE_SET_HUMIDITY_ASSIST = "set_humidity_assist"
+SERVICE_SNOOZE_OFF = "snooze_off"
 
 ATTR_ACTION = "action"
 ATTR_APPLY_CURRENT_SCHEDULE = "apply_current_schedule"
@@ -181,6 +187,7 @@ ZONE_SENSOR_UNIQUE_ID_SUFFIXES = (
     "preconditioning_start",
     "room_assist_state",
     "humidity_assist_state",
+    "guard_state",
 )
 
 ZONE_NUMBER_UNIQUE_ID_SUFFIXES = (

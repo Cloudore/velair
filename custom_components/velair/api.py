@@ -56,6 +56,7 @@ from .config_helpers import (
     should_apply_active_schedule_on_startup,
 )
 from .external_execution.models import ExternalScheduleRequiredError
+from .guards_api import GUARDS_SETTINGS_SCHEMA, guards_status_payload, merge_guards_settings, register_guards_ws
 from .models import (
     DEFAULT_COMFORT_TEMPERATURE_MAX,
     DEFAULT_COMFORT_TEMPERATURE_MIN,
@@ -376,6 +377,7 @@ def async_setup_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_update_zone_limits)
     websocket_api.async_register_command(hass, ws_update_zone_delivery)
     websocket_api.async_register_command(hass, ws_update_zone_humidity_assist)
+    register_guards_ws(hass)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_settings)
     websocket_api.async_register_command(hass, ws_reset_zone_preconditioning_learning)
     websocket_api.async_register_command(hass, ws_export_data)
@@ -967,6 +969,7 @@ async def ws_select_mode(
             vol.Range(min=0, max=MAX_DELIVERY_STAGGER_SECONDS),
         ),
         vol.Optional("humidity_assist"): HUMIDITY_ASSIST_SETTINGS_SCHEMA,
+        vol.Optional("guards"): GUARDS_SETTINGS_SCHEMA,
     }
 )
 @websocket_api.async_response
@@ -1015,6 +1018,7 @@ async def ws_update_settings(
             **(current_humidity if isinstance(current_humidity, dict) else {}),
             **msg["humidity_assist"],
         }
+    if "guards" in msg: updates["guards"] = merge_guards_settings(runtime, msg["guards"])
 
     scheduler = runtime["scheduler"]
     try:
@@ -1796,6 +1800,7 @@ def _build_schedule_response(runtime: dict[str, Any]) -> dict[str, Any]:
         "humidity_assist_compliant": bool(
             getattr(scheduler, "humidity_assist_compliant", False)
         ),
+        "guards": guards_status_payload(scheduler),
         "zone_runtime": (
             {} if getattr(scheduler, "temperature_migration_blocked", False)
             else getattr(scheduler, "get_zone_runtime_statuses", lambda: {})()
@@ -2112,6 +2117,7 @@ def _export_zones(zones: dict[str, Any]) -> dict[str, Any]:
             ),
             "delivery": deepcopy(zone.get("delivery", {})),
             "humidity_assist": deepcopy(zone.get("humidity_assist", {})),
+            "guards": deepcopy(zone.get("guards", {})),
         }
         for entity_id, zone in zones.items()
     }

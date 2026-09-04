@@ -46,6 +46,7 @@ from .const import (
     MIN_DELIVERY_CONFIRM_ATTEMPTS,
     MIN_DELIVERY_CONFIRM_TIMEOUT_SECONDS,
 )
+from .guards_models import GuardsRuntimeData, GuardsSettingsData, GuardsZoneData, normalize_guards_runtime_data, normalize_guards_settings, normalize_guards_zone_data
 
 WEEKDAYS = (
     "monday",
@@ -429,6 +430,7 @@ class ZoneData(TypedDict):
     execution: NotRequired[ZoneExecutionData]
     delivery: DeliveryData
     humidity_assist: NotRequired[HumidityAssistData]
+    guards: NotRequired[GuardsZoneData]
 
 
 class ScheduleTemplateData(TypedDict):
@@ -448,6 +450,8 @@ class PanelSettingsData(TypedDict):
     max_temperature: float
     delivery_stagger_seconds: int
     humidity_assist: NotRequired[HumidityAssistSettingsData]
+    guards: NotRequired[GuardsSettingsData]
+    guards_runtime: NotRequired[dict[str, GuardsRuntimeData]]
 
 
 class GlobalData(TypedDict):
@@ -838,6 +842,7 @@ def normalize_schedule_data(
             "humidity_assist": normalize_humidity_assist_data(
                 zone_data.get("humidity_assist")
             ),
+            "guards": normalize_guards_zone_data(zone_data.get("guards")),
         }
         execution = normalize_zone_execution(zone_data.get("execution"))
         if execution is not None:
@@ -857,6 +862,7 @@ def normalize_schedule_data(
                 "external_change_policy": normalize_external_change_policy(None),
                 "delivery": normalize_zone_delivery(None),
                 "humidity_assist": normalize_humidity_assist_data(None),
+                "guards": normalize_guards_zone_data(None),
             },
         )
 
@@ -1444,6 +1450,8 @@ def normalize_panel_settings(
         "humidity_assist": normalize_humidity_assist_settings(
             settings.get("humidity_assist")
         ),
+        "guards": normalize_guards_settings(settings.get("guards")),
+        "guards_runtime": normalize_guards_runtime_data(settings.get("guards_runtime"), climate_entities),
     }
 
 
