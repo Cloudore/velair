@@ -187,7 +187,11 @@ class AutomationBlueprintContractTest(unittest.TestCase):
         }
         self.assertEqual(
             compatibility,
-            {"occupancy_home_away": None, "window_pause": "1.6.0"},
+            {
+                "occupancy_home_away": None,
+                "occupancy_setback": "1.8.0",
+                "window_pause": "1.6.0",
+            },
         )
 
         for entry in entries:
@@ -660,3 +664,63 @@ class AutomationBlueprintContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OccupancySetbackBlueprintTest(unittest.TestCase):
+    """Behavior contracts of the occupancy setback ladder blueprint."""
+
+    def test_setback_blueprint_owns_one_hold_and_never_polls(self) -> None:
+        source = (BLUEPRINTS / "occupancy_setback.yaml").read_text(encoding="utf-8")
+
+        self.assertIn("default: velair_occupancy_setback", source)
+        self.assertIn("owned_pause_id: !input pause_id", source)
+        self.assertGreaterEqual(source.count('pause_id: "{{ owned_pause_id }}"'), 7)
+        self.assertGreaterEqual(source.count("service: velair.pause_zone"), 7)
+        self.assertEqual(source.count("service: velair.resume_zone"), 1)
+        self.assertGreaterEqual(source.count("action: hold"), 7)
+        self.assertIn('constraint: "{{ constraint }}"', source)
+        self.assertIn("mode: parallel", source)
+        self.assertIn("max: 20", source)
+        self.assertIn("max_exceeded: warning", source)
+        self.assertNotIn("mode: restart", source)
+        self.assertNotIn("- delay:", source)
+        self.assertNotIn("time_pattern", source)
+        for trigger_id in ("stage1_due", "stage2_due", "stage3_due", "occupied",
+                           "availability_due", "availability_recovered",
+                           "zone_resumed", "startup"):
+            self.assertIn(f"id: {trigger_id}", source)
+        self.assertIn("for: !input occupied_delay", source)
+        self.assertIn("for: !input availability_warning_delay", source)
+        self.assertIn("event_type: velair_event", source)
+        self.assertIn("event: zone_resumed", source)
+        self.assertEqual(source.count("- wait_for_trigger:"), 3)
+        self.assertEqual(source.count("continue_on_timeout: true"), 3)
+        self.assertEqual(source.count('value_template: "{{ not wait.completed }}"'), 3)
+        self.assertIn("velair_setback_{{ this.entity_id | replace", source)
+        self.assertIn("service: persistent_notification.create", source)
+        self.assertIn("service: persistent_notification.dismiss", source)
+        self.assertIn("states(occupancy_entity) in ['off', 'not_home']", source)
+        self.assertIn("states(occupancy_entity) in ['on', 'home']", source)
+
+    def test_setback_behavior_is_documented(self) -> None:
+        detail = (DETAILS / "occupancy-setback-ladder.md").read_text(encoding="utf-8")
+        normalized_detail = " ".join(detail.split())
+        catalog = GUIDE.read_text(encoding="utf-8")
+
+        for phrase in (
+            "native template trigger per stage",
+            "resets that timer",
+            "updates the hold in place",
+            "removes only this automation's hold",
+            "deterministic notification ID",
+            "one reconciliation execution",
+            "applies the highest stage already due",
+            "waits interruptibly for the remaining stages",
+            "There is no polling",
+            "keeps precedence over any hold",
+            "never counts as empty or occupied",
+            "checked again immediately before every call",
+        ):
+            self.assertIn(phrase, normalized_detail)
+        self.assertIn("owns one hold per automation", catalog)
+

@@ -14,6 +14,18 @@
       "changelog": "changelogs/occupancy_home_away.md"
     },
     {
+      "id": "occupancy_setback",
+      "name": "Velair - Occupancy setback ladder",
+      "domain": "automation",
+      "file": "automation/velair/occupancy_setback.yaml",
+      "version": "1.0.0",
+      "released_with_velair": "1.8.0",
+      "minimum_velair": "1.8.0",
+      "minimum_home_assistant": "2024.6.0",
+      "source_url": "https://github.com/cgonfer/velair/blob/main/blueprints/automation/velair/occupancy_setback.yaml",
+      "changelog": "changelogs/occupancy_setback.md"
+    },
+    {
       "id": "window_pause",
       "name": "Velair - Pause a zone while windows are open",
       "domain": "automation",

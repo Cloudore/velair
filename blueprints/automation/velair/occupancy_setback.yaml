@@ -1,0 +1,586 @@
+# Velair blueprint version: 1.0.0
+# Minimum Velair version: 1.8.0
+# Minimum Home Assistant version: 2024.6.0
+blueprint:
+  name: Velair - Occupancy setback ladder
+  description: >-
+    Move one Velair-managed climate through up to three setback stages after
+    its room has been empty for configurable times, and release the setback
+    when the room is occupied again. Each stage is a Velair zone hold, so the
+    schedule is never edited and a manual adjustment or another pause keeps
+    precedence. Blueprint version 1.0.0. Requires Velair 1.8.0 or newer and
+    Home Assistant 2024.6.0 or newer.
+  domain: automation
+  author: Cristian Gonzalez Fernandez
+  source_url: https://github.com/cgonfer/velair/blob/main/blueprints/automation/velair/occupancy_setback.yaml
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    climate_entity:
+      name: Managed thermostat
+      description: The climate entity must already be managed by Velair.
+      selector:
+        entity:
+          filter:
+            domain: climate
+    occupancy:
+      name: Room occupancy
+      description: >-
+        Consolidated occupancy state for this room. `on` or `home` means
+        occupied; `off` or `not_home` means empty. A group, template binary
+        sensor, or helper works well.
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+            - domain: input_boolean
+            - domain: group
+    stages:
+      name: Setback stages
+      icon: mdi:stairs-up
+      input:
+        stage1_minutes:
+          name: Stage 1 after (minutes)
+          description: How long the room must stay empty before the first stage applies.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 1440
+              step: 1
+              unit_of_measurement: min
+              mode: box
+        stage1_temperature:
+          name: Stage 1 temperature
+          description: Hold temperature for the first stage, in the thermostat's unit.
+          default: 23
+          selector:
+            number:
+              min: 5
+              max: 95
+              step: 0.5
+              mode: box
+        stage2_enabled:
+          name: Enable stage 2
+          default: true
+          selector:
+            boolean: {}
+        stage2_minutes:
+          name: Stage 2 after (minutes)
+          default: 30
+          selector:
+            number:
+              min: 1
+              max: 1440
+              step: 1
+              unit_of_measurement: min
+              mode: box
+        stage2_temperature:
+          name: Stage 2 temperature
+          default: 25
+          selector:
+            number:
+              min: 5
+              max: 95
+              step: 0.5
+              mode: box
+        stage3_enabled:
+          name: Enable stage 3
+          default: true
+          selector:
+            boolean: {}
+        stage3_minutes:
+          name: Stage 3 after (minutes)
+          default: 90
+          selector:
+            number:
+              min: 1
+              max: 1440
+              step: 1
+              unit_of_measurement: min
+              mode: box
+        stage3_temperature:
+          name: Stage 3 temperature
+          default: 26
+          selector:
+            number:
+              min: 5
+              max: 95
+              step: 0.5
+              mode: box
+    dials:
+      name: Live dials (optional)
+      description: >-
+        Optional helper entities that override the stage numbers above, so a
+        dashboard slider can tune the ladder without editing this automation.
+        Leave empty to use the fixed numbers.
+      icon: mdi:tune
+      collapsed: true
+      input:
+        stage1_minutes_entity:
+          name: Stage 1 minutes entity
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+                - domain: number
+                - domain: sensor
+        stage1_temperature_entity:
+          name: Stage 1 temperature entity
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+                - domain: number
+                - domain: sensor
+        stage2_minutes_entity:
+          name: Stage 2 minutes entity
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+                - domain: number
+                - domain: sensor
+        stage2_temperature_entity:
+          name: Stage 2 temperature entity
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+                - domain: number
+                - domain: sensor
+        stage3_minutes_entity:
+          name: Stage 3 minutes entity
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+                - domain: number
+                - domain: sensor
+        stage3_temperature_entity:
+          name: Stage 3 temperature entity
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+                - domain: number
+                - domain: sensor
+    behavior:
+      name: Hold behavior
+      icon: mdi:thermometer-lines
+      input:
+        constraint:
+          name: How stages combine with the schedule
+          description: >-
+            Raise only keeps the warmer of the stage and the schedule target
+            (cooling setbacks), lower only keeps the cooler one (heating
+            setbacks), exact replaces the schedule target.
+          default: raise_only
+          selector:
+            select:
+              options:
+                - label: Raise only
+                  value: raise_only
+                - label: Lower only
+                  value: lower_only
+                - label: Exact
+                  value: absolute
+              mode: dropdown
+        hvac_mode:
+          name: HVAC mode while held
+          description: Keep the current mode or force one while a stage is active.
+          default: keep
+          selector:
+            select:
+              options:
+                - label: Keep current mode
+                  value: keep
+                - label: Cool
+                  value: cool
+                - label: Heat
+                  value: heat
+                - label: Dry
+                  value: dry
+                - label: Fan only
+                  value: fan_only
+                - label: Auto
+                  value: auto
+              mode: dropdown
+        fan_mode:
+          name: Fan mode while held
+          description: Optional fan mode applied with every stage. Leave empty to keep the current fan mode.
+          default: ""
+          selector:
+            text:
+        release_on_occupancy:
+          name: Release when the room is occupied again
+          description: >-
+            Remove this automation's hold when the room becomes occupied. Turn
+            off when another automation (for example an arrival comfort ramp)
+            owns the release.
+          default: true
+          selector:
+            boolean: {}
+        pause_id:
+          name: Pause ID
+          description: Stable identifier used to add, update, and remove only this automation's hold.
+          default: velair_occupancy_setback
+          selector:
+            text:
+        blocking_entities:
+          name: Blocking entities
+          description: >-
+            While any of these reports `on`, `home`, `playing`, or `paused`,
+            no stage is applied and an existing stage is left unchanged. Use it
+            for sleep or guest helpers, bed sensors, or a media player in the room.
+          default: []
+          selector:
+            entity:
+              multiple: true
+    timing:
+      name: Timing and diagnostics
+      icon: mdi:timer-outline
+      collapsed: true
+      input:
+        occupied_delay:
+          name: Occupied delay
+          description: How long the room must stay occupied before the hold is released.
+          default:
+            seconds: 0
+          selector:
+            duration: {}
+        availability_warning_delay:
+          name: Availability warning delay
+          description: >-
+            How long occupancy must remain unknown or unavailable before Home
+            Assistant shows a diagnostic notification.
+          default:
+            minutes: 5
+          selector:
+            duration: {}
+
+mode: parallel
+max: 20
+max_exceeded: warning
+
+trigger_variables:
+  occupancy_entity: !input occupancy
+  climate_entity: !input climate_entity
+  stage1_minutes: !input stage1_minutes
+  stage2_minutes: !input stage2_minutes
+  stage3_minutes: !input stage3_minutes
+  stage1_minutes_entity: !input stage1_minutes_entity
+  stage2_minutes_entity: !input stage2_minutes_entity
+  stage3_minutes_entity: !input stage3_minutes_entity
+
+variables:
+  occupancy_entity: !input occupancy
+  climate_entity: !input climate_entity
+  owned_pause_id: !input pause_id
+  constraint: !input constraint
+  hvac_mode: !input hvac_mode
+  fan_mode: !input fan_mode
+  release_on_occupancy: !input release_on_occupancy
+  blocking_entities: !input blocking_entities
+  stage2_enabled: !input stage2_enabled
+  stage3_enabled: !input stage3_enabled
+  stage1_minutes: !input stage1_minutes
+  stage2_minutes: !input stage2_minutes
+  stage3_minutes: !input stage3_minutes
+  stage1_temperature: !input stage1_temperature
+  stage2_temperature: !input stage2_temperature
+  stage3_temperature: !input stage3_temperature
+  stage1_minutes_entity: !input stage1_minutes_entity
+  stage2_minutes_entity: !input stage2_minutes_entity
+  stage3_minutes_entity: !input stage3_minutes_entity
+  stage1_temperature_entity: !input stage1_temperature_entity
+  stage2_temperature_entity: !input stage2_temperature_entity
+  stage3_temperature_entity: !input stage3_temperature_entity
+  minutes_1: >-
+    {{ (states(stage1_minutes_entity) | float(stage1_minutes)) if stage1_minutes_entity else stage1_minutes }}
+  minutes_2: >-
+    {{ (states(stage2_minutes_entity) | float(stage2_minutes)) if stage2_minutes_entity else stage2_minutes }}
+  minutes_3: >-
+    {{ (states(stage3_minutes_entity) | float(stage3_minutes)) if stage3_minutes_entity else stage3_minutes }}
+  temperature_1: >-
+    {{ (states(stage1_temperature_entity) | float(stage1_temperature)) if stage1_temperature_entity else stage1_temperature }}
+  temperature_2: >-
+    {{ (states(stage2_temperature_entity) | float(stage2_temperature)) if stage2_temperature_entity else stage2_temperature }}
+  temperature_3: >-
+    {{ (states(stage3_temperature_entity) | float(stage3_temperature)) if stage3_temperature_entity else stage3_temperature }}
+  room_is_empty: >-
+    {{ states(occupancy_entity) in ['off', 'not_home'] }}
+  room_is_occupied: >-
+    {{ states(occupancy_entity) in ['on', 'home'] }}
+  blocked: >-
+    {{ expand(blocking_entities)
+       | selectattr('state', 'in', ['on', 'home', 'playing', 'paused'])
+       | list | count > 0 }}
+  empty_minutes: >-
+    {% set entity = states[occupancy_entity] %}
+    {{ ((now() - entity.last_changed).total_seconds() / 60) if entity else 0 }}
+  availability_notification_id: >-
+    velair_setback_{{ this.entity_id | replace('.', '_') | replace('-', '_') }}
+
+trigger:
+  - platform: template
+    value_template: >-
+      {{ states(occupancy_entity) in ['off', 'not_home'] }}
+    for:
+      minutes: >-
+        {{ (states(stage1_minutes_entity) | float(stage1_minutes)) if stage1_minutes_entity else stage1_minutes }}
+    id: stage1_due
+  - platform: template
+    value_template: >-
+      {{ states(occupancy_entity) in ['off', 'not_home'] }}
+    for:
+      minutes: >-
+        {{ (states(stage2_minutes_entity) | float(stage2_minutes)) if stage2_minutes_entity else stage2_minutes }}
+    id: stage2_due
+  - platform: template
+    value_template: >-
+      {{ states(occupancy_entity) in ['off', 'not_home'] }}
+    for:
+      minutes: >-
+        {{ (states(stage3_minutes_entity) | float(stage3_minutes)) if stage3_minutes_entity else stage3_minutes }}
+    id: stage3_due
+  - platform: template
+    value_template: >-
+      {{ states(occupancy_entity) in ['on', 'home'] }}
+    for: !input occupied_delay
+    id: occupied
+  - platform: template
+    value_template: >-
+      {{ states(occupancy_entity) in ['unknown', 'unavailable'] }}
+    for: !input availability_warning_delay
+    id: availability_due
+  - platform: template
+    value_template: >-
+      {{ states(occupancy_entity) in ['on', 'home', 'off', 'not_home'] }}
+    id: availability_recovered
+  - platform: event
+    event_type: velair_event
+    event_data:
+      event: zone_resumed
+      entity_id: !input climate_entity
+    id: zone_resumed
+  - platform: homeassistant
+    event: start
+    id: startup
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'stage1_due' }}"
+        sequence:
+          - condition: template
+            value_template: "{{ room_is_empty and not blocked }}"
+          - service: velair.pause_zone
+            continue_on_error: true
+            data:
+              entity_id: "{{ climate_entity }}"
+              action: hold
+              pause_id: "{{ owned_pause_id }}"
+              temperature: "{{ temperature_1 }}"
+              constraint: "{{ constraint }}"
+              label: "empty {{ minutes_1 | int }} min - stage 1"
+              hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+              fan_mode: "{{ fan_mode if fan_mode else none }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'stage2_due' }}"
+        sequence:
+          - condition: template
+            value_template: "{{ stage2_enabled and room_is_empty and not blocked }}"
+          - service: velair.pause_zone
+            continue_on_error: true
+            data:
+              entity_id: "{{ climate_entity }}"
+              action: hold
+              pause_id: "{{ owned_pause_id }}"
+              temperature: "{{ temperature_2 }}"
+              constraint: "{{ constraint }}"
+              label: "empty {{ minutes_2 | int }} min - stage 2"
+              hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+              fan_mode: "{{ fan_mode if fan_mode else none }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'stage3_due' }}"
+        sequence:
+          - condition: template
+            value_template: "{{ stage3_enabled and room_is_empty and not blocked }}"
+          - service: velair.pause_zone
+            continue_on_error: true
+            data:
+              entity_id: "{{ climate_entity }}"
+              action: hold
+              pause_id: "{{ owned_pause_id }}"
+              temperature: "{{ temperature_3 }}"
+              constraint: "{{ constraint }}"
+              label: "empty {{ minutes_3 | int }} min - stage 3"
+              hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+              fan_mode: "{{ fan_mode if fan_mode else none }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'occupied' }}"
+        sequence:
+          - condition: template
+            value_template: "{{ release_on_occupancy and room_is_occupied }}"
+          - service: velair.resume_zone
+            continue_on_error: true
+            data:
+              entity_id: "{{ climate_entity }}"
+              apply_current_schedule: true
+              pause_id: "{{ owned_pause_id }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'availability_due' }}"
+        sequence:
+          - condition: template
+            value_template: >-
+              {{ states(occupancy_entity) in ['unknown', 'unavailable'] }}
+          - service: persistent_notification.create
+            data:
+              notification_id: "{{ availability_notification_id }}"
+              title: Velair occupancy state is unavailable
+              message: >-
+                {{ state_attr(occupancy_entity, 'friendly_name') or occupancy_entity }}
+                ({{ occupancy_entity }}) reports `{{ states(occupancy_entity) }}`.
+                The setback ladder for {{ state_attr(climate_entity, 'friendly_name') or climate_entity }}
+                does not apply or release stages until this entity reports
+                occupied (`on`/`home`) or empty (`off`/`not_home`).
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ states(occupancy_entity) in ['on', 'home', 'off', 'not_home'] }}
+            then:
+              - service: persistent_notification.dismiss
+                data:
+                  notification_id: "{{ availability_notification_id }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'availability_recovered' }}"
+        sequence:
+          - condition: template
+            value_template: >-
+              {{ states(occupancy_entity) in ['on', 'home', 'off', 'not_home'] }}
+          - service: persistent_notification.dismiss
+            data:
+              notification_id: "{{ availability_notification_id }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id in ['startup', 'zone_resumed'] }}"
+        sequence:
+          # Reconcile from the occupancy entity's own age: apply the highest
+          # stage already due, then wait interruptibly for the remaining ones.
+          - condition: template
+            value_template: "{{ room_is_empty and not blocked }}"
+          - variables:
+              age: "{{ empty_minutes | float(0) }}"
+              due_stage: >-
+                {% if stage3_enabled and age >= (minutes_3 | float) %}3
+                {% elif stage2_enabled and age >= (minutes_2 | float) %}2
+                {% elif age >= (minutes_1 | float) %}1
+                {% else %}0{% endif %}
+          - if:
+              - condition: template
+                value_template: "{{ (due_stage | int) > 0 }}"
+            then:
+              - service: velair.pause_zone
+                continue_on_error: true
+                data:
+                  entity_id: "{{ climate_entity }}"
+                  action: hold
+                  pause_id: "{{ owned_pause_id }}"
+                  temperature: >-
+                    {{ {1: temperature_1, 2: temperature_2, 3: temperature_3}[due_stage | int] }}
+                  constraint: "{{ constraint }}"
+                  label: >-
+                    empty {{ {1: minutes_1, 2: minutes_2, 3: minutes_3}[due_stage | int] | int }} min - stage {{ due_stage | int }}
+                  hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+                  fan_mode: "{{ fan_mode if fan_mode else none }}"
+          - if:
+              - condition: template
+                value_template: "{{ (due_stage | int) < 1 }}"
+            then:
+              - wait_for_trigger:
+                  - platform: template
+                    value_template: >-
+                      {{ states(occupancy_entity) not in ['off', 'not_home'] }}
+                timeout:
+                  minutes: "{{ [((minutes_1 | float) - (age | float)), 0] | max }}"
+                continue_on_timeout: true
+              - condition: template
+                value_template: "{{ not wait.completed }}"
+              - condition: template
+                value_template: "{{ room_is_empty and not blocked }}"
+              - service: velair.pause_zone
+                continue_on_error: true
+                data:
+                  entity_id: "{{ climate_entity }}"
+                  action: hold
+                  pause_id: "{{ owned_pause_id }}"
+                  temperature: "{{ temperature_1 }}"
+                  constraint: "{{ constraint }}"
+                  label: "empty {{ minutes_1 | int }} min - stage 1"
+                  hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+                  fan_mode: "{{ fan_mode if fan_mode else none }}"
+          - if:
+              - condition: template
+                value_template: "{{ stage2_enabled and (due_stage | int) < 2 }}"
+            then:
+              - wait_for_trigger:
+                  - platform: template
+                    value_template: >-
+                      {{ states(occupancy_entity) not in ['off', 'not_home'] }}
+                timeout:
+                  minutes: "{{ [((minutes_2 | float) - ([age | float, minutes_1 | float] | max)), 0] | max }}"
+                continue_on_timeout: true
+              - condition: template
+                value_template: "{{ not wait.completed }}"
+              - condition: template
+                value_template: "{{ room_is_empty and not blocked }}"
+              - service: velair.pause_zone
+                continue_on_error: true
+                data:
+                  entity_id: "{{ climate_entity }}"
+                  action: hold
+                  pause_id: "{{ owned_pause_id }}"
+                  temperature: "{{ temperature_2 }}"
+                  constraint: "{{ constraint }}"
+                  label: "empty {{ minutes_2 | int }} min - stage 2"
+                  hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+                  fan_mode: "{{ fan_mode if fan_mode else none }}"
+          - if:
+              - condition: template
+                value_template: "{{ stage3_enabled and (due_stage | int) < 3 }}"
+            then:
+              - wait_for_trigger:
+                  - platform: template
+                    value_template: >-
+                      {{ states(occupancy_entity) not in ['off', 'not_home'] }}
+                timeout:
+                  minutes: "{{ [((minutes_3 | float) - ([age | float, minutes_2 | float] | max)), 0] | max }}"
+                continue_on_timeout: true
+              - condition: template
+                value_template: "{{ not wait.completed }}"
+              - condition: template
+                value_template: "{{ room_is_empty and not blocked }}"
+              - service: velair.pause_zone
+                continue_on_error: true
+                data:
+                  entity_id: "{{ climate_entity }}"
+                  action: hold
+                  pause_id: "{{ owned_pause_id }}"
+                  temperature: "{{ temperature_3 }}"
+                  constraint: "{{ constraint }}"
+                  label: "empty {{ minutes_3 | int }} min - stage 3"
+                  hvac_mode: "{{ hvac_mode if hvac_mode != 'keep' else none }}"
+                  fan_mode: "{{ fan_mode if fan_mode else none }}"

@@ -513,7 +513,7 @@ From Settings, you can enable **Apply active schedule after startup**. When enab
 
 ## Automation Blueprints
 
-Velair provides two optional Home Assistant blueprints through its documentation:
+Velair provides three optional Home Assistant blueprints through its documentation:
 
 - switch between chosen Home/Away actions from one consolidated occupancy entity;
 - pause one or more managed climates while any selected window or door remains open.
