@@ -308,11 +308,11 @@ class ZoneTemperatureLimitNumberTest(unittest.IsolatedAsyncioTestCase):
                     .read_text(encoding="utf-8")
                 )
                 numbers = translation["entity"]["number"]
-                self.assertEqual(
-                    set(numbers),
-                    {"zone_min_temperature_limit", "zone_max_temperature_limit"},
-                )
-                for key in numbers:
+                limit_keys = {"zone_min_temperature_limit", "zone_max_temperature_limit"}
+                # Other platforms (Humidity Assist) add their own number
+                # translations; the two limit keys must always be present.
+                self.assertTrue(limit_keys <= set(numbers))
+                for key in limit_keys:
                     self.assertIn("{zone}", numbers[key]["name"])
 
 
