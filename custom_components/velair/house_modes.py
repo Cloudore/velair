@@ -603,7 +603,7 @@ class HouseModesCoordinator:
         elif runtime.travel_active:
             await self._async_travel_recheck(now, settings, presence)
 
-        if sleep is True and not runtime.sleeping:
+        if sleep is True:
             await self._async_sleep_on(now, settings)
         elif runtime.sleeping and (sleep is False or settings["sleep_entity_id"] is None):
             await self._async_sleep_off(now, settings)
@@ -783,14 +783,16 @@ class HouseModesCoordinator:
         stage2_at = (
             presence.empty_since + timedelta(minutes=deep_minutes) if deep_minutes > 0 else None
         )
-        if runtime.away_stage < 1 and now >= stage1_at:
+        if now >= stage1_at:
             await self._async_apply_away_stage(1, now, settings)
-            runtime.away_stage = 1
-            self._note_action("away stage 1 applied", now)
-        if stage2_at is not None and runtime.away_stage < 2 and now >= stage2_at:
+            if runtime.away_stage < 1:
+                runtime.away_stage = 1
+                self._note_action("away stage 1 applied", now)
+        if stage2_at is not None and now >= stage2_at:
             await self._async_apply_away_stage(2, now, settings)
-            runtime.away_stage = 2
-            self._note_action("away stage 2 applied", now)
+            if runtime.away_stage < 2:
+                runtime.away_stage = 2
+                self._note_action("away stage 2 applied", now)
         if runtime.away_stage < 1:
             runtime.next_stage_at = stage1_at
         elif stage2_at is not None and runtime.away_stage < 2:
@@ -822,7 +824,11 @@ class HouseModesCoordinator:
                     fan_mode=fan_mode,
                     label=LABEL_AWAY_1,
                 )
-            if stage >= 2 and config["away_deep_temperature"] is not None:
+            if (
+                stage >= 2
+                and config["away_deep_temperature"] is not None
+                and PAUSE_ID_AWAY_6H not in pause_ids
+            ):
                 await self._async_hold(
                     entity_id,
                     PAUSE_ID_AWAY_6H,
@@ -860,6 +866,15 @@ class HouseModesCoordinator:
     # Sleep and pre-sleep
     # ------------------------------------------------------------------
     async def _async_sleep_on(self, now: datetime, settings: HouseModesSettingsData) -> None:
+        """Apply the sleep hold to every eligible zone, reconciling on every call.
+
+        Called on every evaluate cycle while sleep is on, not only on the
+        off-to-on transition: a zone that was manual, disabled, or simply
+        missing its hold (a restart or an outage can clear a hold without
+        clearing `runtime.sleeping`) must not stay unheld for the rest of
+        the night just because the transition already happened once. Zones
+        that already hold "sleep" are left untouched -- no redundant writes.
+        """
         runtime = self._runtime
         for entity_id in self._zone_ids():
             pause_ids = self._pause_ids(entity_id, now)
@@ -877,10 +892,14 @@ class HouseModesCoordinator:
             if self._manual_status(entity_id, now) is not None:
                 runtime.zone_reasons[entity_id] = REASON_MANUAL
                 continue
+            if PAUSE_ID_SLEEP in self._pause_ids(entity_id, now):
+                continue
+            self._runtime.zone_reasons.pop(entity_id, None)
             await self._async_apply_sleep_zone(entity_id, config, now)
-        runtime.sleeping = True
-        runtime.sleep_since = now
-        self._note_action("sleep holds applied", now)
+        if not runtime.sleeping:
+            runtime.sleeping = True
+            runtime.sleep_since = now
+            self._note_action("sleep holds applied", now)
 
     async def _async_apply_sleep_zone(
         self, entity_id: str, config: HouseModesZoneData, now: datetime

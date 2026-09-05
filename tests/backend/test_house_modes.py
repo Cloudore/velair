@@ -437,9 +437,12 @@ class AwayStagingTest(HouseModesTestCase):
         self.assertIsNone(self._pause(LIVING, "away_1h"))
         self.assertEqual(self.coordinator._runtime.away_stage, 1)
 
-        # Not retried before stage 2.
-        await self._evaluate(NOW + timedelta(minutes=20))
-        self.assertIsNone(self._pause(LIVING, "away_1h"))
+        # Stage 1 reconciles on every subsequent evaluate, so once the lease
+        # expires the zone is picked up without waiting for stage 2.
+        await self._evaluate(NOW + timedelta(minutes=15))
+        hold = self._pause(LIVING, "away_1h")
+        self.assertIsNotNone(hold)
+        self.assertEqual(hold["temperature"], 26.0)
 
     async def test_default_lease_is_thirty_minutes_when_guards_are_absent(self) -> None:
         self.assertEqual(self.coordinator._lease_minutes(), 30)
@@ -1026,6 +1029,55 @@ class RestartContinuityTest(HouseModesTestCase):
         await self._settle()
         self.assertIsNone(self._pause(MASTER, "sleep"))
         self.assertIsNone(restarted.get_zone_limits(MASTER)["min_temperature"])
+
+    async def test_restart_reapplies_a_sleep_hold_that_was_lost_without_clearing_sleeping(self) -> None:
+        """Reproduces a real incident: an outage (or a config-entry option like
+        apply_active_schedule_on_startup) can clear a zone's persisted hold
+        without clearing the coordinator's own `sleeping` flag. Previously
+        sleep was only (re-)applied on the off-to-on transition, so a zone in
+        this state stayed unheld for the rest of the night. It must now be
+        picked up on the very next evaluate, restart included."""
+        self._set(SLEEP, "on", NOW)
+        await self._start()
+        self.assertIsNotNone(self._pause(MASTER, "sleep"))
+        self.assertIsNotNone(self._pause(LIVING, "sleep"))
+        self.assertEqual(self.scheduler.get_zone_limits(MASTER)["min_temperature"], 22.0)
+
+        # Simulate the hold being lost while `sleeping` stays true in storage.
+        self.data["zones"][MASTER]["pauses"] = []
+        self.data["zones"][LIVING]["pauses"] = []
+        self.data["settings"]["house_modes_runtime"]["saved_minimums"] = {}
+        self.scheduler._data["zones"][MASTER]["limits"]["min_temperature"] = None
+
+        restarted = self._make_scheduler()
+        self.assertTrue(restarted.house_modes._runtime.sleeping)
+        self.assertIsNone(self._pause(MASTER, "sleep"))  # confirms the hold is really gone
+        await restarted.async_start()
+        await self._settle()
+
+        self.assertIsNotNone(self._pause(MASTER, "sleep"))
+        self.assertIsNotNone(self._pause(LIVING, "sleep"))
+        self.assertEqual(restarted.get_zone_limits(MASTER)["min_temperature"], 22.0)
+        # sleep_since must not have been reset by the reconciliation pass.
+        self.assertEqual(
+            self.data["settings"]["house_modes_runtime"]["sleep_since"], NOW.isoformat()
+        )
+
+    async def test_zone_manual_when_sleep_started_gets_the_hold_once_manual_ends(self) -> None:
+        """The other half of the same incident: a zone that was in a manual
+        adjustment at the exact moment sleep engaged used to miss the hold
+        permanently, since only the on/off transition ever applied it."""
+        await self._enter_manual(DEN)
+        self._set(SLEEP, "on", NOW)
+        await self._start()
+        self.assertIsNone(self._pause(DEN, "sleep"))
+        self.assertEqual(self._status()["zone_reasons"][DEN], "manual")
+
+        await self.scheduler.async_resume_automatic_control(DEN)
+        await self._evaluate(NOW + timedelta(minutes=1))
+
+        self.assertIsNotNone(self._pause(DEN, "sleep"))
+        self.assertNotIn(DEN, self._status().get("zone_reasons", {}))
 
     async def test_travel_runtime_survives_restart(self) -> None:
         self._leave(NOW - timedelta(minutes=5))
