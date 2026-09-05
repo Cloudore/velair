@@ -502,12 +502,22 @@ class GuardsCoordinator:
             self._evaluating = True
             try:
                 current_reason = reason
+                passes = 0
                 while True:
                     await self._async_evaluate_locked(current_reason)
                     if not self._rerun_requested:
                         break
                     self._rerun_requested = False
                     current_reason = "rerun"
+                    passes += 1
+                    if passes % 5 == 0:
+                        # Cede the event loop periodically: a sustained burst of
+                        # rerun requests (e.g. a flood of settings changes, or a
+                        # slow/retrying climate delivery) must not monopolize it
+                        # for however long the burst lasts -- other coroutines
+                        # (HTTP/WebSocket handling, other entities' state writes)
+                        # need a turn too, or the whole instance appears hung.
+                        await asyncio.sleep(0)
             finally:
                 self._evaluating = False
 

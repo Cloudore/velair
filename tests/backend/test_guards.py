@@ -11,7 +11,7 @@ from pathlib import Path
 import sys
 from types import ModuleType, SimpleNamespace
 import unittest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 from . import helpers
 from .helpers import (
@@ -1754,6 +1754,25 @@ class RerunCoalescingTest(GuardsTestCase):
         self.assertEqual(calls["n"], target_reruns + 1)
         self.assertFalse(coordinator._evaluating)
         self.assertFalse(coordinator._rerun_requested)
+
+    async def test_sustained_rerun_bursts_yield_to_the_event_loop(self) -> None:
+        coordinator = self.guards
+        calls = {"n": 0}
+        target_reruns = 47  # enough to cross several 5-pass yield boundaries
+
+        async def fake_locked(reason: str) -> None:
+            calls["n"] += 1
+            if calls["n"] <= target_reruns:
+                coordinator._rerun_requested = True
+
+        coordinator._async_evaluate_locked = fake_locked
+        with patch("asyncio.sleep", wraps=asyncio.sleep) as sleep_mock:
+            await coordinator.async_evaluate(reason="test")
+
+        self.assertEqual(calls["n"], target_reruns + 1)
+        # A pass every 5 coalesced reruns cedes the loop once, so a burst of
+        # 47 reruns must yield: it must not run start-to-finish uninterrupted.
+        self.assertEqual(sleep_mock.call_count, target_reruns // 5)
 
 
 if __name__ == "__main__":
